@@ -2429,6 +2429,29 @@ async function _supaDispatch(fn, payload){
 // Helper — deduplicate array (replaces [...new Set(arr)] for GAS compat)
 function _uniq(arr){var s={},r=[];(arr||[]).forEach(function(v){if(!s[v]){s[v]=1;r.push(v);}});return r;}
 
+// == FORCE HURUF BESAR — semua medan input teks pengguna ditukar ke UPPERCASE secara automatik ==
+// Dikecualikan: PIN (mesti kekal nombor asal), email, nombor, tel, tarikh, dan medan tersembunyi/kata laluan.
+(function(){
+  var EXCLUDE_TYPES = {password:1,email:1,number:1,tel:1,date:1,hidden:1,checkbox:1,radio:1,file:1,range:1,color:1,month:1,week:1,time:1};
+  function _shouldSkip(el){
+    if(!el || (el.tagName!=='INPUT' && el.tagName!=='TEXTAREA')) return true;
+    var type=(el.type||'text').toLowerCase();
+    if(EXCLUDE_TYPES[type]) return true;
+    if(/pin/i.test(el.id||'')) return true; // medan PIN (nombor 6-digit) — jangan uppercase
+    return false;
+  }
+  document.addEventListener('input', function(e){
+    var el=e.target;
+    if(_shouldSkip(el)) return;
+    var upper=el.value.toUpperCase();
+    if(upper!==el.value){
+      var s=el.selectionStart, en=el.selectionEnd;
+      el.value=upper;
+      try{ el.setSelectionRange(s,en); }catch(ex){}
+    }
+  }, true);
+})();
+
 var LOGO_URL='https://drive.google.com/thumbnail?id=16W_2I2bcuea1YwDnya0v-M94AGB-A1A3&sz=w400';
 var LOGO_FULL='https://drive.google.com/thumbnail?id=16W_2I2bcuea1YwDnya0v-M94AGB-A1A3&sz=w800';
 var selId='',selNm='',isEdit=false,editKod='';
