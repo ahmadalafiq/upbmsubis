@@ -6738,21 +6738,19 @@ function getSkor(pc, field, py, pg){
     if(!sc[k]) sc[k]={total:0,detail:[],display:disp,sekolah:sek};
     sc[k].total+=pts;
     sc[k].detail.push({
-      prog:p['Nama Program'], tempat:p['Tempat'], per:per, pts:pts, kat:kat,
+      prog:p['Nama Program'], progId:progKey, tempat:p['Tempat'], per:per, pts:pts, kat:kat,
       sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru']
     });
   });
 
   // == Step 2: Pelibatan (markah asas untuk SEMUA yang berdaftar — ditambah, bukan gantian, kepada markah pencapaian) ==
-  var bSeenPy={}; // berkumpulan dedup for pelibatan
-  (py||[]).forEach(function(p){
-    // Skip rekod tanpa nama entiti — elak nama sekolah terpapar dalam ranking peserta/guru
+  var bSeenPy={}; // berkumpulan dedup for pelibatan — dikongsi antara sumber Penyertaan & Pencapaian supaya tiada kiraan berganda
+  function _grantPelibatan(p, per, progId, progNm){
     if(field==='Nama Peserta' && !p['Nama Peserta']) return;
     if(field==='Nama Guru'    && !p['Nama Guru'])    return;
     var k=_entityKey(p); if(!k) return;
     var disp=_displayName(p);
     var sek=p['Nama Sekolah']||'';
-    var progId=p['Program ID']||'';
 
     // Berkumpulan: only count sekolah once per program
     if(field==='Nama Sekolah'){
@@ -6763,7 +6761,6 @@ function getSkor(pc, field, py, pg){
       if(bSeenPy[bkp]) return; bSeenPy[bkp]=1;
     }
 
-    var per=progPer[progId]||'SEKOLAH';
     // JADUAL 6: auto-assign PELIBATAN I bila peserta tak dapat tempat (Sekolah = 0 mata, tiada opsyen Pelibatan)
     var pts=mPts(per,'PELIBATAN I');
 
@@ -6771,10 +6768,24 @@ function getSkor(pc, field, py, pg){
     sc[k].total+=pts;
     var _kat2=(p['Kategori']||progKat[progId]||'INDIVIDU').toUpperCase();
     sc[k].detail.push({
-      prog:p['Nama Program']||progId,
+      prog:progNm||progId, progId:progId,
       tempat:'PELIBATAN I', per:per, pts:pts, kat:_kat2,
       sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru']
     });
+  }
+  // Sumber utama: jadual Penyertaan (pendaftaran)
+  (py||[]).forEach(function(p){
+    var progId=p['Program ID']||'';
+    var per=progPer[progId]||'SEKOLAH';
+    _grantPelibatan(p, per, progId, p['Nama Program']);
+  });
+  // Sumber fallback: jadual Pencapaian — jamin peserta/guru/sekolah yang ADA tempat tapi
+  // TIADA rekod pendaftaran Penyertaan (data tak lengkap) tetap dapat kredit Pelibatan.
+  // bSeenPy dikongsi, jadi entiti yang sudah dikira dari Penyertaan tak dikira dua kali.
+  (pc||[]).forEach(function(p){
+    var progId=(p['Program ID']||p['Nama Program'])||'';
+    var per=(p['Peringkat']||progPer[progId]||'SEKOLAH').toUpperCase();
+    _grantPelibatan(p, per, progId, p['Nama Program']);
   });
 
   return sc;
@@ -6870,15 +6881,20 @@ function showDet(nm,type){
     }
   });
   // Gabungkan baris Pelibatan ke dalam baris Pencapaian program yang sama (satu baris utama + subskrip Pelibatan)
+  // Kunci padanan guna progId (bukan nama program) — elak pertembungan bila 2 program berbeza kebetulan sama nama.
+  // Markah Pelibatan sekolah cuma SATU setiap program (tak kira berapa kategori), jadi ia dilekatkan pada
+  // baris Pencapaian PERTAMA sahaja bagi progId itu; baris Pencapaian lain (kategori/tempat lain, progId sama)
+  // kekal tanpa subskrip — sebab markah Pelibatan program itu sudah diwakili sekali di baris pertama.
   var _pelMap={};
   _grouped.forEach(function(x){
-    if(String(x.tempat||'').indexOf('PELIBATAN')>-1) _pelMap[x.prog+'|'+x.per]=x;
+    if(String(x.tempat||'').indexOf('PELIBATAN')>-1) _pelMap[x.progId||(x.prog+'|'+x.per)]=x;
   });
   var _final=[];
   _grouped.forEach(function(x){
     if(String(x.tempat||'').indexOf('PELIBATAN')>-1) return; // dilayan sebagai subskrip, bukan baris sendiri
-    var pel=_pelMap[x.prog+'|'+x.per];
-    if(pel){ x=Object.assign({},x,{pelibatan:pel}); delete _pelMap[x.prog+'|'+x.per]; }
+    var pk=x.progId||(x.prog+'|'+x.per);
+    var pel=_pelMap[pk];
+    if(pel){ x=Object.assign({},x,{pelibatan:pel}); delete _pelMap[pk]; }
     _final.push(x);
   });
   // Pelibatan yang tiada padanan pencapaian (tiada tempat langsung) kekal sebagai baris sendiri
