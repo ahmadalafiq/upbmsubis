@@ -45,6 +45,11 @@ nav{background:var(--red);padding:0 1.5rem;padding-top:env(safe-area-inset-top);
 .ch{font-family:'Montserrat',sans-serif;font-size:.78rem;font-weight:800;color:var(--g8);margin-bottom:.9rem;display:flex;align-items:center;gap:.4rem;padding-bottom:.5rem;border-bottom:2px solid var(--g1);}
 .ch .dot{width:4px;height:13px;background:var(--red);border-radius:2px;flex-shrink:0;}
 .ch .ml{margin-left:auto;}
+/* RANKING SR/SM SEGMENTED TOGGLE */
+.rk-seg{display:inline-flex;background:var(--g1);border-radius:20px;padding:2px;gap:1px;flex-shrink:0;}
+.rk-seg button{border:none;background:transparent;color:var(--g6);font-size:.58rem;font-weight:800;padding:.28rem .52rem;border-radius:18px;cursor:pointer;font-family:'Open Sans',sans-serif;text-transform:uppercase;transition:all .15s;min-height:auto;letter-spacing:.3px;-webkit-tap-highlight-color:transparent;}
+.rk-seg button.on{background:var(--red);color:#fff;box-shadow:0 1px 3px rgba(192,57,43,.35);}
+@media(hover:hover){.rk-seg button:not(.on):hover{color:var(--red);}}
 /* COLLAPSIBLE */
 .cbtn{background:none;border:none;cursor:pointer;font-size:.7rem;color:var(--g5);font-weight:700;padding:.16rem .44rem;border-radius:5px;transition:all .14s;font-family:'Open Sans',sans-serif;}
 .cbtn:hover{background:var(--g1);color:var(--g7);}
@@ -1693,7 +1698,13 @@ body.view-list .pc::after { display: none; }
   <!-- ── BARIS 1: RANKING SEKOLAH + PENCAPAIAN ─────────────── -->
   <div class="two mb2">
     <div class="card ch-card-wrap">
-      <div class="ch"><div class="dot"></div>🏆 RANKING SEKOLAH — KESELURUHAN (TOP 5)</div>
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>🏆 RANKING SEKOLAH — KESELURUHAN (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('sek','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('sek','SR',this)">SR</button>
+          <button onclick="_setRkJenis('sek','SM',this)">SM</button>
+        </div>
+      </div>
       <div id="rk-sek"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-ms" onclick="moreRank('sek')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
@@ -1721,12 +1732,24 @@ body.view-list .pc::after { display: none; }
   <!-- ── BARIS 2: RANKING PESERTA + GURU ───────────────────── -->
   <div class="two mb2">
     <div class="card ch-card-wrap">
-      <div class="ch"><div class="dot"></div>🧑‍🎓 RANKING PESERTA (TOP 5)</div>
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>🧑‍🎓 RANKING PESERTA (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('pes','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('pes','SR',this)">SR</button>
+          <button onclick="_setRkJenis('pes','SM',this)">SM</button>
+        </div>
+      </div>
       <div id="rk-pes"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-mps" onclick="moreRank('pes')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
     <div class="card ch-card-wrap">
-      <div class="ch"><div class="dot"></div>👨‍🏫 RANKING GURU (TOP 5)</div>
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>👨‍🏫 RANKING GURU (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('guru','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('guru','SR',this)">SR</button>
+          <button onclick="_setRkJenis('guru','SM',this)">SM</button>
+        </div>
+      </div>
       <div id="rk-guru"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-mg" onclick="moreRank('guru')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
@@ -7768,6 +7791,54 @@ var _SEKOLAH_STATIK = [
 // _sekExtraDb: sekolah baharu yang ditambah semasa sesi (belum ada dalam senarai statik)
 var _sekExtraDb = [];
 
+// == JENIS SEKOLAH: SR (Rendah) / SM (Menengah) ================
+// Rujuk kod sekolah dalam _SEKOLAH_STATIK (+ _sekExtraDb): huruf ke-2 kod 'E' = Menengah.
+var _sekKodMap = null;
+function _buildSekKodMap(){
+  if(_sekKodMap) return _sekKodMap;
+  _sekKodMap = {};
+  _SEKOLAH_STATIK.forEach(function(s){ _sekKodMap[String(s.nama||'').toUpperCase().trim()] = s.kod; });
+  (_sekExtraDb||[]).forEach(function(s){ _sekKodMap[String(s.nama||'').toUpperCase().trim()] = s.kod; });
+  return _sekKodMap;
+}
+function _jenisSekolah(namaSekolah){
+  var nm = String(namaSekolah||'').toUpperCase().trim();
+  if(!nm) return 'SR';
+  var kod = _buildSekKodMap()[nm];
+  if(kod) return kod.charAt(1)==='E' ? 'SM' : 'SR';
+  // Fallback ikut corak nama bila sekolah tiada dalam senarai statik (mis. sekolah baharu belum disegerak)
+  if(/^SMK\b|SEKOLAH MENENGAH/.test(nm)) return 'SM';
+  return 'SR';
+}
+// Tapis objek skor ranking (dari getSkor) ikut jenis sekolah entiti (rujuk .sekolah setiap entri)
+function _filterSkorByJenis(scores, jenis){
+  if(!jenis || jenis==='SEMUA') return scores;
+  var out={};
+  Object.keys(scores||{}).forEach(function(k){
+    if(_jenisSekolah(scores[k].sekolah)===jenis) out[k]=scores[k];
+  });
+  return out;
+}
+// State semasa toggle SEMUA/SR/SM bagi setiap kad ranking
+var _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA'};
+var _rkFull = {sek:{}, pes:{}, guru:{}};
+var _rkElMap = {sek:['rk-sek','btn-ms'], pes:['rk-pes','btn-mps'], guru:['rk-guru','btn-mg']};
+function _renderRkType(type){
+  var cfg=_rkElMap[type]; if(!cfg) return;
+  var jenis=_rkJenisFilter[type]||'SEMUA';
+  var filtered=_filterSkorByJenis(_rkFull[type]||{}, jenis);
+  _rk[type]=filtered; // supaya moreRank() dan showDet() guna set yang sama dgn tapisan semasa
+  buildRank(cfg[0], filtered, 5, cfg[1], type);
+}
+function _setRkJenis(type, jenis, btnEl){
+  _rkJenisFilter[type]=jenis;
+  if(btnEl && btnEl.parentNode){
+    Array.prototype.forEach.call(btnEl.parentNode.children, function(b){ b.classList.remove('on'); });
+    btnEl.classList.add('on');
+  }
+  _renderRkType(type);
+}
+
 // == DROPDOWN SEKOLAH =========================================
 function _populateSekDropdown(){
   var sel=document.getElementById('daf-sek-select');
@@ -8122,9 +8193,11 @@ function rebuildDash(){
     rk.sekPel[k] =Object.assign({}, rk.sek[k], {total: rk.sek[k].totalPel||0});
   });
   _rk = rk;
-  buildRank('rk-sek',  rk.sek,  5, 'btn-ms');
-  buildRank('rk-pes',  rk.pes,  5, 'btn-mps');
-  buildRank('rk-guru', rk.guru, 5, 'btn-mg');
+  // Simpan set penuh (tanpa tapisan) untuk sek/pes/guru — toggle SEMUA/SR/SM bertindak di atas set ini
+  _rkFull = {sek: rk.sek, pes: rk.pes, guru: rk.guru};
+  _renderRkType('sek');
+  _renderRkType('pes');
+  _renderRkType('guru');
   buildRank('rk-pes-ada',   rk.pesAda,   5, 'btn-mpsa', 'pesAda');
   buildRank('rk-pes-tiada', rk.pesTiada, 5, 'btn-mpst', 'pesTiada');
   buildRank('rk-sek-penc', rk.sekPenc, 5, 'btn-mska', 'sekPenc');
@@ -9265,6 +9338,12 @@ function resetDashFilters(silent) {
     if (!btn) return;
     btn.className = (m==='semua') ? 'btn bs bsm' : 'btn bw bsm';
     btn.style.fontWeight = (m==='semua') ? '800' : '';
+  });
+
+  // Reset toggle ranking SEMUA/SR/SM
+  _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA'};
+  document.querySelectorAll('.rk-seg').forEach(function(grp){
+    Array.prototype.forEach.call(grp.children, function(b, i){ b.classList.toggle('on', i===0); });
   });
 
   if (!silent) rebuildDash();
