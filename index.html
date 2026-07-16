@@ -2432,7 +2432,7 @@ function _uniq(arr){var s={},r=[];(arr||[]).forEach(function(v){if(!s[v]){s[v]=1
 // == FORCE HURUF BESAR — semua medan input teks pengguna ditukar ke UPPERCASE secara automatik ==
 // Dikecualikan: PIN (mesti kekal nombor asal), email, nombor, tel, tarikh, dan medan tersembunyi/kata laluan.
 (function(){
-  var EXCLUDE_TYPES = {password:1,email:1,number:1,tel:1,date:1,hidden:1,checkbox:1,radio:1,file:1,range:1,color:1,month:1,week:1,time:1};
+  var EXCLUDE_TYPES = {password:1,email:1,date:1,hidden:1,checkbox:1,radio:1,file:1,range:1,color:1,month:1,week:1,time:1};
   function _shouldSkip(el){
     if(!el || (el.tagName!=='INPUT' && el.tagName!=='TEXTAREA')) return true;
     var type=(el.type||'text').toLowerCase();
@@ -2451,6 +2451,40 @@ function _uniq(arr){var s={},r=[];(arr||[]).forEach(function(v){if(!s[v]){s[v]=1
     }
   }, true);
 })();
+
+// == SUPABASE REALTIME (2-HALA SYNC) =========================================
+var _realtimeBustTimer = null;
+function _initRealtimeSync() {
+  if (!sb) return;
+
+  function _triggerRealtimeSync(payload) {
+    console.log('Perubahan Real-time Dikesan:', payload);
+    clearTimeout(_realtimeBustTimer);
+    _realtimeBustTimer = setTimeout(function(){
+      cBust(); // Kosongkan cache klien
+      var activePg = (document.querySelector('.pg.on')||{}).id||'';
+
+      // Elak reload jika ada modal aktif/pengguna sedang mengisi borang
+      if(document.getElementById('ov').classList.contains('on')) return;
+      if(activePg==='pg-peserta' && _isPenyFormAktif()) return;
+      if(activePg==='pg-pengelola' && document.getElementById('mo-edit').classList.contains('on')) return;
+
+      // Reload tab aktif secara automatik
+      if(activePg==='pg-dashboard') loadDash(true);
+      else if(activePg==='pg-pengelola') loadProgs(true);
+      else if(activePg==='pg-peserta') loadProgsForPeny(true);
+      else if(activePg==='pg-akaun') loadAkaun(true);
+    }, 1500); // 1.5 saat debounce
+  }
+
+  sb.channel('db-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PROGRAM }, _triggerRealtimeSync)
+    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PENYERTAAN }, _triggerRealtimeSync)
+    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PENCAPAIAN }, _triggerRealtimeSync)
+    .subscribe(function(status) {
+      console.log('Status Realtime Supabase:', status);
+    });
+}
 
 var LOGO_URL='https://drive.google.com/thumbnail?id=16W_2I2bcuea1YwDnya0v-M94AGB-A1A3&sz=w400';
 var LOGO_FULL='https://drive.google.com/thumbnail?id=16W_2I2bcuea1YwDnya0v-M94AGB-A1A3&sz=w800';
@@ -8790,6 +8824,10 @@ function _initApp(){
       '<div class="empty"><div class="ei">⚠</div><h3>Gagal sambung ke Supabase. Sila muat semula.</h3></div>';
     return;
   }
+
+  // Memulakan Supabase Realtime Subscription untuk penyelarasan data 2 hala
+  _initRealtimeSync();
+
   // Cuba pulihkan sesi dari sessionStorage
   _initSesiDariStorage();
   // PEMBETULAN: pra-isi dropdown sekolah di skrin Daftar Akaun sejak awal
