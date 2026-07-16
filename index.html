@@ -1693,7 +1693,7 @@ body.view-list .pc::after { display: none; }
   <!-- ── BARIS 1: RANKING SEKOLAH + PENCAPAIAN ─────────────── -->
   <div class="two mb2">
     <div class="card ch-card-wrap">
-      <div class="ch"><div class="dot"></div>🏆 RANKING SEKOLAH (TOP 5)</div>
+      <div class="ch"><div class="dot"></div>🏆 RANKING SEKOLAH — KESELURUHAN (TOP 5)</div>
       <div id="rk-sek"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-ms" onclick="moreRank('sek')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
@@ -1701,6 +1701,20 @@ body.view-list .pc::after { display: none; }
       <div class="ch"><div class="dot"></div>🥇 PENCAPAIAN PROGRAM</div>
       <div id="dash-penc"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-mp" onclick="morePenc()" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
+    </div>
+  </div>
+
+  <!-- ── BARIS 1B: RANKING SEKOLAH — PENCAPAIAN SAHAJA / PELIBATAN SAHAJA ── -->
+  <div class="two mb2">
+    <div class="card ch-card-wrap">
+      <div class="ch"><div class="dot"></div>🎖️ RANKING SEKOLAH — PENCAPAIAN SAHAJA (TOP 5)</div>
+      <div id="rk-sek-penc"><div class="ld"><div class="sp"></div></div></div>
+      <div class="mt1"><button class="btn bs bsm" id="btn-mska" onclick="moreRank('sekPenc')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
+    </div>
+    <div class="card ch-card-wrap">
+      <div class="ch"><div class="dot"></div>📋 RANKING SEKOLAH — PELIBATAN SAHAJA (TOP 5)</div>
+      <div id="rk-sek-pel"><div class="ld"><div class="sp"></div></div></div>
+      <div class="mt1"><button class="btn bs bsm" id="btn-mskt" onclick="moreRank('sekPel')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
   </div>
 
@@ -2536,10 +2550,26 @@ function getTPT(kat){ var k=String(kat||'').toUpperCase(); return (k==='TERBUKA 
 var DAYS=['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
 var MTHS=['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogs','Sep','Okt','Nov','Dis'];
 
+// ISU 5: Normalisasi label Peringkat + amaran bila tak sepadan — elak fallback senyap ke skala SEKOLAH (yang zerokan Pelibatan)
+var PERINGKAT_ALIAS={
+  'BAHAGIAN SABAH SARAWAK':'BAHAGIAN','ZON':'DAERAH','ZON DAERAH':'DAERAH','DAERAH ZON':'DAERAH',
+  'MALAYSIA':'KEBANGSAAN','KEBANGSAAN MALAYSIA':'KEBANGSAAN','DUNIA':'ANTARABANGSA','ANTARABANGSA DUNIA':'ANTARABANGSA'
+};
+var _peringkatWarnings=[]; // label Peringkat tak dikenali — semak di sini untuk audit data (window._peringkatWarnings)
+function _normPeringkat(per){
+  var p=(per||'').toUpperCase().trim();
+  if(MARKAH[p]) return p;
+  var stripped=p.replace(/[().\/]/g,' ').replace(/\s+/g,' ').trim();
+  if(MARKAH[stripped]) return stripped;
+  if(PERINGKAT_ALIAS[stripped]) return PERINGKAT_ALIAS[stripped];
+  for(var key in PERINGKAT_ALIAS){ if(stripped.indexOf(key)>-1) return PERINGKAT_ALIAS[key]; }
+  // Tak sepadan langsung selepas normalisasi — rekod amaran, guna DAERAH sebagai fallback (bukan SEKOLAH yg zerokan Pelibatan)
+  if(p && _peringkatWarnings.indexOf(p)<0) _peringkatWarnings.push(p);
+  return 'DAERAH';
+}
 function mPts(per,tempat){
-  // PEMBETULAN SEDERHANA #3: Normalize peringkat supaya case-insensitive — elak fallback silap ke SEKOLAH
-  var perN=(per||'').toUpperCase().trim();
-  var m=MARKAH[perN]||MARKAH.SEKOLAH, t=(tempat||'').toUpperCase();
+  var perN=_normPeringkat(per);
+  var m=MARKAH[perN]||MARKAH.DAERAH, t=(tempat||'').toUpperCase();
   if(t.indexOf('PERTAMA')>-1)return m.PERTAMA;
   if(t.indexOf('KEDUA')>-1)return m.KEDUA;
   if(t.indexOf('KETIGA')>-1)return m.KETIGA;
@@ -2550,8 +2580,6 @@ function mPts(per,tempat){
   if(t==='PELIBATAN III'||t.indexOf('PELIBATAN III')>-1)return m.PELIBATAN3;
   if(t==='PELIBATAN II'||t.indexOf('PELIBATAN II')>-1)return m.PELIBATAN2;
   if(t==='PELIBATAN I'||t.indexOf('PELIBATAN I')>-1)return m.PELIBATAN1;
-  // Alias legasi — rekod lama guna label 'PENYERTAAN' (markah flat 1) sebelum JADUAL 6 diperkenalkan
-  if(t==='PENYERTAAN'||t.indexOf('SERTA')>-1)return m.PELIBATAN1;
   return m.PELIBATAN1;
 }
 
@@ -6672,11 +6700,38 @@ async function loadDash(bust){
   }catch(e){hideOv();toast('Gagal: '+e.message,'er');}
 }
 
+// ISU 4: Kedudukan keutamaan tempat — guna untuk susun rekod Pencapaian sebelum diproses,
+// supaya kredit Pelibatan fallback (Step 2b) sentiasa melekat pada pencapaian TERBAIK peserta
+// itu untuk program tersebut, bukan ikut turutan rekod dlm pangkalan data (non-deterministic).
+function _tempatRank(t){
+  t=(t||'').toUpperCase();
+  if(t.indexOf('PERTAMA')>-1) return 1;
+  if(t.indexOf('KEDUA')>-1) return 2;
+  if(t.indexOf('KETIGA')>-1) return 3;
+  if(t.indexOf('KEEMPAT')>-1) return 4;
+  if(t.indexOf('BERSAMA')>-1) return 4.5;
+  if(t.indexOf('KELIMA')>-1) return 5;
+  return 99;
+}
+// ISU 7: Skop dedup Pelibatan — 'PROGRAM' (1 kredit setiap program, tak kira kategori) ialah
+// polisi rasmi semasa yang dipersetujui. Tukar ke 'KATEGORI' jika dasar berubah kelak supaya
+// 1 kredit diberi bagi SETIAP kategori dalam program yang sama — tanpa gali semula logik dedup.
+var PELIBATAN_DEDUP_SCOPE='PROGRAM';
+function _pelibatanDedupKey(k, progId, kat){
+  return PELIBATAN_DEDUP_SCOPE==='KATEGORI' ? (progId+'|'+kat+'|'+k) : (progId+'|'+k);
+}
+
 function getSkor(pc, field, py, pg){
   // py  = penyertaan rows (_aP)
   // pg  = program list (_aPg) — needed for Peringkat of penyertaan entries
   var sc={};
   var bSeen={}; // berkumpulan dedup
+  // ISU 4: susun ikut keutamaan tempat (Pertama→Kelima→lain) supaya pemprosesan deterministik
+  pc=(pc||[]).slice().sort(function(a,b){
+    var ra=_tempatRank(a['Tempat']), rb=_tempatRank(b['Tempat']);
+    if(ra!==rb) return ra-rb;
+    return String(a['Kategori']||'').localeCompare(String(b['Kategori']||''));
+  });
 
   // Build progId → Peringkat map from program list
   var progPer={}, progKat={};
@@ -6735,8 +6790,9 @@ function getSkor(pc, field, py, pg){
     }
 
 
-    if(!sc[k]) sc[k]={total:0,detail:[],display:disp,sekolah:sek};
+    if(!sc[k]) sc[k]={total:0,totalPenc:0,totalPel:0,detail:[],display:disp,sekolah:sek};
     sc[k].total+=pts;
+    sc[k].totalPenc+=pts;
     sc[k].detail.push({
       prog:p['Nama Program'], progId:progKey, tempat:p['Tempat'], per:per, pts:pts, kat:kat,
       sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru']
@@ -6752,21 +6808,18 @@ function getSkor(pc, field, py, pg){
     var disp=_displayName(p);
     var sek=p['Nama Sekolah']||'';
 
-    // Berkumpulan: only count sekolah once per program
-    if(field==='Nama Sekolah'){
-      var bk=progId+'|'+k;
-      if(bSeenPy[bk]) return; bSeenPy[bk]=1;
-    } else if(field==='Nama Peserta'||field==='Nama Guru'){
-      var bkp=k+'|'+progId;
-      if(bSeenPy[bkp]) return; bSeenPy[bkp]=1;
-    }
+    // Berkumpulan: only count sekolah once per program (ISU 7: skop dedup ditentukan PELIBATAN_DEDUP_SCOPE)
+    var _katDk=(p['Kategori']||progKat[progId]||'INDIVIDU').toUpperCase();
+    var dedupKey=_pelibatanDedupKey(k, progId, _katDk);
+    if(bSeenPy[dedupKey]) return; bSeenPy[dedupKey]=1;
 
     // JADUAL 6: auto-assign PELIBATAN I bila peserta tak dapat tempat (Sekolah = 0 mata, tiada opsyen Pelibatan)
     var pts=mPts(per,'PELIBATAN I');
 
-    if(!sc[k]) sc[k]={total:0,detail:[],display:disp,sekolah:sek};
+    if(!sc[k]) sc[k]={total:0,totalPenc:0,totalPel:0,detail:[],display:disp,sekolah:sek};
     sc[k].total+=pts;
-    var _kat2=(p['Kategori']||progKat[progId]||'INDIVIDU').toUpperCase();
+    sc[k].totalPel+=pts;
+    var _kat2=_katDk;
     sc[k].detail.push({
       prog:progNm||progId, progId:progId,
       tempat:'PELIBATAN I', per:per, pts:pts, kat:_kat2,
@@ -6803,6 +6856,8 @@ function _pencBadge(e){
     ?'<span style="display:inline-flex;align-items:center;gap:2px;font-size:.52rem;font-weight:800;color:#1e8449;background:rgba(39,174,96,.14);border-radius:20px;padding:.05rem .34rem;margin-left:.32rem;white-space:nowrap;">🏆 PENCAPAIAN</span>'
     :'';
 }
+// Kumpulan type ranking berasaskan entiti sekolah — subtajuk nama sekolah tak perlu diulang untuk ini
+function _isSekType(t){ return t==='sek'||t==='sekPenc'||t==='sekPel'; }
 function buildRank(elId,scores,limit,moreBtnId,type){
   var el=document.getElementById(elId);
   type=type||elId.replace('rk-','');
@@ -6817,7 +6872,7 @@ function buildRank(elId,scores,limit,moreBtnId,type){
     var div=document.createElement('div'); div.className='rit';
     var disp=e[1].display||e[0];
     var sek=e[1].sekolah||'';
-    var subHtml=(type!=='sek'&&sek)?'<div class="rsub">· '+sek+'</div>':'';
+    var subHtml=(!_isSekType(type)&&sek)?'<div class="rsub">· '+sek+'</div>':'';
     div.innerHTML='<div class="rbg '+c+'">'+(i+1)+'</div><div class="rn">'+disp+_pencBadge(e[1])+subHtml+'</div><div class="rs">'+e[1].total+' PT</div>';
     (function(nm,tp){div.addEventListener('click',function(){showDet(nm,tp);});})(e[0],type);
     wrap.appendChild(div);
@@ -6832,11 +6887,11 @@ function buildRank(elId,scores,limit,moreBtnId,type){
 
 function moreRank(type){
   // Normalise long form → short key used in _rk
-  var _typeMap={sekolah:'sek',peserta:'pes',guru:'guru',sek:'sek',pes:'pes',pesAda:'pesAda',pesTiada:'pesTiada'};
+  var _typeMap={sekolah:'sek',peserta:'pes',guru:'guru',sek:'sek',pes:'pes',pesAda:'pesAda',pesTiada:'pesTiada',sekPenc:'sekPenc',sekPel:'sekPel'};
   type=_typeMap[type]||type;
   var sc=_rk[type]||{};
   var sorted=Object.entries(sc).sort(function(a,b){return b[1].total-a[1].total;});
-  var titles={sek:'🏆 RANKING SEKOLAH',pes:'🧑‍🎓 RANKING PESERTA',guru:'👨‍🏫 RANKING GURU',pesAda:'🏆 RANKING PESERTA — ADA PENCAPAIAN',pesTiada:'📋 RANKING PESERTA — TIADA PENCAPAIAN'};
+  var titles={sek:'🏆 RANKING SEKOLAH — KESELURUHAN',pes:'🧑‍🎓 RANKING PESERTA',guru:'👨‍🏫 RANKING GURU',pesAda:'🏆 RANKING PESERTA — ADA PENCAPAIAN',pesTiada:'📋 RANKING PESERTA — TIADA PENCAPAIAN',sekPenc:'🎖️ RANKING SEKOLAH — PENCAPAIAN SAHAJA',sekPel:'📋 RANKING SEKOLAH — PELIBATAN SAHAJA'};
   document.getElementById('more-tit').textContent=titles[type]||'RANKING';
   if(!sorted.length){
     document.getElementById('more-body').innerHTML='<div class="empty"><div class="ei">—</div><h3>Tiada data</h3></div>';
@@ -6849,7 +6904,7 @@ function moreRank(type){
     var disp=e[1].display||e[0];
     var sek=e[1].sekolah||'';
     var _tp=type||'sek';
-    var subHtml=(_tp!=='sek'&&sek)?'<div class="rsub">· '+sek+'</div>':'';
+    var subHtml=(!_isSekType(_tp)&&sek)?'<div class="rsub">· '+sek+'</div>':'';
     div.innerHTML='<div class="rbg '+c+'">'+(i+1)+'</div><div class="rn">'+disp+_pencBadge(e[1])+subHtml+'</div><div class="rs">'+e[1].total+' PT</div>';
     (function(nm,tp){div.addEventListener('click',function(){showDet(nm,tp);});})(e[0],type);
     el.appendChild(div);
@@ -7621,7 +7676,7 @@ function filterMore(q){
     var div=document.createElement('div'); div.className='rit';
     var disp=e[1].display||e[0];
     var sek=e[1].sekolah||'';
-    var subHtml=(_type!=='sek'&&sek)?'<div class="rsub">· '+sek+'</div>':'';
+    var subHtml=(!_isSekType(_type)&&sek)?'<div class="rsub">· '+sek+'</div>':'';
     div.innerHTML='<div class="rbg '+c+'">'+(origRank+1)+'</div><div class="rn">'+disp+subHtml+'</div><div class="rs">'+e[1].total+' PT</div>';
     (function(nm,tp){div.addEventListener('click',function(){showDet(nm,tp);});})(e[0],_type);
     el.appendChild(div);
@@ -8072,12 +8127,20 @@ function rebuildDash(){
   Object.keys(rk.pes).forEach(function(k){
     if(_hasPenc(rk.pes[k])) rk.pesAda[k]=rk.pes[k]; else rk.pesTiada[k]=rk.pes[k];
   });
+  // ISU 3: Ranking Sekolah — Pencapaian sahaja / Pelibatan sahaja (guna sub-jumlah, bukan filter entiti)
+  rk.sekPenc={}; rk.sekPel={};
+  Object.keys(rk.sek).forEach(function(k){
+    rk.sekPenc[k]=Object.assign({}, rk.sek[k], {total: rk.sek[k].totalPenc||0});
+    rk.sekPel[k] =Object.assign({}, rk.sek[k], {total: rk.sek[k].totalPel||0});
+  });
   _rk = rk;
   buildRank('rk-sek',  rk.sek,  5, 'btn-ms');
   buildRank('rk-pes',  rk.pes,  5, 'btn-mps');
   buildRank('rk-guru', rk.guru, 5, 'btn-mg');
   buildRank('rk-pes-ada',   rk.pesAda,   5, 'btn-mpsa', 'pesAda');
   buildRank('rk-pes-tiada', rk.pesTiada, 5, 'btn-mpst', 'pesTiada');
+  buildRank('rk-sek-penc', rk.sekPenc, 5, 'btn-mska', 'sekPenc');
+  buildRank('rk-sek-pel',  rk.sekPel,  5, 'btn-mskt', 'sekPel');
   buildPenc(pc, 3);
 
   // Original charts
