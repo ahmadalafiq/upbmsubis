@@ -6639,7 +6639,6 @@ function printDashRingkasan(){
   setTimeout(function(){w.print();},400);
 }
 
-var _dashAutoRefreshTimer = null;
 // Toggle expandable sections dalam dashboard
 function _togDashSection(bodyId, btnId){
   var body=document.getElementById(bodyId);
@@ -6650,16 +6649,6 @@ function _togDashSection(bodyId, btnId){
   if(btn)btn.textContent=isClosed?'▲ TUTUP':'▼ BUKA';
 }
 
-function _startDashAutoRefresh(){
-  clearInterval(_dashAutoRefreshTimer);
-  _dashAutoRefreshTimer = setInterval(function(){
-    // Auto-refresh hanya jika tab dashboard aktif dan tiada overlay
-    var activePg = (document.querySelector('.pg.on')||{}).id||'';
-    if(activePg==='pg-dashboard' && !document.getElementById('ov').classList.contains('on')){
-      loadDash(true);
-    }
-  }, 3*60*1000); // 3 minit
-}
 function _updateDashTimestamp(){
   var el=document.getElementById('dash-ts');
   if(!el) return;
@@ -6696,7 +6685,6 @@ async function loadDash(bust){
     requestAnimationFrame(function(){
       rebuildDash();
     });
-    _startDashAutoRefresh();
   }catch(e){hideOv();toast('Gagal: '+e.message,'er');}
 }
 
