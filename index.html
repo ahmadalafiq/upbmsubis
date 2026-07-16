@@ -8214,11 +8214,18 @@ function rebuildDash(){
   Object.keys(rk.pes).forEach(function(k){
     if(_hasPenc(rk.pes[k])) rk.pesAda[k]=rk.pes[k]; else rk.pesTiada[k]=rk.pes[k];
   });
-  // ISU 3: Ranking Sekolah — Pencapaian sahaja / Pelibatan sahaja (guna sub-jumlah, bukan filter entiti)
+  // ISU 3 (dibetulkan): Ranking Sekolah — Pencapaian sahaja / Pelibatan sahaja kini EKSKLUSIF,
+  // konsisten dgn logik pesAda/pesTiada di atas — sekolah yang ADA pencapaian (totalPenc>0) tidak lagi
+  // turut terpapar dalam ranking "Pelibatan Sahaja" walaupun ia juga ada markah pelibatan.
   rk.sekPenc={}; rk.sekPel={};
   Object.keys(rk.sek).forEach(function(k){
-    rk.sekPenc[k]=Object.assign({}, rk.sek[k], {total: rk.sek[k].totalPenc||0});
-    rk.sekPel[k] =Object.assign({}, rk.sek[k], {total: rk.sek[k].totalPel||0});
+    var totPenc = rk.sek[k].totalPenc||0;
+    var totPel  = rk.sek[k].totalPel||0;
+    if(totPenc>0){
+      rk.sekPenc[k]=Object.assign({}, rk.sek[k], {total: totPenc});
+    } else if(totPel>0){
+      rk.sekPel[k]=Object.assign({}, rk.sek[k], {total: totPel});
+    }
   });
   _rk = rk;
   // Simpan set penuh (tanpa tapisan) untuk semua ranking — toggle SEMUA/SR/SM bertindak di atas set ini
