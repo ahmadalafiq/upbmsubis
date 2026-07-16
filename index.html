@@ -6843,9 +6843,23 @@ function showDet(nm,type){
       _grouped.push(Object.assign({},x,{pesList:x.pes?[x.pes]:[]}));
     }
   });
+  // Gabungkan baris Pelibatan ke dalam baris Pencapaian program yang sama (satu baris utama + subskrip Pelibatan)
+  var _pelMap={};
+  _grouped.forEach(function(x){
+    if(String(x.tempat||'').indexOf('PELIBATAN')>-1) _pelMap[x.prog+'|'+x.per]=x;
+  });
+  var _final=[];
+  _grouped.forEach(function(x){
+    if(String(x.tempat||'').indexOf('PELIBATAN')>-1) return; // dilayan sebagai subskrip, bukan baris sendiri
+    var pel=_pelMap[x.prog+'|'+x.per];
+    if(pel){ x=Object.assign({},x,{pelibatan:pel}); delete _pelMap[x.prog+'|'+x.per]; }
+    _final.push(x);
+  });
+  // Pelibatan yang tiada padanan pencapaian (tiada tempat langsung) kekal sebagai baris sendiri
+  Object.keys(_pelMap).forEach(function(k){ _final.push(_pelMap[k]); });
   document.getElementById('det-body').innerHTML=
     '<div style="font-family:Montserrat,sans-serif;font-size:.72rem;font-weight:800;color:var(--red);margin-bottom:.62rem;">JUMLAH: '+d.total+' MATA</div>'
-    +_grouped.map(function(x){
+    +_final.map(function(x){
       var katLabel=x.kat||'INDIVIDU';
       var katCol=_katColor[katLabel]||'#555';
       var isPenyertaan=x.tempat==='PENYERTAAN'||String(x.tempat||'').indexOf('PELIBATAN')>-1;
@@ -6860,13 +6874,17 @@ function showDet(nm,type){
           +x.pesList.map(function(nm){return '<span style="font-size:.6rem;background:rgba(0,0,0,.07);border-radius:20px;padding:.05rem .3rem;">👤 '+nm+'</span>';}).join('')
           +'</div>';
       }
+      // Subskrip kecil markah Pelibatan di bawah dpt — hanya bila program ada tempat pencapaian DAN markah pelibatan berasingan
+      var pelSub=x.pelibatan
+        ?'<div style="font-size:.56rem;color:var(--g5);font-weight:700;margin-top:.12rem;">+'+x.pelibatan.pts+' '+x.pelibatan.tempat+'</div>'
+        :'';
       return '<div class="di"><div class="dk">'+x.tempat+'</div>'
         +'<div class="db"><div class="dpg">'+x.prog+'</div>'
         +(katBadge?'<div>'+katBadge+'</div>':'')
         +'<div class="dsb">'+x.per+(x.sek?' &bull; '+x.sek:'')+((!isBK&&x.pes)?' &bull; '+x.pes:'')+(x.guru?' &bull; '+x.guru:'')+'</div>'
         +pesHtml
         +'</div>'
-        +'<div class="dpt">+'+x.pts+'</div></div>';
+        +'<div><div class="dpt">+'+x.pts+'</div>'+pelSub+'</div></div>';
     }).join('');
   openMo('mo-det');
 }
