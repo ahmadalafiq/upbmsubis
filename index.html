@@ -1718,6 +1718,20 @@ body.view-list .pc::after { display: none; }
     </div>
   </div>
 
+  <!-- ── BARIS 2B: RANKING PESERTA — ADA PENCAPAIAN / TIADA PENCAPAIAN ── -->
+  <div class="two mb2">
+    <div class="card ch-card-wrap">
+      <div class="ch"><div class="dot"></div>🏆 RANKING PESERTA — ADA PENCAPAIAN (TOP 5)</div>
+      <div id="rk-pes-ada"><div class="ld"><div class="sp"></div></div></div>
+      <div class="mt1"><button class="btn bs bsm" id="btn-mpsa" onclick="moreRank('pesAda')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
+    </div>
+    <div class="card ch-card-wrap">
+      <div class="ch"><div class="dot"></div>📋 RANKING PESERTA — TIADA PENCAPAIAN (TOP 5)</div>
+      <div id="rk-pes-tiada"><div class="ld"><div class="sp"></div></div></div>
+      <div class="mt1"><button class="btn bs bsm" id="btn-mpst" onclick="moreRank('pesTiada')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
+    </div>
+  </div>
+
   <!-- ── BARIS 3: CARTA BIDANG + DONUT STATUS ──────────────── -->
   <div class="two mb2">
     <div class="card ch-card-wrap">
@@ -6766,9 +6780,21 @@ function getSkor(pc, field, py, pg){
   return sc;
 }
 
-function buildRank(elId,scores,limit,moreBtnId){
+// Semak sama ada entiti (peserta/guru/sekolah) ada sekurang-kurangnya satu markah PENCAPAIAN (tempat sebenar, bukan Pelibatan)
+function _hasPenc(e){
+  return (e.detail||[]).some(function(x){
+    var t=String(x.tempat||'');
+    return t.indexOf('PELIBATAN')<0 && t!=='PENYERTAAN';
+  });
+}
+function _pencBadge(e){
+  return _hasPenc(e)
+    ?'<span style="display:inline-flex;align-items:center;gap:2px;font-size:.52rem;font-weight:800;color:#1e8449;background:rgba(39,174,96,.14);border-radius:20px;padding:.05rem .34rem;margin-left:.32rem;white-space:nowrap;">🏆 PENCAPAIAN</span>'
+    :'';
+}
+function buildRank(elId,scores,limit,moreBtnId,type){
   var el=document.getElementById(elId);
-  var type=elId.replace('rk-','');
+  type=type||elId.replace('rk-','');
   var sorted=Object.entries(scores).sort(function(a,b){return b[1].total-a[1].total;});
   if(!sorted.length){
     el.innerHTML='<div class="empty"><div class="ei">—</div><h3>Tiada pencapaian</h3></div>';
@@ -6781,7 +6807,7 @@ function buildRank(elId,scores,limit,moreBtnId){
     var disp=e[1].display||e[0];
     var sek=e[1].sekolah||'';
     var subHtml=(type!=='sek'&&sek)?'<div class="rsub">· '+sek+'</div>':'';
-    div.innerHTML='<div class="rbg '+c+'">'+(i+1)+'</div><div class="rn">'+disp+subHtml+'</div><div class="rs">'+e[1].total+' PT</div>';
+    div.innerHTML='<div class="rbg '+c+'">'+(i+1)+'</div><div class="rn">'+disp+_pencBadge(e[1])+subHtml+'</div><div class="rs">'+e[1].total+' PT</div>';
     (function(nm,tp){div.addEventListener('click',function(){showDet(nm,tp);});})(e[0],type);
     wrap.appendChild(div);
   });
@@ -6795,11 +6821,11 @@ function buildRank(elId,scores,limit,moreBtnId){
 
 function moreRank(type){
   // Normalise long form → short key used in _rk
-  var _typeMap={sekolah:'sek',peserta:'pes',guru:'guru',sek:'sek',pes:'pes'};
+  var _typeMap={sekolah:'sek',peserta:'pes',guru:'guru',sek:'sek',pes:'pes',pesAda:'pesAda',pesTiada:'pesTiada'};
   type=_typeMap[type]||type;
   var sc=_rk[type]||{};
   var sorted=Object.entries(sc).sort(function(a,b){return b[1].total-a[1].total;});
-  var titles={sek:'🏆 RANKING SEKOLAH',pes:'🧑‍🎓 RANKING PESERTA',guru:'👨‍🏫 RANKING GURU'};
+  var titles={sek:'🏆 RANKING SEKOLAH',pes:'🧑‍🎓 RANKING PESERTA',guru:'👨‍🏫 RANKING GURU',pesAda:'🏆 RANKING PESERTA — ADA PENCAPAIAN',pesTiada:'📋 RANKING PESERTA — TIADA PENCAPAIAN'};
   document.getElementById('more-tit').textContent=titles[type]||'RANKING';
   if(!sorted.length){
     document.getElementById('more-body').innerHTML='<div class="empty"><div class="ei">—</div><h3>Tiada data</h3></div>';
@@ -6813,7 +6839,7 @@ function moreRank(type){
     var sek=e[1].sekolah||'';
     var _tp=type||'sek';
     var subHtml=(_tp!=='sek'&&sek)?'<div class="rsub">· '+sek+'</div>':'';
-    div.innerHTML='<div class="rbg '+c+'">'+(i+1)+'</div><div class="rn">'+disp+subHtml+'</div><div class="rs">'+e[1].total+' PT</div>';
+    div.innerHTML='<div class="rbg '+c+'">'+(i+1)+'</div><div class="rn">'+disp+_pencBadge(e[1])+subHtml+'</div><div class="rs">'+e[1].total+' PT</div>';
     (function(nm,tp){div.addEventListener('click',function(){showDet(nm,tp);});})(e[0],type);
     el.appendChild(div);
   });
@@ -8025,10 +8051,17 @@ function rebuildDash(){
   rk.sek  = getSkor(pc,'Nama Sekolah', py, pg);
   rk.pes  = getSkor(pc,'Nama Peserta',  py, pg);
   rk.guru = getSkor(pc,'Nama Guru',     py, pg);
+  // Pecahkan ranking peserta ikut status pencapaian (rujuk objek skor yang sama, tiada duplikasi data)
+  rk.pesAda={}; rk.pesTiada={};
+  Object.keys(rk.pes).forEach(function(k){
+    if(_hasPenc(rk.pes[k])) rk.pesAda[k]=rk.pes[k]; else rk.pesTiada[k]=rk.pes[k];
+  });
   _rk = rk;
   buildRank('rk-sek',  rk.sek,  5, 'btn-ms');
   buildRank('rk-pes',  rk.pes,  5, 'btn-mps');
   buildRank('rk-guru', rk.guru, 5, 'btn-mg');
+  buildRank('rk-pes-ada',   rk.pesAda,   5, 'btn-mpsa', 'pesAda');
+  buildRank('rk-pes-tiada', rk.pesTiada, 5, 'btn-mpst', 'pesTiada');
   buildPenc(pc, 3);
 
   // Original charts
