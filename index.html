@@ -2108,7 +2108,7 @@ function _mapProgramOut(r){
   if(!r) return null;
   return {
     'ID': r.id,
-    'Nama Program': r.nama,
+    'Nama Program': r.nama_program,
     'Pengelola': r.pengelola,
     'Kod Pengelola': r.kod_pengelola,
     'Bidang': r.bidang,
@@ -2264,7 +2264,7 @@ async function _supaDispatch(fn, payload){
     var thn1 = tar1 ? new Date(tar1).getFullYear() : new Date().getFullYear();
     var insP = {
       id: _genId('PRG'),
-      nama: payload.nama, pengelola: payload.pengelola, kod_pengelola: payload.kodPengelola,
+      nama_program: payload.nama, pengelola: payload.pengelola, kod_pengelola: payload.kodPengelola,
       bidang: payload.bidang, kategori: (payload.kategori||[]).join(','), peringkat: payload.peringkat,
       tarikh: tar1, tempat: payload.tempat, status: payload.status||'AKTIF', tahun: thn1
     };
@@ -2277,7 +2277,7 @@ async function _supaDispatch(fn, payload){
     var tar2 = payload.tarikh;
     var thn2 = tar2 ? new Date(tar2).getFullYear() : new Date().getFullYear();
     var updP = {
-      nama: payload.nama, pengelola: payload.pengelola, kod_pengelola: payload.kodPengelola,
+      nama_program: payload.nama, pengelola: payload.pengelola, kod_pengelola: payload.kodPengelola,
       bidang: payload.bidang, kategori: (payload.kategori||[]).join(','), peringkat: payload.peringkat,
       tarikh: tar2, tempat: payload.tempat, status: payload.status||'AKTIF', tahun: thn2
     };
