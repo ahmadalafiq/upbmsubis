@@ -1718,12 +1718,24 @@ body.view-list .pc::after { display: none; }
   <!-- ── BARIS 1B: RANKING SEKOLAH — PENCAPAIAN SAHAJA / PELIBATAN SAHAJA ── -->
   <div class="two mb2">
     <div class="card ch-card-wrap">
-      <div class="ch"><div class="dot"></div>🎖️ RANKING SEKOLAH — PENCAPAIAN SAHAJA (TOP 5)</div>
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>🎖️ RANKING SEKOLAH — PENCAPAIAN SAHAJA (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('sekPenc','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('sekPenc','SR',this)">SR</button>
+          <button onclick="_setRkJenis('sekPenc','SM',this)">SM</button>
+        </div>
+      </div>
       <div id="rk-sek-penc"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-mska" onclick="moreRank('sekPenc')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
     <div class="card ch-card-wrap">
-      <div class="ch"><div class="dot"></div>📋 RANKING SEKOLAH — PELIBATAN SAHAJA (TOP 5)</div>
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>📋 RANKING SEKOLAH — PELIBATAN SAHAJA (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('sekPel','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('sekPel','SR',this)">SR</button>
+          <button onclick="_setRkJenis('sekPel','SM',this)">SM</button>
+        </div>
+      </div>
       <div id="rk-sek-pel"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-mskt" onclick="moreRank('sekPel')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
@@ -1758,12 +1770,24 @@ body.view-list .pc::after { display: none; }
   <!-- ── BARIS 2B: RANKING PESERTA — ADA PENCAPAIAN / TIADA PENCAPAIAN ── -->
   <div class="two mb2">
     <div class="card ch-card-wrap">
-      <div class="ch"><div class="dot"></div>🏆 RANKING PESERTA — ADA PENCAPAIAN (TOP 5)</div>
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>🏆 RANKING PESERTA — ADA PENCAPAIAN (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('pesAda','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('pesAda','SR',this)">SR</button>
+          <button onclick="_setRkJenis('pesAda','SM',this)">SM</button>
+        </div>
+      </div>
       <div id="rk-pes-ada"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-mpsa" onclick="moreRank('pesAda')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
     <div class="card ch-card-wrap">
-      <div class="ch"><div class="dot"></div>📋 RANKING PESERTA — TIADA PENCAPAIAN (TOP 5)</div>
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>📋 RANKING PESERTA — TIADA PENCAPAIAN (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('pesTiada','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('pesTiada','SR',this)">SR</button>
+          <button onclick="_setRkJenis('pesTiada','SM',this)">SM</button>
+        </div>
+      </div>
       <div id="rk-pes-tiada"><div class="ld"><div class="sp"></div></div></div>
       <div class="mt1"><button class="btn bs bsm" id="btn-mpst" onclick="moreRank('pesTiada')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
     </div>
@@ -7820,9 +7844,13 @@ function _filterSkorByJenis(scores, jenis){
   return out;
 }
 // State semasa toggle SEMUA/SR/SM bagi setiap kad ranking
-var _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA'};
-var _rkFull = {sek:{}, pes:{}, guru:{}};
-var _rkElMap = {sek:['rk-sek','btn-ms'], pes:['rk-pes','btn-mps'], guru:['rk-guru','btn-mg']};
+var _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA', pesAda:'SEMUA', pesTiada:'SEMUA', sekPenc:'SEMUA', sekPel:'SEMUA'};
+var _rkFull = {sek:{}, pes:{}, guru:{}, pesAda:{}, pesTiada:{}, sekPenc:{}, sekPel:{}};
+var _rkElMap = {
+  sek:['rk-sek','btn-ms'], pes:['rk-pes','btn-mps'], guru:['rk-guru','btn-mg'],
+  pesAda:['rk-pes-ada','btn-mpsa'], pesTiada:['rk-pes-tiada','btn-mpst'],
+  sekPenc:['rk-sek-penc','btn-mska'], sekPel:['rk-sek-pel','btn-mskt']
+};
 function _renderRkType(type){
   var cfg=_rkElMap[type]; if(!cfg) return;
   var jenis=_rkJenisFilter[type]||'SEMUA';
@@ -8193,15 +8221,15 @@ function rebuildDash(){
     rk.sekPel[k] =Object.assign({}, rk.sek[k], {total: rk.sek[k].totalPel||0});
   });
   _rk = rk;
-  // Simpan set penuh (tanpa tapisan) untuk sek/pes/guru — toggle SEMUA/SR/SM bertindak di atas set ini
-  _rkFull = {sek: rk.sek, pes: rk.pes, guru: rk.guru};
+  // Simpan set penuh (tanpa tapisan) untuk semua ranking — toggle SEMUA/SR/SM bertindak di atas set ini
+  _rkFull = {sek: rk.sek, pes: rk.pes, guru: rk.guru, pesAda: rk.pesAda, pesTiada: rk.pesTiada, sekPenc: rk.sekPenc, sekPel: rk.sekPel};
   _renderRkType('sek');
   _renderRkType('pes');
   _renderRkType('guru');
-  buildRank('rk-pes-ada',   rk.pesAda,   5, 'btn-mpsa', 'pesAda');
-  buildRank('rk-pes-tiada', rk.pesTiada, 5, 'btn-mpst', 'pesTiada');
-  buildRank('rk-sek-penc', rk.sekPenc, 5, 'btn-mska', 'sekPenc');
-  buildRank('rk-sek-pel',  rk.sekPel,  5, 'btn-mskt', 'sekPel');
+  _renderRkType('pesAda');
+  _renderRkType('pesTiada');
+  _renderRkType('sekPenc');
+  _renderRkType('sekPel');
   buildPenc(pc, 3);
 
   // Original charts
@@ -9341,7 +9369,7 @@ function resetDashFilters(silent) {
   });
 
   // Reset toggle ranking SEMUA/SR/SM
-  _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA'};
+  _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA', pesAda:'SEMUA', pesTiada:'SEMUA', sekPenc:'SEMUA', sekPel:'SEMUA'};
   document.querySelectorAll('.rk-seg').forEach(function(grp){
     Array.prototype.forEach.call(grp.children, function(b, i){ b.classList.toggle('on', i===0); });
   });
