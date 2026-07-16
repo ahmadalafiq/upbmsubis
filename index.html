@@ -2506,13 +2506,14 @@ function hlMatch(str,q){
   return String(str).replace(re,'<mark style="background:#fff3cd;color:#333;border-radius:2px;padding:0 1px;">$1</mark>');
 }
 
+// JADUAL 6: MARKAH PELIBATAN — Sekolah tiada opsyen Pelibatan (0), Zon & Daerah digabung sebagai satu peringkat DAERAH
 var MARKAH={
-   SEKOLAH:     {PERTAMA:8,  KEDUA:7,  KETIGA:6, KEEMPAT:5, BERSAMA:6, KELIMA:4, PENYERTAAN:1},
-  DAERAH:      {PERTAMA:11, KEDUA:10,  KETIGA:9, KEEMPAT:8, BERSAMA:9, KELIMA:7, PENYERTAAN:1},
-  BAHAGIAN:    {PERTAMA:14, KEDUA:13, KETIGA:12, KEEMPAT:11, BERSAMA:12, KELIMA:10, PENYERTAAN:1},
-  NEGERI:      {PERTAMA:14, KEDUA:13, KETIGA:12, KEEMPAT:11, BERSAMA:12, KELIMA:10, PENYERTAAN:1},
-  KEBANGSAAN:  {PERTAMA:17, KEDUA:16, KETIGA:15, KEEMPAT:14, BERSAMA:15, KELIMA:13, PENYERTAAN:1},
-  ANTARABANGSA:{PERTAMA:20, KEDUA:19, KETIGA:18, KEEMPAT:17, BERSAMA:18, KELIMA:16, PENYERTAAN:1}
+   SEKOLAH:     {PERTAMA:8,  KEDUA:7,  KETIGA:6, KEEMPAT:5, BERSAMA:6, KELIMA:4, PELIBATAN1:0,  PELIBATAN2:0,  PELIBATAN3:0},
+  DAERAH:      {PERTAMA:11, KEDUA:10,  KETIGA:9, KEEMPAT:8, BERSAMA:9, KELIMA:7, PELIBATAN1:11, PELIBATAN2:8,  PELIBATAN3:4},
+  BAHAGIAN:    {PERTAMA:14, KEDUA:13, KETIGA:12, KEEMPAT:11, BERSAMA:12, KELIMA:10, PELIBATAN1:12, PELIBATAN2:9,  PELIBATAN3:5},
+  NEGERI:      {PERTAMA:14, KEDUA:13, KETIGA:12, KEEMPAT:11, BERSAMA:12, KELIMA:10, PELIBATAN1:14, PELIBATAN2:10, PELIBATAN3:6},
+  KEBANGSAAN:  {PERTAMA:17, KEDUA:16, KETIGA:15, KEEMPAT:14, BERSAMA:15, KELIMA:13, PELIBATAN1:17, PELIBATAN2:12, PELIBATAN3:8},
+  ANTARABANGSA:{PERTAMA:20, KEDUA:19, KETIGA:18, KEEMPAT:17, BERSAMA:18, KELIMA:16, PELIBATAN1:20, PELIBATAN2:15, PELIBATAN3:10}
 };
 var PER_ORDER=['ANTARABANGSA','KEBANGSAAN','NEGERI','BAHAGIAN','DAERAH','SEKOLAH'];
 var TPT_STANDARD=[{k:'t1',l:'TEMPAT PERTAMA'},{k:'t2',l:'TEMPAT KEDUA'},{k:'t3',l:'TEMPAT KETIGA'},{k:'t4',l:'TEMPAT KEEMPAT'},{k:'t5',l:'TEMPAT KELIMA'}];
@@ -2531,8 +2532,13 @@ function mPts(per,tempat){
   if(t.indexOf('KEEMPAT')>-1)return m.KEEMPAT;
   if(t.indexOf('BERSAMA')>-1)return m.BERSAMA;
   if(t.indexOf('KELIMA')>-1)return m.KELIMA;
-  if(t==='PENYERTAAN'||t.indexOf('SERTA')>-1)return m.PENYERTAAN;
-  return m.PENYERTAAN;
+  // JADUAL 6: Pelibatan III/II diperiksa dahulu (elak 'PELIBATAN III' silap sepadan dgn 'PELIBATAN I')
+  if(t==='PELIBATAN III'||t.indexOf('PELIBATAN III')>-1)return m.PELIBATAN3;
+  if(t==='PELIBATAN II'||t.indexOf('PELIBATAN II')>-1)return m.PELIBATAN2;
+  if(t==='PELIBATAN I'||t.indexOf('PELIBATAN I')>-1)return m.PELIBATAN1;
+  // Alias legasi — rekod lama guna label 'PENYERTAAN' (markah flat 1) sebelum JADUAL 6 diperkenalkan
+  if(t==='PENYERTAAN'||t.indexOf('SERTA')>-1)return m.PELIBATAN1;
+  return m.PELIBATAN1;
 }
 
 // == CLIENT CACHE (in-memory, 3 minit TTL) ============
@@ -6656,7 +6662,6 @@ function getSkor(pc, field, py, pg){
   // py  = penyertaan rows (_aP)
   // pg  = program list (_aPg) — needed for Peringkat of penyertaan entries
   var sc={};
-  var seen={}; // key: progId+'|'+entityKey — already has pencapaian pts
   var bSeen={}; // berkumpulan dedup
 
   // Build progId → Peringkat map from program list
@@ -6722,14 +6727,10 @@ function getSkor(pc, field, py, pg){
       prog:p['Nama Program'], tempat:p['Tempat'], per:per, pts:pts, kat:kat,
       sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru']
     });
-
-    // Mark this entity as having pencapaian for this program
-    var sk=(p['Program ID']||p['Nama Program'])+'|'+k;
-    if(!seen[sk]) seen[sk]=1;
   });
 
-  // == Step 2: Penyertaan (participation marks for those without placement) ==
-  var bSeenPy={}; // berkumpulan dedup for penyertaan
+  // == Step 2: Pelibatan (markah asas untuk SEMUA yang berdaftar — ditambah, bukan gantian, kepada markah pencapaian) ==
+  var bSeenPy={}; // berkumpulan dedup for pelibatan
   (py||[]).forEach(function(p){
     // Skip rekod tanpa nama entiti — elak nama sekolah terpapar dalam ranking peserta/guru
     if(field==='Nama Peserta' && !p['Nama Peserta']) return;
@@ -6738,8 +6739,6 @@ function getSkor(pc, field, py, pg){
     var disp=_displayName(p);
     var sek=p['Nama Sekolah']||'';
     var progId=p['Program ID']||'';
-    var sk=progId+'|'+k;
-    if(seen[sk]) return; // already has pencapaian pts for this prog, skip
 
     // Berkumpulan: only count sekolah once per program
     if(field==='Nama Sekolah'){
@@ -6751,14 +6750,15 @@ function getSkor(pc, field, py, pg){
     }
 
     var per=progPer[progId]||'SEKOLAH';
-    var pts=mPts(per,'PENYERTAAN'); // 1pt
+    // JADUAL 6: auto-assign PELIBATAN I bila peserta tak dapat tempat (Sekolah = 0 mata, tiada opsyen Pelibatan)
+    var pts=mPts(per,'PELIBATAN I');
 
     if(!sc[k]) sc[k]={total:0,detail:[],display:disp,sekolah:sek};
     sc[k].total+=pts;
     var _kat2=(p['Kategori']||progKat[progId]||'INDIVIDU').toUpperCase();
     sc[k].detail.push({
       prog:p['Nama Program']||progId,
-      tempat:'PENYERTAAN', per:per, pts:pts, kat:_kat2,
+      tempat:'PELIBATAN I', per:per, pts:pts, kat:_kat2,
       sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru']
     });
   });
@@ -6848,7 +6848,7 @@ function showDet(nm,type){
     +_grouped.map(function(x){
       var katLabel=x.kat||'INDIVIDU';
       var katCol=_katColor[katLabel]||'#555';
-      var isPenyertaan=x.tempat==='PENYERTAAN';
+      var isPenyertaan=x.tempat==='PENYERTAAN'||String(x.tempat||'').indexOf('PELIBATAN')>-1;
       var isBK=katLabel==='BERKUMPULAN LELAKI'||katLabel==='BERKUMPULAN PEREMPUAN'||katLabel==='BERKUMPULAN'||katLabel==='KESELURUHAN';
       // Badge kategori — papar bawah nama program, tidak papar untuk PENYERTAAN
       var katBadge=(!isPenyertaan)
