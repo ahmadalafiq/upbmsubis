@@ -2097,12 +2097,6 @@ var TBL_PENYERTAAN = 'penyertaan';
 var TBL_PENCAPAIAN = 'pencapaian';
 var TBL_PENGGUNA   = 'pengguna';
 
-// Penjana ID ringkas (menggantikan Utilities.getUuid() sisi-server GAS)
-function _genId(prefix){
-  var rnd = (Math.random().toString(36).slice(2,8));
-  return (prefix||'ID')+'-'+Date.now().toString(36).toUpperCase()+'-'+rnd.toUpperCase();
-}
-
 // == PEMETAAN BARIS PANGKALAN DATA <-> OBJEK UI (kekalkan nama medan Melayu sedia ada) ==
 function _mapProgramOut(r){
   if(!r) return null;
@@ -2181,7 +2175,6 @@ function _mapAkaunOut(r){
 // -> objek utk insert ke jadual penyertaan
 function _rowArrToPenyertaanIn(row, tahun){
   return {
-    id: _genId('PNY'),
     program_id: row[0],
     nama_program: row[1],
     kod_sekolah: row[2],
@@ -2269,7 +2262,6 @@ async function _supaDispatch(fn, payload){
     var tar1 = payload.tarikh;
     var thn1 = tar1 ? new Date(tar1).getFullYear() : new Date().getFullYear();
     var insP = {
-      id: _genId('PRG'),
       nama_program: payload.nama, pengelola: payload.pengelola, kod_pengelola: payload.kodPengelola,
       bidang: payload.bidang, kategori: (payload.kategori||[]).join(','), peringkat: payload.peringkat,
       tarikh: tar1, tempat: payload.tempat, status: payload.status||'AKTIF', tahun: thn1
@@ -2324,7 +2316,6 @@ async function _supaDispatch(fn, payload){
     _throwIfErr(dPc.error);
     var entriesIn = (payload.entries||[]).map(function(e){
       return {
-        id: _genId('PNC'),
         program_id: payload.programId,
         nama_program: payload.programNama,
         kategori: e.kategori,
