@@ -2161,14 +2161,14 @@ function _mapPencapaianOut(r){
 function _mapAkaunOut(r){
   if(!r) return null;
   return {
-    noKP: r.no_kp || r.noKP || '',
-    nama: r.nama || r['Nama'] || '',
-    role: r.role || r['Role'] || '',
-    kodSekolah: r.kod_sekolah || r['Kod Sekolah'] || '',
-    namaSekolah: r.nama_sekolah || r['Nama Sekolah'] || '',
-    noTel: r.no_tel || r['No Tel'] || '',
-    status: r.status || r['Status'] || '',
-    tarikh: r.created_at ? String(r.created_at).slice(0,10) : ''
+    noKP: r.no_kp || r['No KP'],
+    nama: r.nama || r['Nama'],
+    role: r.role || r['Role'],
+    kodSekolah: r.kod_sekolah || r['Kod Sekolah'],
+    namaSekolah: r.nama_sekolah || r['Nama Sekolah'],
+    noTel: r.no_tel || r['No Tel'],
+    status: r.status || r['Status'],
+    tarikh: r.tarikh_daftar ? String(r.tarikh_daftar).slice(0,10) : ''
   };
 }
 // Baris mentah [progId,progNama,kodSekolah,namaSekolah,kategori,namaGuru,noKPGuru,bangsaGuru,jantinaGuru,noTelGuru,namaPeserta,noKPPeserta,jantinaPeserta,bangsaPeserta]
@@ -2385,7 +2385,7 @@ async function _supaDispatch(fn, payload){
   }
 
   if(fn === 'getAkaunListGS'){
-    var rA = await sb.from(TBL_PENGGUNA).select('*').order('created_at',{ascending:false});
+    var rA = await sb.from(TBL_PENGGUNA).select('*').order('tarikh_daftar',{ascending:false});
     _throwIfErr(rA.error);
     return {ok:true, data:(rA.data||[]).map(_mapAkaunOut)};
   }
