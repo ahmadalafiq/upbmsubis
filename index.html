@@ -2106,68 +2106,74 @@ function _genId(prefix){
 // == PEMETAAN BARIS PANGKALAN DATA <-> OBJEK UI (kekalkan nama medan Melayu sedia ada) ==
 function _mapProgramOut(r){
   if(!r) return null;
+  var nm = r.nama_program || r.nama || r['Nama Program'] || '';
+  if(nm === 'undefined' || nm === 'null') nm = 'PROGRAM TANPA NAMA';
   return {
-    'ID': r.id,
-    'Nama Program': r.nama_program,
-    'Pengelola': r.pengelola,
-    'Kod Pengelola': r.kod_pengelola,
-    'Bidang': r.bidang,
-    'Kategori': r.kategori,
-    'Peringkat': r.peringkat,
-    'Tarikh': r.tarikh,
-    'Tempat': r.tempat,
-    'Status': r.status,
-    'Tahun': r.tahun
+    'ID': r.id || r['ID'] || '',
+    'Nama Program': nm || 'PROGRAM TANPA NAMA',
+    'Pengelola': r.pengelola || r['Pengelola'] || '',
+    'Kod Pengelola': r.kod_pengelola || r['Kod Pengelola'] || '',
+    'Bidang': r.bidang || r['Bidang'] || '',
+    'Kategori': r.kategori || r['Kategori'] || '',
+    'Peringkat': r.peringkat || r['Peringkat'] || '',
+    'Tarikh': r.tarikh || r['Tarikh'] || '',
+    'Tempat': r.tempat || r['Tempat'] || '',
+    'Status': r.status || r['Status'] || '',
+    'Tahun': r.tahun || r['Tahun'] || ''
   };
 }
 function _mapPenyertaanOut(r){
   if(!r) return null;
+  var nm = r.nama_program || r.nama || r['Nama Program'] || '';
+  if(nm === 'undefined' || nm === 'null') nm = 'PROGRAM TANPA NAMA';
   return {
-    'ID': r.id,
-    'Program ID': r.program_id,
-    'Nama Program': r.nama_program,
-    'Kod Sekolah': r.kod_sekolah,
-    'Nama Sekolah': r.nama_sekolah,
-    'Kategori Penyertaan': r.kategori_penyertaan,
-    'Nama Guru': r.nama_guru,
-    'No KP Guru': r.no_kp_guru,
-    'Bangsa Guru': r.bangsa_guru,
-    'Jantina Guru': r.jantina_guru,
-    'No Tel Guru': r.no_tel_guru,
-    'Nama Peserta': r.nama_peserta,
-    'No KP Peserta': r.no_kp_peserta,
-    'Jantina Peserta': r.jantina_peserta,
-    'Bangsa Peserta': r.bangsa_peserta,
-    'Tarikh Daftar': r.tarikh_daftar,
-    'Tahun': r.tahun
+    'ID': r.id || r['ID'] || '',
+    'Program ID': r.program_id || r['Program ID'] || '',
+    'Nama Program': nm || 'PROGRAM TANPA NAMA',
+    'Kod Sekolah': r.kod_sekolah || r['Kod Sekolah'] || '',
+    'Nama Sekolah': r.nama_sekolah || r['Nama Sekolah'] || '',
+    'Kategori Penyertaan': r.kategori_penyertaan || r['Kategori Penyertaan'] || '',
+    'Nama Guru': r.nama_guru || r['Nama Guru'] || '',
+    'No KP Guru': r.no_kp_guru || r['No KP Guru'] || '',
+    'Bangsa Guru': r.bangsa_guru || r['Bangsa Guru'] || '',
+    'Jantina Guru': r.jantina_guru || r['Jantina Guru'] || '',
+    'No Tel Guru': r.no_tel_guru || r['No Tel Guru'] || '',
+    'Nama Peserta': r.nama_peserta || r['Nama Peserta'] || '',
+    'No KP Peserta': r.no_kp_peserta || r['No KP Peserta'] || '',
+    'Jantina Peserta': r.jantina_peserta || r['Jantina Peserta'] || '',
+    'Bangsa Peserta': r.bangsa_peserta || r['Bangsa Peserta'] || '',
+    'Tarikh Daftar': r.tarikh_daftar || r['Tarikh Daftar'] || '',
+    'Tahun': r.tahun || r['Tahun'] || ''
   };
 }
 function _mapPencapaianOut(r){
   if(!r) return null;
+  var nm = r.nama_program || r.nama || r['Nama Program'] || '';
+  if(nm === 'undefined' || nm === 'null') nm = 'PROGRAM TANPA NAMA';
   return {
-    'ID': r.id,
-    'Program ID': r.program_id,
-    'Nama Program': r.nama_program,
-    'Kategori': r.kategori,
-    'Nama Sekolah': r.nama_sekolah,
-    'Nama Peserta': r.nama_peserta,
-    'Nama Guru': r.nama_guru,
-    'Tempat': r.tempat,
-    'Markah': r.markah,
-    'Peringkat': r.peringkat,
-    'Tahun': r.tahun
+    'ID': r.id || r['ID'] || '',
+    'Program ID': r.program_id || r['Program ID'] || '',
+    'Nama Program': nm || 'PROGRAM TANPA NAMA',
+    'Kategori': r.kategori || r['Kategori'] || '',
+    'Nama Sekolah': r.nama_sekolah || r['Nama Sekolah'] || '',
+    'Nama Peserta': r.nama_peserta || r['Nama Peserta'] || '',
+    'Nama Guru': r.nama_guru || r['Nama Guru'] || '',
+    'Tempat': r.tempat || r['Tempat'] || '',
+    'Markah': r.markah || r['Markah'] || 0,
+    'Peringkat': r.peringkat || r['Peringkat'] || '',
+    'Tahun': r.tahun || r['Tahun'] || ''
   };
 }
 function _mapAkaunOut(r){
   if(!r) return null;
   return {
-    noKP: r.no_kp,
-    nama: r.nama,
-    role: r.role,
-    kodSekolah: r.kod_sekolah,
-    namaSekolah: r.nama_sekolah,
-    noTel: r.no_tel,
-    status: r.status,
+    noKP: r.no_kp || r.noKP || '',
+    nama: r.nama || r['Nama'] || '',
+    role: r.role || r['Role'] || '',
+    kodSekolah: r.kod_sekolah || r['Kod Sekolah'] || '',
+    namaSekolah: r.nama_sekolah || r['Nama Sekolah'] || '',
+    noTel: r.no_tel || r['No Tel'] || '',
+    status: r.status || r['Status'] || '',
     tarikh: r.created_at ? String(r.created_at).slice(0,10) : ''
   };
 }
