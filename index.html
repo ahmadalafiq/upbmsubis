@@ -2384,6 +2384,12 @@ async function _supaDispatch(fn, payload){
     };
     var rUpd = await sb.from(TBL_PROGRAM).update(updP).eq('id', payload.id);
     _throwIfErr(rUpd.error);
+    // Segerakkan salinan 'nama_program' yang disimpan berasingan (denormalized) dalam Penyertaan & Pencapaian —
+    // tanpa ini, nama lama kekal terpapar walaupun program sudah ditukar nama.
+    var rUpdPy = await sb.from(TBL_PENYERTAAN).update({nama_program: payload.nama}).eq('program_id', payload.id);
+    _throwIfErr(rUpdPy.error);
+    var rUpdPc = await sb.from(TBL_PENCAPAIAN).update({nama_program: payload.nama}).eq('program_id', payload.id);
+    _throwIfErr(rUpdPc.error);
     return {ok:true, msg:'Program berjaya dikemaskini'};
   }
 
