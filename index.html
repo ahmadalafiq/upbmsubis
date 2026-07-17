@@ -1793,6 +1793,32 @@ body.view-list .pc::after { display: none; }
     </div>
   </div>
 
+  <!-- ── BARIS 2C: RANKING GURU — ADA PENCAPAIAN / TIADA PENCAPAIAN ── -->
+  <div class="two mb2">
+    <div class="card ch-card-wrap">
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>🏆 RANKING GURU — ADA PENCAPAIAN (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('guruAda','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('guruAda','SR',this)">SR</button>
+          <button onclick="_setRkJenis('guruAda','SM',this)">SM</button>
+        </div>
+      </div>
+      <div id="rk-guru-ada"><div class="ld"><div class="sp"></div></div></div>
+      <div class="mt1"><button class="btn bs bsm" id="btn-mga" onclick="moreRank('guruAda')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
+    </div>
+    <div class="card ch-card-wrap">
+      <div class="ch" style="flex-wrap:wrap;"><div class="dot"></div>📋 RANKING GURU — TIADA PENCAPAIAN (TOP 5)
+        <div class="rk-seg ml">
+          <button class="on" onclick="_setRkJenis('guruTiada','SEMUA',this)">SEMUA</button>
+          <button onclick="_setRkJenis('guruTiada','SR',this)">SR</button>
+          <button onclick="_setRkJenis('guruTiada','SM',this)">SM</button>
+        </div>
+      </div>
+      <div id="rk-guru-tiada"><div class="ld"><div class="sp"></div></div></div>
+      <div class="mt1"><button class="btn bs bsm" id="btn-mgt" onclick="moreRank('guruTiada')" style="display:none;width:100%;">LIHAT SELANJUTNYA ▼</button></div>
+    </div>
+  </div>
+
   <!-- ── BARIS 3: CARTA BIDANG + DONUT STATUS ──────────────── -->
   <div class="two mb2">
     <div class="card ch-card-wrap">
@@ -2226,7 +2252,9 @@ function _mapPencapaianOut(r){
     'Kategori': r.kategori || r['Kategori'] || '',
     'Nama Sekolah': r.nama_sekolah || r['Nama Sekolah'] || '',
     'Nama Peserta': r.nama_peserta || r['Nama Peserta'] || '',
+    'No KP Peserta': r.no_kp_peserta || r['No KP Peserta'] || '',
     'Nama Guru': r.nama_guru || r['Nama Guru'] || '',
+    'No KP Guru': r.no_kp_guru || r['No KP Guru'] || '',
     'Tempat': r.tempat || r['Tempat'] || '',
     'Markah': r.markah || r['Markah'] || 0,
     'Peringkat': r.peringkat || r['Peringkat'] || '',
@@ -2396,7 +2424,9 @@ async function _supaDispatch(fn, payload){
         kategori: e.kategori,
         nama_sekolah: e.sekolah,
         nama_peserta: e.peserta,
+        no_kp_peserta: e.kpPeserta||'',
         nama_guru: e.guru,
+        no_kp_guru: e.kpGuru||'',
         tempat: e.tempat,
         markah: e.markah,
         peringkat: payload.peringkat,
@@ -3586,10 +3616,10 @@ function renderPcForm(pny,pnc,katRaw){
     var key=sk+'||'+kat2;
     if(!_pps[key])_pps[key]=[];if(!_gps[key])_gps[key]=[];
     if(p['Nama Peserta']&&!_pps[key].find(function(x){return x.n===p['Nama Peserta'];}))_pps[key].push({n:p['Nama Peserta'],kp:p['No KP Peserta']||''});
-    if(p['Nama Guru']&&_gps[key].indexOf(p['Nama Guru'])<0)_gps[key].push(p['Nama Guru']);
+    if(p['Nama Guru']&&!_gps[key].find(function(x){return x.n===p['Nama Guru'];}))_gps[key].push({n:p['Nama Guru'],kp:p['No KP Guru']||''});
     if(!_pps[sk])_pps[sk]=[];if(!_gps[sk])_gps[sk]=[];
     if(p['Nama Peserta']&&!_pps[sk].find(function(x){return x.n===p['Nama Peserta'];}))_pps[sk].push({n:p['Nama Peserta'],kp:p['No KP Peserta']||''});
-    if(p['Nama Guru']&&_gps[sk].indexOf(p['Nama Guru'])<0)_gps[sk].push(p['Nama Guru']);
+    if(p['Nama Guru']&&!_gps[sk].find(function(x){return x.n===p['Nama Guru'];}))_gps[sk].push({n:p['Nama Guru'],kp:p['No KP Guru']||''});
   });
   var katList=(katRaw||'INDIVIDU LELAKI,INDIVIDU PEREMPUAN').split(',').map(function(k){return k.trim().toUpperCase();}).filter(Boolean);
   var sekS={};pny.forEach(function(p){if(p['Nama Sekolah'])sekS[p['Nama Sekolah']]=true;});
@@ -3630,7 +3660,7 @@ function renderPcForm(pny,pnc,katRaw){
         var pKey=ss+'||'+kat;
         (_pps[pKey]||_pps[ss]||[]).forEach(function(ps){po+='<option value="'+ps.n+'|'+ps.kp+'"'+(e['Nama Peserta']===ps.n?' selected':'')+'>'+ps.n+'</option>';});
         var go='<option value="">— PILIH GURU —</option>';
-        (_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g?' selected':'')+'>'+g+'</option>';});
+        (_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g.n?' selected':'')+'>'+g.n+'</option>';});
         html+='<div class="pcs" style="background:#fff;border:1px solid var(--g2);border-radius:var(--r);padding:.6rem;margin-bottom:.45rem;">'
           +'<div class="pct" style="font-size:.62rem;color:var(--g6);">'+t.l+'</div>'
           +'<div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.45rem;">'
@@ -3665,7 +3695,7 @@ function renderPcForm(pny,pnc,katRaw){
         var katKey=kat.replace(/\s/g,'-');
         var go='<option value="">— PILIH GURU —</option>';
         var ss=e['Nama Sekolah']||'';
-        (_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g?' selected':'')+'>'+g+'</option>';});
+        (_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g.n?' selected':'')+'>'+g.n+'</option>';});
         html+='<div class="pcs" style="background:#fff;border:1px solid rgba(39,174,96,.2);border-radius:var(--r);padding:.6rem;margin-bottom:.45rem;">'
           +'<div class="pct" style="font-size:.62rem;color:var(--g6);">'+t.l+'</div>'
           +'<div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.45rem;">'
@@ -3702,7 +3732,7 @@ function renderPcForm(pny,pnc,katRaw){
         var katKey=kat.replace(/\s/g,'-');
         var go='<option value="">— PILIH GURU —</option>';
         var ss=e['Nama Sekolah']||'';
-        (_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g?' selected':'')+'>'+g+'</option>';});
+        (_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g.n?' selected':'')+'>'+g.n+'</option>';});
         html+='<div class="pcs" style="background:#fff;border:1px solid rgba(192,57,43,.18);border-radius:var(--r);padding:.6rem;margin-bottom:.45rem;">'
           +'<div class="pct">'+t.l+'</div>'
           +'<div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.45rem;">'
@@ -3733,7 +3763,7 @@ function renderPcForm(pny,pnc,katRaw){
         var pKey=ss+'||'+kat;
         (_pps[pKey]||_pps[ss]||[]).forEach(function(p){po+='<option value="'+p.n+'|'+p.kp+'"'+(e['Nama Peserta']===p.n?' selected':'')+'>'+p.n+'</option>';});
         var go='<option value="">-- PILIH GURU --</option>';
-        (_gps[pKey]||_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g?' selected':'')+'>'+g+'</option>';});
+        (_gps[pKey]||_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g.n?' selected':'')+'>'+g.n+'</option>';});
         var autoMarkah=mPts(gv('e-per')||'SEKOLAH',t.l);
         var exMarkah=e['Markah']!==undefined&&e['Markah']!==''?e['Markah']:autoMarkah;
         html+='<div class="pcs" style="background:#fff;border:1px solid rgba(230,126,34,.2);border-radius:var(--r);padding:.6rem;margin-bottom:.45rem;">'
@@ -3767,7 +3797,7 @@ function renderPcForm(pny,pnc,katRaw){
         var katKey=kat.replace(/\s/g,'-');
         var go='<option value="">— PILIH GURU —</option>';
         var ss=e['Nama Sekolah']||'';
-        (_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g?' selected':'')+'>'+g+'</option>';});
+        (_gps[ss]||[]).forEach(function(g){go+='<option'+(e['Nama Guru']===g.n?' selected':'')+'>'+g.n+'</option>';});
         html+='<div class="pcs" style="background:#fff;border:1px solid rgba(211,84,0,.2);border-radius:var(--r);padding:.6rem;margin-bottom:.45rem;">'
           +'<div class="pct" style="font-size:.62rem;color:var(--g6);">'+t.l+'</div>'
           +'<div class="fg" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.45rem;">'
@@ -3805,10 +3835,16 @@ function renderPcForm(pny,pnc,katRaw){
       // Guru dropdown — baca dari semua rekod, gabung unik
       var gWrap=document.getElementById('pc-g-'+katKey+'-'+t.k);
       if(gWrap){
-        var guruItems=(_gps[ss]||[]);
-        // Guru disimpan sebagai "A | B | C" dalam rekod pertama
+        var guruItems=(_gps[ss]||[]).map(function(g){return{val:g.n+'|'+g.kp,lbl:g.n};});
+        // Guru disimpan sebagai "A | B | C" dalam rekod pertama; No KP Guru turut disimpan sejajar ("kp1 | kp2 | kp3")
         var guruRaw=e['Nama Guru']||'';
-        var selGuru=guruRaw?guruRaw.split('|').map(function(g){return g.trim();}).filter(Boolean):[];
+        var guruKpRaw=e['No KP Guru']||'';
+        var guruNames=guruRaw?guruRaw.split('|').map(function(g){return g.trim();}).filter(Boolean):[];
+        var guruKps=guruKpRaw?guruKpRaw.split('|').map(function(g){return g.trim();}):[];
+        var selGuru=guruNames.map(function(nm,idx){
+          var found=(_gps[ss]||[]).find(function(g){return g.n===nm;});
+          return nm+'|'+(found?found.kp:(guruKps[idx]||''));
+        });
         _chkdBuild(gWrap.id, guruItems, selGuru, '— PILIH GURU —');
       }
       // Peserta dropdown — kumpul semua nama unik dari semua rekod tempat ini
@@ -4010,8 +4046,8 @@ function _fillBrkFromScores(kat,sekScores,per,sekPencCount){
     if(ge){
       var gList=_gps[entry[0]]||[];
       if(gList.length){
-        ge.innerHTML='<option value="">— PILIH GURU —</option>'+gList.map(function(g){return '<option>'+g+'</option>';}).join('');
-        ge.value=gList[0]||'';
+        ge.innerHTML='<option value="">— PILIH GURU —</option>'+gList.map(function(g){return '<option>'+g.n+'</option>';}).join('');
+        ge.value=gList[0]?gList[0].n:'';
       }
     }
   });
@@ -4175,7 +4211,7 @@ function rPGKat(kat,k){
     _chkdBuild(pWrap.id, pesItems, [], '— PILIH PESERTA —');
   }
   if(gWrap){
-    var guruItems=(_gps[sek]||[]);
+    var guruItems=(_gps[sek]||[]).map(function(g){return{val:g.n+'|'+g.kp,lbl:g.n};});
     _chkdBuild(gWrap.id, guruItems, [], '— PILIH GURU —');
   }
   updateMarkah(kat,k);
@@ -4211,10 +4247,11 @@ function _collectPencEntries(){
       var se=document.getElementById('pc-s-'+katKey+'-'+t.k);if(!se)return;
       var sek=se.value;if(!sek)return;
       var markah=mPts(per,t.l);
-      // Baca guru (boleh berbilang)
+      // Baca guru (boleh berbilang) — val format "nama|kp", pisahkan & gabung sejajar
       var gWrap=document.getElementById('pc-g-'+katKey+'-'+t.k);
-      var guruList=gWrap?_chkdGetSel(gWrap.id):[];
-      var guruNm=guruList.join(' | ');
+      var guruSelVals=gWrap?_chkdGetSel(gWrap.id):[];
+      var guruNm=guruSelVals.map(function(v){return (v.split('|')[0]||'').trim();}).join(' | ');
+      var guruKp=guruSelVals.map(function(v){return (v.split('|')[1]||'').trim();}).join(' | ');
       if(!isBerk&&!isKsel&&!isTrbBrk){
         // Individu/Terbuka: satu entri per peserta yang dipilih
         var pWrap=document.getElementById('pc-p-'+katKey+'-'+t.k);
@@ -4222,10 +4259,10 @@ function _collectPencEntries(){
         if(pesSelVals.length){
           pesSelVals.forEach(function(pv){
             var parts=pv.split('|');var pes=parts[0]||'';var kp=parts[1]||'';
-            allEntries.push({kategori:kat,sekolah:sek,peserta:pes,kpPeserta:kp,guru:guruNm,tempat:t.l,markah:markah});
+            allEntries.push({kategori:kat,sekolah:sek,peserta:pes,kpPeserta:kp,guru:guruNm,kpGuru:guruKp,tempat:t.l,markah:markah});
           });
         } else {
-          allEntries.push({kategori:kat,sekolah:sek,peserta:'',kpPeserta:'',guru:guruNm,tempat:t.l,markah:markah});
+          allEntries.push({kategori:kat,sekolah:sek,peserta:'',kpPeserta:'',guru:guruNm,kpGuru:guruKp,tempat:t.l,markah:markah});
         }
       } else {
         // Berkumpulan/Keseluruhan/Terbuka Berkumpulan: satu entri per peserta dari senarai agregat; markah sekolah dikira sekali
@@ -4234,13 +4271,13 @@ function _collectPencEntries(){
           pesList.forEach(function(p,pi){
             allEntries.push({
               kategori:kat, sekolah:sek, peserta:p.n, kpPeserta:p.kp,
-              guru:guruNm, tempat:t.l, markah:markah,
+              guru:guruNm, kpGuru:guruKp, tempat:t.l, markah:markah,
               _brkMain:(pi===0) // hanya entri PERTAMA dikira untuk markah sekolah
             });
           });
         } else {
           // Tiada peserta — sekolah tetap dapat markah tapi peserta tidak muncul dalam ranking
-          allEntries.push({kategori:kat,sekolah:sek,peserta:'',kpPeserta:'',guru:guruNm,tempat:t.l,markah:markah,_brkMain:true});
+          allEntries.push({kategori:kat,sekolah:sek,peserta:'',kpPeserta:'',guru:guruNm,kpGuru:guruKp,tempat:t.l,markah:markah,_brkMain:true});
         }
       }
       if(savedKat.indexOf(kat)<0)savedKat.push(kat);
@@ -6922,11 +6959,11 @@ function buildRank(elId,scores,limit,moreBtnId,type){
 
 function moreRank(type){
   // Normalise long form → short key used in _rk
-  var _typeMap={sekolah:'sek',peserta:'pes',guru:'guru',sek:'sek',pes:'pes',pesAda:'pesAda',pesTiada:'pesTiada',sekPenc:'sekPenc',sekPel:'sekPel'};
+  var _typeMap={sekolah:'sek',peserta:'pes',guru:'guru',sek:'sek',pes:'pes',pesAda:'pesAda',pesTiada:'pesTiada',sekPenc:'sekPenc',sekPel:'sekPel',guruAda:'guruAda',guruTiada:'guruTiada'};
   type=_typeMap[type]||type;
   var sc=_rk[type]||{};
   var sorted=Object.entries(sc).sort(function(a,b){return b[1].total-a[1].total;});
-  var titles={sek:'🏆 RANKING SEKOLAH — KESELURUHAN',pes:'🧑‍🎓 RANKING PESERTA',guru:'👨‍🏫 RANKING GURU',pesAda:'🏆 RANKING PESERTA — ADA PENCAPAIAN',pesTiada:'📋 RANKING PESERTA — TIADA PENCAPAIAN',sekPenc:'🎖️ RANKING SEKOLAH — PENCAPAIAN SAHAJA',sekPel:'📋 RANKING SEKOLAH — PELIBATAN SAHAJA'};
+  var titles={sek:'🏆 RANKING SEKOLAH — KESELURUHAN',pes:'🧑‍🎓 RANKING PESERTA',guru:'👨‍🏫 RANKING GURU',pesAda:'🏆 RANKING PESERTA — ADA PENCAPAIAN',pesTiada:'📋 RANKING PESERTA — TIADA PENCAPAIAN',sekPenc:'🎖️ RANKING SEKOLAH — PENCAPAIAN SAHAJA',sekPel:'📋 RANKING SEKOLAH — PELIBATAN SAHAJA',guruAda:'🏆 RANKING GURU — ADA PENCAPAIAN',guruTiada:'📋 RANKING GURU — TIADA PENCAPAIAN'};
   document.getElementById('more-tit').textContent=titles[type]||'RANKING';
   if(!sorted.length){
     document.getElementById('more-body').innerHTML='<div class="empty"><div class="ei">—</div><h3>Tiada data</h3></div>';
@@ -7844,12 +7881,13 @@ function _filterSkorByJenis(scores, jenis){
   return out;
 }
 // State semasa toggle SEMUA/SR/SM bagi setiap kad ranking
-var _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA', pesAda:'SEMUA', pesTiada:'SEMUA', sekPenc:'SEMUA', sekPel:'SEMUA'};
-var _rkFull = {sek:{}, pes:{}, guru:{}, pesAda:{}, pesTiada:{}, sekPenc:{}, sekPel:{}};
+var _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA', pesAda:'SEMUA', pesTiada:'SEMUA', sekPenc:'SEMUA', sekPel:'SEMUA', guruAda:'SEMUA', guruTiada:'SEMUA'};
+var _rkFull = {sek:{}, pes:{}, guru:{}, pesAda:{}, pesTiada:{}, sekPenc:{}, sekPel:{}, guruAda:{}, guruTiada:{}};
 var _rkElMap = {
   sek:['rk-sek','btn-ms'], pes:['rk-pes','btn-mps'], guru:['rk-guru','btn-mg'],
   pesAda:['rk-pes-ada','btn-mpsa'], pesTiada:['rk-pes-tiada','btn-mpst'],
-  sekPenc:['rk-sek-penc','btn-mska'], sekPel:['rk-sek-pel','btn-mskt']
+  sekPenc:['rk-sek-penc','btn-mska'], sekPel:['rk-sek-pel','btn-mskt'],
+  guruAda:['rk-guru-ada','btn-mga'], guruTiada:['rk-guru-tiada','btn-mgt']
 };
 function _renderRkType(type){
   var cfg=_rkElMap[type]; if(!cfg) return;
@@ -8214,6 +8252,11 @@ function rebuildDash(){
   Object.keys(rk.pes).forEach(function(k){
     if(_hasPenc(rk.pes[k])) rk.pesAda[k]=rk.pes[k]; else rk.pesTiada[k]=rk.pes[k];
   });
+  // Pecahkan ranking guru ikut status pencapaian — corak sama seperti pesAda/pesTiada
+  rk.guruAda={}; rk.guruTiada={};
+  Object.keys(rk.guru).forEach(function(k){
+    if(_hasPenc(rk.guru[k])) rk.guruAda[k]=rk.guru[k]; else rk.guruTiada[k]=rk.guru[k];
+  });
   // ISU 3 (dibetulkan): Ranking Sekolah — Pencapaian sahaja / Pelibatan sahaja kini EKSKLUSIF,
   // konsisten dgn logik pesAda/pesTiada di atas — sekolah yang ADA pencapaian (totalPenc>0) tidak lagi
   // turut terpapar dalam ranking "Pelibatan Sahaja" walaupun ia juga ada markah pelibatan.
@@ -8229,7 +8272,7 @@ function rebuildDash(){
   });
   _rk = rk;
   // Simpan set penuh (tanpa tapisan) untuk semua ranking — toggle SEMUA/SR/SM bertindak di atas set ini
-  _rkFull = {sek: rk.sek, pes: rk.pes, guru: rk.guru, pesAda: rk.pesAda, pesTiada: rk.pesTiada, sekPenc: rk.sekPenc, sekPel: rk.sekPel};
+  _rkFull = {sek: rk.sek, pes: rk.pes, guru: rk.guru, pesAda: rk.pesAda, pesTiada: rk.pesTiada, sekPenc: rk.sekPenc, sekPel: rk.sekPel, guruAda: rk.guruAda, guruTiada: rk.guruTiada};
   _renderRkType('sek');
   _renderRkType('pes');
   _renderRkType('guru');
@@ -8237,6 +8280,8 @@ function rebuildDash(){
   _renderRkType('pesTiada');
   _renderRkType('sekPenc');
   _renderRkType('sekPel');
+  _renderRkType('guruAda');
+  _renderRkType('guruTiada');
   buildPenc(pc, 3);
 
   // Original charts
@@ -9376,7 +9421,7 @@ function resetDashFilters(silent) {
   });
 
   // Reset toggle ranking SEMUA/SR/SM
-  _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA', pesAda:'SEMUA', pesTiada:'SEMUA', sekPenc:'SEMUA', sekPel:'SEMUA'};
+  _rkJenisFilter = {sek:'SEMUA', pes:'SEMUA', guru:'SEMUA', pesAda:'SEMUA', pesTiada:'SEMUA', sekPenc:'SEMUA', sekPel:'SEMUA', guruAda:'SEMUA', guruTiada:'SEMUA'};
   document.querySelectorAll('.rk-seg').forEach(function(grp){
     Array.prototype.forEach.call(grp.children, function(b, i){ b.classList.toggle('on', i===0); });
   });
