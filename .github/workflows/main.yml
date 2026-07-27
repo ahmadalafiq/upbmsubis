@@ -1,0 +1,17 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 3 */3 * *'   # setiap 3 hari, 3 pagi UTC (~11am MYT)
+  workflow_dispatch:         # boleh trigger manual dari tab Actions
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase table
+        run: |
+          curl --fail -X GET \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/pengguna?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
