@@ -2157,7 +2157,10 @@ body.view-list .pc::after { display: none; }
       <button style="background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;line-height:1;" onclick="closeMo('mo-salinan')">✕</button>
     </div>
     <div id="salinan-body" style="padding:0;max-height:75vh;overflow-y:auto;background:#fff;"></div>
-    <div class="mo-ft" style="display:flex;gap:.5rem;justify-content:flex-end;padding:.75rem;background:#fff;border-top:1px solid #eee;border-radius:0 0 var(--rl) var(--rl);">
+    <div class="mo-ft" style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;padding:.75rem;background:#fff;border-top:1px solid #eee;border-radius:0 0 var(--rl) var(--rl);">
+      <button class="btn bg" onclick="muatTurunSalinan()" style="background:#1a5276;color:#fff;">
+        📥 MUAT TURUN PDF
+      </button>
       <button class="btn bg" onclick="cetakSalinan()" style="background:var(--red);color:#fff;">
         🖨 CETAK / SIMPAN PDF
       </button>
@@ -2618,6 +2621,7 @@ function _initRealtimeSync() {
 var LOGO_URL='https://drive.google.com/thumbnail?id=16W_2I2bcuea1YwDnya0v-M94AGB-A1A3&sz=w400';
 var LOGO_FULL='https://drive.google.com/thumbnail?id=16W_2I2bcuea1YwDnya0v-M94AGB-A1A3&sz=w800';
 var selId='',selNm='',isEdit=false,editKod='';
+var _salinanPayload=null,_salinanRows=null; // simpan data hantar terakhir untuk MUAT TURUN PDF (fallback bila window.print() disekat, cth: embed Google Sites)
 var gCnt=0,pCnt=0;
 var eId='',eNm='',eKat='INDIVIDU';
 var _pps={},_gps={},_curPny=[],_curPnc=[];
@@ -6143,6 +6147,7 @@ async function hantarPeny(){
       resetPeny();
       hideOv(); setBtn('btn-hantar',false);
       // Papar modal salinan penyertaan untuk cetak/simpan PDF
+      _salinanPayload=payload; _salinanRows=allRows; // simpan untuk muatTurunSalinan()
       buildSalinanPortal(payload, allRows);
       openMo('mo-salinan');
       return;
@@ -6567,11 +6572,31 @@ function cetakSalinan(){
   // Paparkan hanya salinan portal
   var p=document.getElementById('salinan-print-portal');
   p.style.display='block';
-  window.print();
-  p.style.display='none';
-  // Pulihkan portal lain
-  if(pp) pp.style.display=ppOld;
-  if(ps) ps.style.display=psOld;
+  try{
+    // window.print() disekat secara senyap dalam sesetengah konteks iframe
+    // bersarang (cth: app di-embed dalam Google Sites tanpa allow-modals).
+    // Bungkus dengan try/catch supaya kegagalan itu KELIHATAN, bukan senyap.
+    window.print();
+  }catch(e){
+    console.warn('cetakSalinan: window.print() gagal —', e);
+    toast('Cetak/Simpan PDF tidak disokong dalam paparan ini (cth: dibuka melalui Google Sites). Sila guna butang "MUAT TURUN PDF" atau buka aplikasi ini melalui pautan terus.','er');
+  }finally{
+    p.style.display='none';
+    // Pulihkan portal lain
+    if(pp) pp.style.display=ppOld;
+    if(ps) ps.style.display=psOld;
+  }
+}
+
+// Alternatif "CETAK / SIMPAN PDF" — jana PDF sebenar & muat turun terus (Blob + <a download>).
+// Tidak bergantung pada window.print(), jadi ia tetap berfungsi walaupun app di-embed
+// dalam iframe bersarang (Google Sites) yang menyekat modal/print browser.
+function muatTurunSalinan(){
+  if(!_salinanPayload || !_salinanRows){
+    toast('Tiada data penyertaan untuk dimuat turun. Sila hantar semula penyertaan.','er');
+    return;
+  }
+  janaPdfSalinanPenyertaan(_salinanPayload, _salinanRows);
 }
 // =======================================================
 
