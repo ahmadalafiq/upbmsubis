@@ -1453,8 +1453,14 @@ body.view-list .pc::after { display: none; }
     <div class="ch"><div class="dot"></div>PROGRAM BAHARU</div>
     <div class="fg">
       <div class="fi full"><label>Nama Program</label><input type="text" id="p-nama" placeholder="Masukkan nama program..."></div>
-      <div class="fi"><label>Unit / Nama</label><input type="text" id="p-pengelola" placeholder="Nama pengelola"></div>
-      <div class="fi"><label>Kod Sekolah Penganjur</label><input type="text" id="p-kod" placeholder="Contoh: BDA0001" class="nc"></div>
+      <div class="fi" style="position:relative;"><label>Unit / Nama</label>
+        <input type="text" id="p-pengelola" placeholder="Nama pengelola" autocomplete="off" oninput="onSugPengelolaProg(this.value)" onfocus="onSugPengelolaProg(this.value)" onblur="hideSug('sug-p-pengelola')">
+        <div class="sug-drop" id="sug-p-pengelola"></div>
+      </div>
+      <div class="fi" style="position:relative;"><label>Kod Sekolah Penganjur</label>
+        <input type="text" id="p-kod" placeholder="Contoh: Y044" class="nc" autocomplete="off" oninput="onSugKodProg(this.value)" onfocus="onSugKodProg(this.value)" onblur="hideSug('sug-p-kod')">
+        <div class="sug-drop" id="sug-p-kod"></div>
+      </div>
       <div class="fi"><label>Bidang</label><select id="p-bidang"><option value="">— PILIH —</option><option>SUKAN</option><option>BAHASA</option><option>SENI</option><option>PBB</option><option>STEM</option><option>LAIN-LAIN</option></select></div>
       <div class="fi full"><label>Kategori Pertandingan</label>
         <div class="kat-chk-wrap" id="p-kat-wrap">
@@ -1603,6 +1609,7 @@ body.view-list .pc::after { display: none; }
         <button class="btn bsm" id="ak-filt-tunggu" onclick="akFilt('tunggu')" style="background:#f39c12;color:#fff;">⏳ TUNGGU</button>
         <button class="btn bs bsm" id="ak-filt-aktif" onclick="akFilt('aktif')">✅ AKTIF</button>
         <button class="btn bs bsm" onclick="loadAkaun(true)">🔄 MUAT SEMULA</button>
+        <button class="btn bs bsm" style="background:#1a5276;color:#fff;" onclick="bukaSenaraiSekolah()" title="Urus senarai rasmi nama & kod sekolah">🏫 SENARAI SEKOLAH</button>
         <button class="btn bs bsm" onclick="akMigrateSheet()" title="Kemaskini header sheet PIN">🛠 MIGRATE</button>
         <button class="btn bs bsm" onclick="akBackfillTahun()" title="Isi kolum Tahun untuk rekod lama">📅 BACKFILL TAHUN</button>
       </div>
@@ -2218,6 +2225,7 @@ var TBL_PROGRAM    = 'programs';
 var TBL_PENYERTAAN = 'penyertaan';
 var TBL_PENCAPAIAN = 'pencapaian';
 var TBL_PENGGUNA   = 'pengguna';
+var TBL_SEKOLAH     = 'sekolah'; // jadual rujukan utama nama & kod sekolah (elak duplikat ejaan)
 
 // == PEMETAAN BARIS PANGKALAN DATA <-> OBJEK UI (kekalkan nama medan Melayu sedia ada) ==
 function _mapProgramOut(r){
@@ -2281,6 +2289,10 @@ function _mapPencapaianOut(r){
     'Peringkat': r.peringkat || r['Peringkat'] || '',
     'Tahun': r.tahun || r['Tahun'] || ''
   };
+}
+function _mapSekolahOut(r){
+  if(!r) return null;
+  return { kod: r.kod || r['Kod'] || '', nama: r.nama || r['Nama'] || '' };
 }
 function _mapAkaunOut(r){
   if(!r) return null;
@@ -2537,6 +2549,68 @@ async function _supaDispatch(fn, payload){
     return {ok:true, pinBaharu:pinBaharu, msg:'PIN berjaya ditetapkan'};
   }
 
+  // -------- SEKOLAH (rujukan utama nama & kod sekolah) --------
+  if(fn === 'getSekolahListGS'){
+    var rS = await sb.from(TBL_SEKOLAH).select('*').order('nama',{ascending:true});
+    _throwIfErr(rS.error);
+    return {ok:true, data:(rS.data||[]).map(_mapSekolahOut)};
+  }
+
+  if(fn === 'tambahSekolahGS'){
+    var kodBaru = String(payload.kod||'').toUpperCase().trim();
+    var namaBaru = String(payload.nama||'').toUpperCase().trim();
+    if(!kodBaru||!namaBaru) return {ok:false, msg:'Kod dan nama sekolah wajib diisi.'};
+    var rChkS = await sb.from(TBL_SEKOLAH).select('kod').eq('kod', kodBaru).maybeSingle();
+    _throwIfErr(rChkS.error);
+    if(rChkS.data) return {ok:false, msg:'Kod sekolah ini telah wujud dalam senarai.'};
+    // Elak duplikat nama walaupun kod berlainan (punca biasa: variasi ejaan)
+    var rChkN = await sb.from(TBL_SEKOLAH).select('kod,nama').ilike('nama', namaBaru).maybeSingle();
+    _throwIfErr(rChkN.error);
+    if(rChkN.data) return {ok:false, msg:'Nama sekolah yang serupa sudah wujud: '+rChkN.data.nama+' ('+rChkN.data.kod+')'};
+    var iS = await sb.from(TBL_SEKOLAH).insert({kod:kodBaru, nama:namaBaru});
+    _throwIfErr(iS.error);
+    return {ok:true, msg:'Sekolah berjaya ditambah.'};
+  }
+
+  if(fn === 'kemaskiniSekolahGS'){
+    var kodEdit = String(payload.kod||'').toUpperCase().trim();
+    var namaEdit = String(payload.nama||'').toUpperCase().trim();
+    if(!kodEdit||!namaEdit) return {ok:false, msg:'Kod dan nama sekolah wajib diisi.'};
+    var rUpS = await sb.from(TBL_SEKOLAH).update({nama:namaEdit}).eq('kod', kodEdit);
+    _throwIfErr(rUpS.error);
+    // Segerak salinan nama_sekolah yang tersimpan berasingan (denormalized) dalam pengguna & penyertaan
+    var rUpPg = await sb.from(TBL_PENGGUNA).update({nama_sekolah:namaEdit}).eq('kod_sekolah', kodEdit);
+    _throwIfErr(rUpPg.error);
+    var rUpPy2 = await sb.from(TBL_PENYERTAAN).update({nama_sekolah:namaEdit}).eq('kod_sekolah', kodEdit);
+    _throwIfErr(rUpPy2.error);
+    return {ok:true, msg:'Sekolah berjaya dikemaskini.'};
+  }
+
+  if(fn === 'seedSekolahGS'){
+    // Isi jadual sekolah kali pertama daripada senarai statik terbina-dalam (guna hanya jika jadual kosong)
+    var rCnt = await sb.from(TBL_SEKOLAH).select('kod',{count:'exact',head:true});
+    _throwIfErr(rCnt.error);
+    if(rCnt.count>0) return {ok:false, msg:'Jadual sekolah sudah ada data — seed dilangkau untuk elak duplikat.'};
+    var seedRows = (payload.senarai||[]).map(function(s){return {kod:s.kod, nama:s.nama};});
+    if(!seedRows.length) return {ok:false, msg:'Tiada data untuk di-seed.'};
+    var iSeed = await sb.from(TBL_SEKOLAH).insert(seedRows);
+    _throwIfErr(iSeed.error);
+    return {ok:true, msg:seedRows.length+' sekolah berjaya di-seed.'};
+  }
+
+  // -------- KEMASKINI MAKLUMAT PENGGUNA (admin) --------
+  if(fn === 'kemaskiniMaklumatPenggunaGS'){
+    var updM = {};
+    if(payload.nama!=null) updM.nama = String(payload.nama).toUpperCase().trim();
+    if(payload.kodSekolah!=null) updM.kod_sekolah = String(payload.kodSekolah).toUpperCase().trim();
+    if(payload.namaSekolah!=null) updM.nama_sekolah = String(payload.namaSekolah).toUpperCase().trim();
+    if(payload.noTel!=null) updM.no_tel = payload.noTel;
+    if(!Object.keys(updM).length) return {ok:false, msg:'Tiada maklumat untuk dikemaskini.'};
+    var rUpM = await sb.from(TBL_PENGGUNA).update(updM).eq('no_kp', payload.noKP);
+    _throwIfErr(rUpM.error);
+    return {ok:true, msg:'Maklumat pengguna dikemaskini.'};
+  }
+
   // -------- UTILITI ADMIN --------
   if(fn === 'migrateSheetGS'){
     // Tiada migrasi header diperlukan — skema Supabase sudah tetap.
@@ -2734,7 +2808,8 @@ var RFN={getProgramsGS:1,getAllDataGS:1,getRumusanGS:1,getPenyertaanByProgramGS:
 var _WRITE_FNS = {
   daftarProgramGS:1, kemaskiniProgramGS:1, padamProgramGS:1,
   simpanPencapaianGS:1, hantarPenyertaanGS:1, kemaskiniPenyertaanSekolahGS:1,
-  resetPinGS:1, kemaskiniAkaunGS:1, migrateSheetGS:1, backfillTahunGS:1
+  resetPinGS:1, kemaskiniAkaunGS:1, migrateSheetGS:1, backfillTahunGS:1,
+  tambahSekolahGS:1, kemaskiniSekolahGS:1, seedSekolahGS:1, kemaskiniMaklumatPenggunaGS:1
 };
 
 function run(fn,payload){
@@ -7898,10 +7973,36 @@ var _SEKOLAH_STATIK = [
   {kod:'YEA4402',nama:'SMK BEKENU'},
   {kod:'YEE4401',nama:'SMK LUAR BANDAR MIRI'},
   {kod:'YEA4401',nama:'SMK SUAI'},
-  {kod:'YEB4401',nama:'SMK SUBIS'}
+  {kod:'YEB4401',nama:'SMK SUBIS'},
+  {kod:'Y044',nama:'PPD SUBIS'}
 ];
 // _sekExtraDb: sekolah baharu yang ditambah semasa sesi (belum ada dalam senarai statik)
 var _sekExtraDb = [];
+
+// == SENARAI SEKOLAH KANONIK (Supabase) =========================
+// _SEKOLAH_STATIK di atas kekal sebagai senarai benih/fallback permulaan.
+// loadSekolahMaster() memuat senarai SEBENAR dari jadual `sekolah` dan MENGGANTI
+// kandungan _SEKOLAH_STATIK secara in-place (bukan tukar rujukan pembolehubah) —
+// supaya semua fungsi sedia ada (_getSekSuggestions, _buildSekKodMap, dropdown
+// sekolah, dsb.) yang sudah rujuk _SEKOLAH_STATIK terus dapat data terkini
+// tanpa perlu diubah satu-satu.
+var _sekolahMasterLoaded = false;
+async function loadSekolahMaster(){
+  try{
+    var r = await run('getSekolahListGS');
+    if(r && r.ok && r.data && r.data.length){
+      _SEKOLAH_STATIK.length = 0;
+      r.data.forEach(function(s){ if(s.kod&&s.nama) _SEKOLAH_STATIK.push({kod:s.kod, nama:s.nama}); });
+      _sekKodMap = null; // batalkan cache lama supaya _buildSekKodMap() bina semula
+      _sekolahMasterLoaded = true;
+      // Segar semula dropdown yang mungkin sudah terpapar
+      _populateDafSekDropdown();
+      if(typeof _populateSekDropdown==='function') _populateSekDropdown();
+    }
+  }catch(e){
+    console.warn('loadSekolahMaster gagal (guna senarai statik sedia ada):', e);
+  }
+}
 
 // == JENIS SEKOLAH: SR (Rendah) / SM (Menengah) ================
 // Rujuk kod sekolah dalam _SEKOLAH_STATIK (+ _sekExtraDb): huruf ke-2 kod 'E' = Menengah.
@@ -8126,6 +8227,50 @@ function pickSugSek(kod,nama){
 
 function hideSug(id){
   setTimeout(function(){var d=document.getElementById(id);if(d)d.classList.remove('on');},200);
+}
+
+// == Suggestion helpers untuk borang PENDAFTARAN PROGRAM (p-pengelola / p-kod) ==
+// Cadangkan padanan dari senarai sekolah kanonik supaya nama pengelola tidak
+// duplikat akibat variasi ejaan. Medan kekal teks bebas (bukan dropdown ketat)
+// sebab sesetengah penganjur bukan sekolah (cth: PPD SUBIS).
+function onSugKodProg(q){
+  var drop=document.getElementById('sug-p-kod'); if(!drop)return;
+  var v=(q||'').trim();
+  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
+  var lv=v.toLowerCase();
+  var items=_getSekSuggestions().filter(function(s){
+    return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
+  }).slice(0,6);
+  if(!items.length){drop.innerHTML='';drop.classList.remove('on');return;}
+  drop.innerHTML=items.map(function(s){
+    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🔑</span><span>'+s.kod+' — '+s.nama+'</span></div>';
+  }).join('');
+  drop.querySelectorAll('.sug-item').forEach(function(el){
+    el.addEventListener('mousedown',function(){pickSugProg(decodeURIComponent(el.dataset.sugKod),decodeURIComponent(el.dataset.sugSek));});
+  });
+  drop.classList.add('on');
+}
+function onSugPengelolaProg(q){
+  var drop=document.getElementById('sug-p-pengelola'); if(!drop)return;
+  var v=(q||'').trim();
+  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
+  var lv=v.toLowerCase();
+  var items=_getSekSuggestions().filter(function(s){
+    return s.nama.toLowerCase().indexOf(lv)>-1;
+  }).slice(0,6);
+  if(!items.length){drop.innerHTML='';drop.classList.remove('on');return;}
+  drop.innerHTML=items.map(function(s){
+    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+s.nama+'</span></div>';
+  }).join('');
+  drop.querySelectorAll('.sug-item').forEach(function(el){
+    el.addEventListener('mousedown',function(){pickSugProg(decodeURIComponent(el.dataset.sugKod),decodeURIComponent(el.dataset.sugSek));});
+  });
+  drop.classList.add('on');
+}
+function pickSugProg(kod,nama){
+  var ki=document.getElementById('p-kod'); if(ki)ki.value=kod;
+  var pi=document.getElementById('p-pengelola'); if(pi)pi.value=nama;
+  hideSug('sug-p-kod'); hideSug('sug-p-pengelola');
 }
 
 // == Suggestion helpers untuk borang DAFTAR AKAUN ============
@@ -8616,6 +8761,9 @@ function _mulakanSesi(data){
   // Kemas kini nav
   _refreshNavUser();
 
+  // Segar semula senarai sekolah kanonik (mungkin admin baru kemaskini)
+  loadSekolahMaster();
+
   // Tunjuk/sembunyikan tab mengikut role
   _applyRoleUI();
 
@@ -8906,6 +9054,7 @@ function _akaunCardHtml(a){
     btns += '<button class="btn bs bsm" style="font-size:.63rem;" onclick="akAktifSemula(\''+a.noKP+'\')">✅ Aktif Semula</button>';
     btns += '<button class="btn bsm" style="background:#8e44ad;color:#fff;font-size:.63rem;" onclick="akResetPin(\''+a.noKP+'\',\''+esc(a.nama)+'\')">🔑 Reset PIN</button>';
   }
+  btns += '<button class="btn bs bsm" style="font-size:.63rem;" onclick="akEditMaklumat(\''+a.noKP+'\')">✏ Edit Maklumat</button>';
   return '<div class="akaun-card '+cardCls+'">'
     +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">'
     +'<div>'
@@ -9054,6 +9203,225 @@ async function akConfirmReset(noKP){
     errEl.textContent = 'Ralat: ' + e.message;
     errEl.style.display = 'block';
   }
+}
+
+// =======================================================
+// EDIT MAKLUMAT PENGGUNA (admin) — nama, sekolah, no telefon
+// =======================================================
+function akEditMaklumat(noKP){
+  var a = (_akaunData||[]).find(function(x){ return String(x.noKP)===String(noKP); });
+  if(!a){ toast('Akaun tidak dijumpai','er'); return; }
+  var existing = document.getElementById('mo-edit-maklumat');
+  if(existing) existing.remove();
+
+  var sekOpts = _getSekSuggestions().sort(function(x,y){return x.nama.localeCompare(y.nama);})
+    .map(function(s){ return '<option value="'+esc(s.kod)+'"'+(s.kod===a.kodSekolah?' selected':'')+'>'+esc(s.nama)+' ('+esc(s.kod)+')</option>'; }).join('');
+
+  var mo = document.createElement('div');
+  mo.className = 'mo on'; mo.id = 'mo-edit-maklumat';
+  mo.innerHTML = '<div class="md" style="max-width:440px;">'
+    +'<div class="mh"><div class="mt">✏ Edit Maklumat — '+esc(a.nama)+'</div>'
+    +'<button class="mc" onclick="document.getElementById(\'mo-edit-maklumat\').remove()">✕</button></div>'
+    +'<div class="mb">'
+    +'<div class="fi full" style="margin-bottom:.6rem;"><label>Nama Penuh</label>'
+    +'<input type="text" id="edm-nama" value="'+esc(a.nama)+'" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.78rem;box-sizing:border-box;text-transform:uppercase;"></div>'
+    +'<div class="fi full" style="margin-bottom:.6rem;"><label>Sekolah</label>'
+    +'<select id="edm-sekolah" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.78rem;box-sizing:border-box;">'
+    +'<option value="">— PILIH SEKOLAH —</option>'+sekOpts+'</select></div>'
+    +'<div class="fi full" style="margin-bottom:.6rem;"><label>No. Telefon</label>'
+    +'<input type="tel" id="edm-tel" value="'+esc(a.noTel||'')+'" placeholder="0128887272" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.78rem;box-sizing:border-box;"></div>'
+    +'<div id="edm-err" style="display:none;background:#fdf2f2;border:1px solid #f5c6c6;border-radius:var(--r);padding:.4rem .65rem;font-size:.68rem;color:var(--red);margin-bottom:.6rem;"></div>'
+    +'<div style="display:flex;gap:.5rem;justify-content:flex-end;">'
+    +'<button class="btn bs" onclick="document.getElementById(\'mo-edit-maklumat\').remove()" style="font-size:.72rem;">Batal</button>'
+    +'<button class="btn" style="font-size:.72rem;" onclick="akSimpanMaklumat(\''+noKP+'\')">✓ Simpan</button>'
+    +'</div></div></div>';
+  document.body.appendChild(mo);
+  setTimeout(function(){ var i=document.getElementById('edm-nama'); if(i) i.focus(); },100);
+}
+
+async function akSimpanMaklumat(noKP){
+  var nama = (document.getElementById('edm-nama').value||'').trim();
+  var kodSel = document.getElementById('edm-sekolah').value;
+  var noTel = (document.getElementById('edm-tel').value||'').trim();
+  var errEl = document.getElementById('edm-err');
+  if(!nama){ errEl.textContent='Nama tidak boleh kosong.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  var namaSekolah = '';
+  if(kodSel){
+    var found = _getSekSuggestions().find(function(s){ return s.kod===kodSel; });
+    namaSekolah = found ? found.nama : '';
+  }
+  showOv('MENGEMASKINI MAKLUMAT...');
+  try{
+    var payload = {noKP:noKP, nama:nama, noTel:noTel};
+    if(kodSel){ payload.kodSekolah = kodSel; payload.namaSekolah = namaSekolah; }
+    var r = await run('kemaskiniMaklumatPenggunaGS', payload);
+    hideOv();
+    if(r&&r.ok){
+      toast(r.msg||'Maklumat dikemaskini','ok');
+      document.getElementById('mo-edit-maklumat').remove();
+      loadAkaun(true);
+    } else {
+      errEl.textContent = (r&&r.msg)||'Ralat semasa kemaskini.'; errEl.style.display='block';
+    }
+  }catch(e){ hideOv(); errEl.textContent='Ralat: '+e.message; errEl.style.display='block'; }
+}
+
+// =======================================================
+// SENARAI SEKOLAH — panel pengurusan (admin sahaja)
+// Jadual `sekolah` di Supabase ialah RUJUKAN UTAMA nama & kod sekolah
+// yang digunakan di seluruh sistem (dropdown penyertaan, autocomplete
+// pendaftaran program, dsb.) — elak duplikat akibat variasi ejaan.
+// =======================================================
+var _sekolahList = [];
+var _sekolahCariQ = '';
+
+async function bukaSenaraiSekolah(){
+  if(!_sesi || _sesi.role!=='admin'){ toast('Akses ditolak. Hanya Admin boleh urus senarai sekolah.','er'); return; }
+  var existing = document.getElementById('mo-sekolah');
+  if(existing) existing.remove();
+
+  var mo = document.createElement('div');
+  mo.className = 'mo on'; mo.id = 'mo-sekolah';
+  mo.innerHTML = '<div class="md" style="max-width:560px;">'
+    +'<div class="mh"><div class="mt">🏫 Senarai Sekolah (Rujukan Utama)</div>'
+    +'<button class="mc" onclick="document.getElementById(\'mo-sekolah\').remove()">✕</button></div>'
+    +'<div class="mb">'
+    +'<div style="font-size:.68rem;color:var(--g6);margin-bottom:.8rem;">Senarai ini menjadi rujukan utama nama &amp; kod sekolah di seluruh sistem. Gunakan sini untuk tambah sekolah baharu atau betulkan ejaan nama sekolah sedia ada — pembetulan akan disegerakkan ke semua rekod berkaitan.</div>'
+    +'<div style="display:flex;gap:.4rem;margin-bottom:.6rem;">'
+    +'<input type="text" id="sek-cari-inp" placeholder="Cari kod atau nama sekolah..." oninput="sekCari(this.value)" style="flex:1;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.74rem;">'
+    +'<button class="btn bsm" style="background:#27ae60;color:#fff;" onclick="sekMulaTambah()">➕ TAMBAH</button>'
+    +'</div>'
+    +'<div id="sek-seed-wrap" style="display:none;background:#fff8f0;border:1px solid #fde8cc;border-radius:var(--r);padding:.55rem .7rem;margin-bottom:.6rem;font-size:.66rem;color:#7d5a1f;">'
+    +'Jadual sekolah masih kosong. <button class="btn bsm" style="background:#e67e22;color:#fff;margin-left:.3rem;font-size:.6rem;" onclick="sekSeedAwal()">🌱 ISI DARI SENARAI SEDIA ADA ('+_SEKOLAH_STATIK.length+' sekolah)</button>'
+    +'</div>'
+    +'<div id="sek-tambah-wrap" style="display:none;background:var(--g1);border-radius:var(--r);padding:.65rem .75rem;margin-bottom:.7rem;">'
+    +'<div style="display:flex;gap:.4rem;flex-wrap:wrap;">'
+    +'<input type="text" id="sek-baru-kod" placeholder="Kod (cth: Y044)" style="flex:1;min-width:110px;padding:.4rem .6rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.72rem;text-transform:uppercase;">'
+    +'<input type="text" id="sek-baru-nama" placeholder="Nama sekolah" style="flex:2;min-width:160px;padding:.4rem .6rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.72rem;text-transform:uppercase;">'
+    +'</div>'
+    +'<div id="sek-tambah-err" style="display:none;color:var(--red);font-size:.65rem;margin-top:.4rem;"></div>'
+    +'<div style="display:flex;gap:.4rem;justify-content:flex-end;margin-top:.5rem;">'
+    +'<button class="btn bs bsm" onclick="document.getElementById(\'sek-tambah-wrap\').style.display=\'none\';">Batal</button>'
+    +'<button class="btn bsm" style="background:#27ae60;color:#fff;" onclick="sekSimpanTambah()">✓ Simpan</button>'
+    +'</div></div>'
+    +'<div id="sek-list" style="max-height:50vh;overflow-y:auto;"><div class="ld"><div class="sp"></div>Memuatkan...</div></div>'
+    +'</div></div>';
+  document.body.appendChild(mo);
+  _muatSenaraiSekolah();
+}
+
+async function _muatSenaraiSekolah(){
+  var el = document.getElementById('sek-list'); if(!el) return;
+  try{
+    var r = await run('getSekolahListGS');
+    _sekolahList = (r && r.ok && r.data) ? r.data : [];
+    var seedWrap = document.getElementById('sek-seed-wrap');
+    if(seedWrap) seedWrap.style.display = _sekolahList.length ? 'none' : 'block';
+    _renderSenaraiSekolah();
+  }catch(e){
+    el.innerHTML = '<div class="empty"><div class="ei">⚠</div><h3>Gagal muat senarai sekolah</h3><p style="font-size:.68rem;color:var(--g5);">'+esc(e.message)+'</p></div>';
+  }
+}
+
+async function sekSeedAwal(){
+  showOv('MENGISI SENARAI SEKOLAH...');
+  try{
+    var r = await run('seedSekolahGS', {senarai:_SEKOLAH_STATIK});
+    hideOv();
+    if(r&&r.ok){
+      toast(r.msg||'Senarai sekolah diisi','ok');
+      await _muatSenaraiSekolah();
+      loadSekolahMaster();
+    } else {
+      toast((r&&r.msg)||'Ralat semasa mengisi senarai','er');
+    }
+  }catch(e){ hideOv(); toast('Ralat: '+e.message,'er'); }
+}
+
+function sekCari(q){ _sekolahCariQ = (q||'').toLowerCase(); _renderSenaraiSekolah(); }
+
+function _renderSenaraiSekolah(){
+  var el = document.getElementById('sek-list'); if(!el) return;
+  var q = _sekolahCariQ;
+  var list = _sekolahList.filter(function(s){
+    if(!q) return true;
+    return s.kod.toLowerCase().indexOf(q)>-1 || s.nama.toLowerCase().indexOf(q)>-1;
+  }).sort(function(a,b){ return a.nama.localeCompare(b.nama); });
+  if(!list.length){
+    el.innerHTML = '<div class="empty"><div class="ei">🏫</div><h3>Tiada sekolah dijumpai</h3><p style="font-size:.68rem;color:var(--g5);">Jadual sekolah mungkin masih kosong — guna butang TAMBAH untuk mula, atau muat naik senarai sedia ada.</p></div>';
+    return;
+  }
+  el.innerHTML = list.map(function(s){
+    var kodSafe = esc(s.kod);
+    return '<div class="di" id="sek-row-'+kodSafe+'" style="align-items:center;">'
+      +'<div class="db" style="flex:1;">'
+      +'<span style="font-family:monospace;font-weight:800;color:var(--red);font-size:.68rem;">'+kodSafe+'</span> '
+      +'<span class="sek-nama-disp" style="font-size:.74rem;font-weight:700;color:var(--g8);">'+esc(s.nama)+'</span>'
+      +'</div>'
+      +'<button class="btn bs bsm" style="font-size:.62rem;" onclick="sekMulaEdit(\''+kodSafe+'\')">✏ Edit</button>'
+      +'</div>';
+  }).join('');
+}
+
+function sekMulaTambah(){
+  var w = document.getElementById('sek-tambah-wrap');
+  w.style.display = 'block';
+  document.getElementById('sek-tambah-err').style.display='none';
+  setTimeout(function(){ var i=document.getElementById('sek-baru-kod'); if(i) i.focus(); },80);
+}
+
+async function sekSimpanTambah(){
+  var kod = (document.getElementById('sek-baru-kod').value||'').trim();
+  var nama = (document.getElementById('sek-baru-nama').value||'').trim();
+  var errEl = document.getElementById('sek-tambah-err');
+  if(!kod||!nama){ errEl.textContent='Sila isi kod dan nama sekolah.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  showOv('MENAMBAH SEKOLAH...');
+  try{
+    var r = await run('tambahSekolahGS',{kod:kod, nama:nama});
+    hideOv();
+    if(r&&r.ok){
+      toast(r.msg||'Sekolah ditambah','ok');
+      document.getElementById('sek-tambah-wrap').style.display='none';
+      document.getElementById('sek-baru-kod').value=''; document.getElementById('sek-baru-nama').value='';
+      await _muatSenaraiSekolah();
+      loadSekolahMaster(); // segar senarai rujukan utama di seluruh app
+    } else {
+      errEl.textContent = (r&&r.msg)||'Ralat semasa menambah sekolah.'; errEl.style.display='block';
+    }
+  }catch(e){ hideOv(); errEl.textContent='Ralat: '+e.message; errEl.style.display='block'; }
+}
+
+function sekMulaEdit(kod){
+  var row = document.getElementById('sek-row-'+kod); if(!row) return;
+  var s = _sekolahList.find(function(x){return x.kod===kod;}); if(!s) return;
+  row.innerHTML = '<div class="db" style="flex:1;display:flex;gap:.4rem;align-items:center;">'
+    +'<span style="font-family:monospace;font-weight:800;color:var(--red);font-size:.68rem;">'+esc(kod)+'</span>'
+    +'<input type="text" id="sek-edit-nama-'+kod+'" value="'+esc(s.nama)+'" style="flex:1;padding:.32rem .5rem;border:1.5px solid var(--red);border-radius:6px;font-size:.72rem;text-transform:uppercase;">'
+    +'</div>'
+    +'<button class="btn bs bsm" style="font-size:.62rem;" onclick="_renderSenaraiSekolah()">✕</button>'
+    +'<button class="btn bsm" style="background:#27ae60;color:#fff;font-size:.62rem;" onclick="sekSimpanEdit(\''+kod+'\')">✓ Simpan</button>';
+  setTimeout(function(){ var i=document.getElementById('sek-edit-nama-'+kod); if(i){i.focus();i.select();} },80);
+}
+
+async function sekSimpanEdit(kod){
+  var input = document.getElementById('sek-edit-nama-'+kod);
+  var namaBaru = (input&&input.value||'').trim();
+  if(!namaBaru){ toast('Nama sekolah tidak boleh kosong','er'); return; }
+  showOv('MENGEMASKINI...');
+  try{
+    var r = await run('kemaskiniSekolahGS',{kod:kod, nama:namaBaru});
+    hideOv();
+    if(r&&r.ok){
+      toast(r.msg||'Sekolah dikemaskini','ok');
+      await _muatSenaraiSekolah();
+      loadSekolahMaster(); // segar senarai rujukan utama di seluruh app
+    } else {
+      toast((r&&r.msg)||'Ralat semasa kemaskini','er');
+      _renderSenaraiSekolah();
+    }
+  }catch(e){ hideOv(); toast('Ralat: '+e.message,'er'); }
 }
 
 async function akMigrateSheet(){
@@ -9271,6 +9639,8 @@ function _initApp(){
   _initSesiDariStorage();
   // PEMBETULAN: pra-isi dropdown sekolah di skrin Daftar Akaun sejak awal
   _populateDafSekDropdown();
+  // Muat senarai sekolah kanonik sebenar dari DB (gantikan senarai statik bila tersedia)
+  loadSekolahMaster();
   // CSS pada body.loggedin kawat semua paparan — tiada manipulasi DOM diperlukan
 }
 if(document.readyState==='loading'){
