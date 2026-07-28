@@ -1598,7 +1598,7 @@ body.view-list .pc::after { display: none; }
   <div class="card mb2">
     <div class="ch" style="display:flex;align-items:center;justify-content:space-between;">
       <div style="display:flex;align-items:center;gap:.4rem;"><div class="dot"></div>SENARAI AKAUN</div>
-      <div style="display:flex;gap:.4rem;">
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;">
         <button class="btn bs bsm" id="ak-filt-semua" onclick="akFilt('semua')" style="font-weight:800;">SEMUA</button>
         <button class="btn bsm" id="ak-filt-tunggu" onclick="akFilt('tunggu')" style="background:#f39c12;color:#fff;">⏳ TUNGGU</button>
         <button class="btn bs bsm" id="ak-filt-aktif" onclick="akFilt('aktif')">✅ AKTIF</button>
@@ -1607,7 +1607,25 @@ body.view-list .pc::after { display: none; }
         <button class="btn bs bsm" onclick="akBackfillTahun()" title="Isi kolum Tahun untuk rekod lama">📅 BACKFILL TAHUN</button>
       </div>
     </div>
-    <div id="akaun-list" style="margin-top:.8rem;">
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.65rem;">
+      <div class="mo-srch-wrap" style="flex:1;min-width:190px;margin-bottom:0;">
+        <span class="mo-srch-ico">🔍</span>
+        <input type="text" class="mo-srch-inp" id="ak-cari" placeholder="Cari nama, No.KP atau sekolah..." oninput="akCari(this.value)">
+        <button class="mo-srch-clear" id="ak-cari-clear" onclick="akCariClear()">✕</button>
+      </div>
+      <select id="ak-filt-role" onchange="akFiltRole(this.value)" style="font-size:.68rem;padding:.4rem .6rem;border-radius:20px;border:1.5px solid var(--g3);font-weight:700;background:#fff;">
+        <option value="semua">👤 SEMUA ROLE</option>
+        <option value="guru">GURU</option>
+        <option value="pkk">PKK</option>
+        <option value="admin">ADMIN</option>
+      </select>
+      <select id="ak-filt-sek" onchange="akFiltSek(this.value)" style="font-size:.68rem;padding:.4rem .6rem;border-radius:20px;border:1.5px solid var(--g3);font-weight:700;background:#fff;max-width:230px;">
+        <option value="semua">🏫 SEMUA SEKOLAH</option>
+      </select>
+      <button class="btn bs bsm" id="ak-grp-btn" onclick="akToggleGroup()" title="Kumpulan akaun mengikut sekolah">🏫 KUMPUL IKUT SEKOLAH</button>
+    </div>
+    <div class="mo-srch-count" id="ak-cari-count"></div>
+    <div id="akaun-list" style="margin-top:.5rem;">
       <div class="ld"><div class="sp"></div>Memuatkan...</div>
     </div>
   </div>
@@ -8740,6 +8758,10 @@ async function lgDaftar(){
 // == Panel Akaun (Admin) =====================================
 var _akaunData = [];
 var _akaunFilt = 'semua';
+var _akaunRoleFilt = 'semua';
+var _akaunSekFilt = 'semua';
+var _akaunSearchQ = '';
+var _akaunGroupBySek = false;
 
 async function loadAkaun(bust){
   if(bust) cBust();
@@ -8747,6 +8769,7 @@ async function loadAkaun(bust){
   try{
     var r = await run('getAkaunListGS');
     _akaunData = (r&&r.data)||[];
+    _populateAkFiltSek();
     renderAkaun();
   }catch(e){
     document.getElementById('akaun-list').innerHTML='<div class="empty"><div class="ei">⚠</div><h3>Gagal memuatkan: '+e.message+'</h3></div>';
@@ -8762,11 +8785,116 @@ function akFilt(f){
   renderAkaun();
 }
 
-function renderAkaun(){
-  var list = _akaunData.filter(function(a){
-    if(_akaunFilt==='semua') return true;
-    return (a.status||'').toLowerCase()===_akaunFilt;
+// == Tapisan mengikut peranan (role) ==========================
+function akFiltRole(v){
+  _akaunRoleFilt = v||'semua';
+  renderAkaun();
+}
+
+// == Tapisan mengikut sekolah ==================================
+function akFiltSek(v){
+  _akaunSekFilt = v||'semua';
+  renderAkaun();
+}
+
+// == Isi dropdown tapisan sekolah berdasarkan data akaun semasa ==
+function _populateAkFiltSek(){
+  var sel = document.getElementById('ak-filt-sek');
+  if(!sel) return;
+  var curVal = sel.value||'semua';
+  var seen = {}, list = [];
+  _akaunData.forEach(function(a){
+    var kod = String(a.kodSekolah||'').trim();
+    var nama = String(a.namaSekolah||'').trim();
+    if(!kod && !nama) return;
+    var key = kod+'||'+nama;
+    if(!seen[key]){ seen[key]=1; list.push({kod:kod, nama:nama}); }
   });
+  list.sort(function(x,y){ return x.nama.localeCompare(y.nama); });
+  var opts = '<option value="semua">🏫 SEMUA SEKOLAH</option>';
+  list.forEach(function(s){
+    opts += '<option value="'+esc(s.kod)+'">'+esc(s.nama)+(s.kod?' ('+esc(s.kod)+')':'')+'</option>';
+  });
+  sel.innerHTML = opts;
+  // Kekalkan pilihan sebelumnya jika masih wujud dalam senarai baharu
+  if(list.some(function(s){return s.kod===curVal;}) || curVal==='semua') sel.value = curVal;
+  else { sel.value='semua'; _akaunSekFilt='semua'; }
+}
+
+// == Carian teks bebas (nama / No.KP / sekolah) ===============
+function akCari(v){
+  _akaunSearchQ = (v||'').trim();
+  var clr = document.getElementById('ak-cari-clear');
+  if(clr) clr.style.display = _akaunSearchQ ? 'block' : 'none';
+  renderAkaun();
+}
+function akCariClear(){
+  var inp = document.getElementById('ak-cari');
+  if(inp) inp.value='';
+  akCari('');
+}
+
+// == Togol paparan kumpulan mengikut sekolah ==================
+function akToggleGroup(){
+  _akaunGroupBySek = !_akaunGroupBySek;
+  var btn = document.getElementById('ak-grp-btn');
+  if(btn){
+    btn.classList.toggle('bs', !_akaunGroupBySek);
+    btn.style.background = _akaunGroupBySek ? 'var(--red)' : '';
+    btn.style.color = _akaunGroupBySek ? '#fff' : '';
+  }
+  renderAkaun();
+}
+
+function _akaunCardHtml(a){
+  var statCls = a.status==='AKTIF'?'stat-aktif':a.status==='TUNGGU'?'stat-tunggu':'stat-tolak';
+  var cardCls = a.status==='TUNGGU'?'tunggu':a.status==='TOLAK'?'tolak':'';
+  var roleOpts = ['guru','pkk','admin'].map(function(r){
+    return '<option value="'+r+'"'+(a.role===r?' selected':'')+'>'+r+'</option>';
+  }).join('');
+  var btns = '';
+  if(a.status==='TUNGGU'){
+    btns += '<select id="role-sel-'+a.noKP.replace(/\D/g,'')+'" style="font-size:.65rem;padding:.28rem .5rem;border-radius:6px;border:1.5px solid var(--g3);">'+roleOpts+'</select>';
+    btns += '<button class="btn bsm" style="background:#27ae60;color:#fff;font-size:.63rem;" onclick="akLulus(\''+a.noKP+'\')">✅ Lulus</button>';
+    btns += '<button class="btn bsm" style="background:#e74c3c;color:#fff;font-size:.63rem;" onclick="akTolak(\''+a.noKP+'\')">✗ Tolak</button>';
+  } else if(a.status==='AKTIF'){
+    btns += '<select id="role-sel-'+a.noKP.replace(/\D/g,'')+'" style="font-size:.65rem;padding:.28rem .5rem;border-radius:6px;border:1.5px solid var(--g3);">'+roleOpts+'</select>';
+    btns += '<button class="btn bs bsm" style="font-size:.63rem;" onclick="akTukarRole(\''+a.noKP+'\')">✏ Kemaskini Role</button>';
+    btns += '<button class="btn bsm" style="background:#8e44ad;color:#fff;font-size:.63rem;" onclick="akResetPin(\''+a.noKP+'\',\''+esc(a.nama)+'\')">🔑 Reset PIN</button>';
+    btns += '<button class="btn bsm" style="background:#e74c3c;color:#fff;font-size:.63rem;" onclick="akNyahaktif(\''+a.noKP+'\')">🚫 Nyahaktif</button>';
+  } else {
+    btns += '<button class="btn bs bsm" style="font-size:.63rem;" onclick="akAktifSemula(\''+a.noKP+'\')">✅ Aktif Semula</button>';
+    btns += '<button class="btn bsm" style="background:#8e44ad;color:#fff;font-size:.63rem;" onclick="akResetPin(\''+a.noKP+'\',\''+esc(a.nama)+'\')">🔑 Reset PIN</button>';
+  }
+  return '<div class="akaun-card '+cardCls+'">'
+    +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">'
+    +'<div>'
+    +'<div class="akaun-name">'+esc(a.nama)
+    +' <span class="lg-role-tag lg-role-'+a.role+'">'+a.role+'</span>'
+    +' <span class="akaun-stat '+statCls+'">'+a.status+'</span></div>'
+    +'<div class="akaun-meta">📋 '+esc(a.namaSekolah)+' ('+esc(a.kodSekolah)+')'
+    +' &nbsp;|&nbsp; 🪪 '+esc(String(a.noKP))+'</div>'
+    +(a.noTel?'<div class="akaun-meta">📞 '+esc(a.noTel)+(a.tarikh?' &nbsp;|&nbsp; 📅 Daftar: '+a.tarikh:'')+'</div>':'')
+    +'</div>'
+    +'</div>'
+    +'<div class="akaun-actions">'+btns+'</div>'
+    +'</div>';
+}
+
+function renderAkaun(){
+  var q = _akaunSearchQ.toLowerCase();
+  var list = _akaunData.filter(function(a){
+    if(_akaunFilt!=='semua' && (a.status||'').toLowerCase()!==_akaunFilt) return false;
+    if(_akaunRoleFilt!=='semua' && (a.role||'').toLowerCase()!==_akaunRoleFilt) return false;
+    if(_akaunSekFilt!=='semua' && String(a.kodSekolah||'').trim()!==_akaunSekFilt) return false;
+    if(q){
+      var hay = (String(a.nama||'')+' '+String(a.noKP||'')+' '+String(a.namaSekolah||'')+' '+String(a.kodSekolah||'')).toLowerCase();
+      if(hay.indexOf(q)===-1) return false;
+    }
+    return true;
+  });
+  var cntEl = document.getElementById('ak-cari-count');
+  if(cntEl) cntEl.textContent = (q||_akaunRoleFilt!=='semua'||_akaunSekFilt!=='semua') ? (list.length+' akaun ditemui') : '';
   if(!list.length){
     document.getElementById('akaun-list').innerHTML='<div class="empty"><div class="ei">👥</div><h3>Tiada akaun dalam kategori ini</h3></div>';
     return;
@@ -8776,41 +8904,35 @@ function renderAkaun(){
     var ord={'TUNGGU':0,'AKTIF':1,'TOLAK':2};
     return (ord[a.status]||1)-(ord[b.status]||1);
   });
-  var html = list.map(function(a){
-    var statCls = a.status==='AKTIF'?'stat-aktif':a.status==='TUNGGU'?'stat-tunggu':'stat-tolak';
-    var cardCls = a.status==='TUNGGU'?'tunggu':a.status==='TOLAK'?'tolak':'';
-    var roleOpts = ['guru','pkk','admin'].map(function(r){
-      return '<option value="'+r+'"'+(a.role===r?' selected':'')+'>'+r+'</option>';
-    }).join('');
-    var btns = '';
-    if(a.status==='TUNGGU'){
-      btns += '<select id="role-sel-'+a.noKP.replace(/\D/g,'')+'" style="font-size:.65rem;padding:.28rem .5rem;border-radius:6px;border:1.5px solid var(--g3);">'+roleOpts+'</select>';
-      btns += '<button class="btn bsm" style="background:#27ae60;color:#fff;font-size:.63rem;" onclick="akLulus(\''+a.noKP+'\')">✅ Lulus</button>';
-      btns += '<button class="btn bsm" style="background:#e74c3c;color:#fff;font-size:.63rem;" onclick="akTolak(\''+a.noKP+'\')">✗ Tolak</button>';
-    } else if(a.status==='AKTIF'){
-      btns += '<select id="role-sel-'+a.noKP.replace(/\D/g,'')+'" style="font-size:.65rem;padding:.28rem .5rem;border-radius:6px;border:1.5px solid var(--g3);">'+roleOpts+'</select>';
-      btns += '<button class="btn bs bsm" style="font-size:.63rem;" onclick="akTukarRole(\''+a.noKP+'\')">✏ Kemaskini Role</button>';
-      btns += '<button class="btn bsm" style="background:#8e44ad;color:#fff;font-size:.63rem;" onclick="akResetPin(\''+a.noKP+'\',\''+esc(a.nama)+'\')">🔑 Reset PIN</button>';
-      btns += '<button class="btn bsm" style="background:#e74c3c;color:#fff;font-size:.63rem;" onclick="akNyahaktif(\''+a.noKP+'\')">🚫 Nyahaktif</button>';
-    } else {
-      btns += '<button class="btn bs bsm" style="font-size:.63rem;" onclick="akAktifSemula(\''+a.noKP+'\')">✅ Aktif Semula</button>';
-      btns += '<button class="btn bsm" style="background:#8e44ad;color:#fff;font-size:.63rem;" onclick="akResetPin(\''+a.noKP+'\',\''+esc(a.nama)+'\')">🔑 Reset PIN</button>';
-    }
-    return '<div class="akaun-card '+cardCls+'">'
-      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">'
-      +'<div>'
-      +'<div class="akaun-name">'+esc(a.nama)
-      +' <span class="lg-role-tag lg-role-'+a.role+'">'+a.role+'</span>'
-      +' <span class="akaun-stat '+statCls+'">'+a.status+'</span></div>'
-      +'<div class="akaun-meta">📋 '+esc(a.namaSekolah)+' ('+esc(a.kodSekolah)+')'
-      +' &nbsp;|&nbsp; 🪪 '+esc(String(a.noKP))+'</div>'
-      +(a.noTel?'<div class="akaun-meta">📞 '+esc(a.noTel)+(a.tarikh?' &nbsp;|&nbsp; 📅 Daftar: '+a.tarikh:'')+'</div>':'')
-      +'</div>'
-      +'</div>'
-      +'<div class="akaun-actions">'+btns+'</div>'
-      +'</div>';
+
+  if(!_akaunGroupBySek){
+    document.getElementById('akaun-list').innerHTML = list.map(_akaunCardHtml).join('');
+    return;
+  }
+
+  // == Paparan dikumpulkan mengikut sekolah ==
+  var groups = {}, order = [];
+  list.forEach(function(a){
+    var kod = String(a.kodSekolah||'').trim();
+    var nama = String(a.namaSekolah||'—').trim()||'—';
+    var key = kod+'||'+nama;
+    if(!groups[key]){ groups[key]={kod:kod, nama:nama, items:[]}; order.push(key); }
+    groups[key].items.push(a);
+  });
+  order.sort(function(x,y){ return groups[x].nama.localeCompare(groups[y].nama); });
+  var html = order.map(function(key){
+    var g = groups[key];
+    return '<div style="margin-bottom:1rem;">'
+      + '<div style="display:flex;align-items:center;gap:.4rem;font-size:.68rem;font-weight:800;'
+      + 'color:var(--red);background:var(--rp);padding:.35rem .7rem;border-radius:8px;margin-bottom:.4rem;'
+      + 'text-transform:uppercase;letter-spacing:.3px;">'
+      + '🏫 '+esc(g.nama)+(g.kod?' ('+esc(g.kod)+')':'')
+      + ' <span style="margin-left:auto;background:#fff;color:var(--red);padding:.05rem .5rem;border-radius:10px;font-size:.62rem;">'+g.items.length+' akaun</span>'
+      + '</div>'
+      + g.items.map(_akaunCardHtml).join('')
+      + '</div>';
   }).join('');
-  document.getElementById('akaun-list').innerHTML=html;
+  document.getElementById('akaun-list').innerHTML = html;
 }
 
 async function _akKemaskini(noKP, status, role){
