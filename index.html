@@ -6050,6 +6050,28 @@ function semakPeny(){
     if(!px.jantina){toast('❌ '+pLabel+': Sila pilih Jantina','er');return;}
     if(!px.bangsa){toast('❌ '+pLabel+': Sila pilih Bangsa','er');return;}
   }
+  // Semak No. KP pendua antara peserta (elak peserta hilang senyap semasa dipaparkan/dihantar)
+  var kpSeen={};
+  for(var pdi=0;pdi<pesFilled.length;pdi++){
+    var pdx=pesFilled[pdi];
+    var kpKey=pdx.kp.replace(/\D/g,'');
+    if(kpSeen[kpKey]){
+      toast('❌ No. KP "'+pdx.kp+'" untuk peserta "'+pdx.nama+'" sama dengan peserta "'+kpSeen[kpKey]+'". Sila semak semula.','er');
+      return;
+    }
+    kpSeen[kpKey]=pdx.nama;
+  }
+  // Semak nama pendua tanpa KP diisi (jarang berlaku sebab KP wajib, tapi sebagai lapisan kedua)
+  var namaSeen={};
+  for(var ndi=0;ndi<pesFilled.length;ndi++){
+    var ndx=pesFilled[ndi];
+    var namaKey=ndx.nama.trim().toUpperCase();
+    if(namaSeen[namaKey] && namaSeen[namaKey]!==ndx.kp){
+      toast('❌ Nama peserta "'+ndx.nama+'" berulang dengan No. KP berbeza. Sila semak ejaan/nama.','er');
+      return;
+    }
+    namaSeen[namaKey]=ndx.kp;
+  }
   // Check kategori
   var noKat=pesFilled.filter(function(p){return !p.kategori.length;});
   if(noKat.length){toast('❌ Langkah 4: Pilih kategori untuk peserta "'+noKat[0].nama+'"','er');return;}
@@ -6167,6 +6189,19 @@ async function hantarPeny(){
   _syncFormValues();
   var guruFilled=_penyData.guruList.filter(function(g){return g.nama.trim();});
   var pesFilled=_penyData.pesList.filter(function(p){return p.nama.trim();});
+
+  // Lapisan keselamatan kedua: sekat hantar jika ada No. KP peserta pendua
+  // (elak peserta hilang senyap semasa dipaparkan selepas hantar)
+  var _kpSeenSend={};
+  for(var _sdi=0;_sdi<pesFilled.length;_sdi++){
+    var _sdx=pesFilled[_sdi];
+    var _kpKeySend=(_sdx.kp||'').replace(/\D/g,'');
+    if(_kpKeySend && _kpSeenSend[_kpKeySend]){
+      toast('❌ No. KP "'+_sdx.kp+'" untuk peserta "'+_sdx.nama+'" sama dengan peserta "'+_kpSeenSend[_kpKeySend]+'". Sila betulkan sebelum hantar.','er');
+      return;
+    }
+    if(_kpKeySend) _kpSeenSend[_kpKeySend]=_sdx.nama;
+  }
 
   var allRows=[];
   pesFilled.forEach(function(p){
