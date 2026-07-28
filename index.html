@@ -1342,13 +1342,14 @@ body.view-list .pc::after { display: none; }
                 inputmode="numeric" oninput="fmtTel(this)">
             </div>
           </div>
-          <div class="lg-fi lg-full">
-            <!-- PEMBETULAN KRITIKAL #4: Guna dropdown sekolah — konsisten dengan halaman Penyertaan -->
+          <div class="lg-fi lg-full" style="position:relative;">
+            <!-- Autocomplete ikut corak tab Pengelola -->
             <label>Sekolah <span class="req">*</span></label>
-            <select id="daf-kodsek" onchange="onDafSekSelect(this.value)" style="text-transform:none;">
-              <option value="">— Pilih sekolah anda —</option>
-            </select>
-            <!-- Hidden field untuk nama sekolah — diisi oleh onDafSekSelect -->
+            <input type="text" id="daf-kodsek-search" placeholder="Taip nama atau kod sekolah..." autocomplete="off"
+              style="text-transform:none;" oninput="onSugDafSek(this.value)" onfocus="onSugDafSek(this.value)" onblur="hideSug('sug-daf-kodsek')">
+            <div class="sug-drop" id="sug-daf-kodsek"></div>
+            <!-- Nilai sebenar (kod) & nama disimpan dlm medan tersembunyi -->
+            <input type="hidden" id="daf-kodsek" value="">
             <input type="hidden" id="daf-nmsek" value="">
           </div>
           <div class="lg-fi lg-full" style="margin-top:.3rem;">
@@ -1538,18 +1539,13 @@ body.view-list .pc::after { display: none; }
   <div class="sbox" id="sbox-sekolah" style="display:none;">
     <div class="sbt">🔐 PENGESAHAN &amp; MAKLUMAT SEKOLAH</div>
     <div class="fg">
-      <div class="fi full">
+      <div class="fi full" style="position:relative;">
         <label>Pilih Sekolah Anda</label>
-        <select id="daf-sek-select" onchange="onSekSelect(this.value)" style="text-transform:none;">
-          <option value="">— Pilih sekolah anda —</option>
-          <optgroup label="Sekolah Kebangsaan">
-          </optgroup>
-          <optgroup label="Sekolah Jenis Kebangsaan Cina">
-          </optgroup>
-          <optgroup label="Sekolah Menengah">
-          </optgroup>
-        </select>
-        <!-- Hidden inputs untuk simpan nilai — digunakan oleh fungsi sedia ada -->
+        <input type="text" id="daf-sek-search" placeholder="Taip nama atau kod sekolah..." autocomplete="off"
+          style="text-transform:none;" oninput="onSugSekPeny(this.value)" onfocus="onSugSekPeny(this.value)" onblur="hideSug('sug-daf-sek')">
+        <div class="sug-drop" id="sug-daf-sek"></div>
+        <!-- Nilai sebenar (kod) disimpan dalam medan tersembunyi — digunakan oleh fungsi sedia ada -->
+        <input type="hidden" id="daf-sek-select" value="">
         <input type="hidden" id="daf-kod" value="">
         <input type="hidden" id="daf-sek" value="">
       </div>
@@ -3554,6 +3550,7 @@ function _prefillPenyertaanEdit(prog, kodSek, sekNm, rows){
     // Set dropdown sekolah
     var selEl = document.getElementById('daf-sek-select');
     if(selEl) selEl.value = kodSek;
+    _syncDafSekDisplay();
 
     // Set hidden fields
     var kodH = document.getElementById('daf-kod');
@@ -5499,12 +5496,12 @@ function _restorePenyDraft(draft){
   document.getElementById('sel-info').style.display='block';
   document.getElementById('sel-edit-info').style.display='none';
   document.getElementById('sbox-sekolah').style.display='block';
-  // Set hidden inputs dan dropdown
-  _populateSekDropdown();
+  // Set hidden inputs
   _populateDafSekDropdown(); // PEMBETULAN KRITIKAL #4
   if(draft.kod){
     var ke=document.getElementById('daf-kod'); if(ke) ke.value=draft.kod;
     var selEl=document.getElementById('daf-sek-select'); if(selEl) selEl.value=draft.kod;
+    _syncDafSekDisplay();
   }
   if(draft.sek){var se=document.getElementById('daf-sek');if(se)se.value=draft.sek;}
   document.getElementById('peny-form-wrap').style.display='block';
@@ -5642,13 +5639,13 @@ function pilihProg(id,nm,cardEl){
   document.getElementById('peny-form-wrap').style.display='none';
   _penyData={guruList:[],pesList:[]};
   _pGCnt=0; _pPCnt=0;
-  // Populate dan reset dropdown sekolah
-  _populateSekDropdown();
+  // Reset medan sekolah
   _populateDafSekDropdown(); // PEMBETULAN KRITIKAL #4
   var selEl=document.getElementById('daf-sek-select');
   // PEMBETULAN KRITIKAL #1: Guru/PKK — auto-pilih sekolah sendiri dan buka borang terus
   var _autoKod = (_sesi && (_sesi.role==='guru'||_sesi.role==='pkk') && _sesi.kodSekolah) ? _sesi.kodSekolah : '';
   if(selEl){ selEl.value = _autoKod || ''; }
+  _syncDafSekDisplay();
   var kodH=document.getElementById('daf-kod'); if(kodH) kodH.value='';
   var sekH=document.getElementById('daf-sek'); if(sekH) sekH.value='';
   var ks=document.getElementById('kod-stat');
@@ -5697,38 +5694,30 @@ function removeMainGuru(id){
 }
 
 function _getGuruSyorFromAP(kodSekolah){
-  // Kumpul guru unik dari _aP — utamakan sekolah ini, fallback kepada semua rekod
+  // Kumpul guru unik dari _aP — HANYA untuk sekolah dipilih (tiada fallback
+  // ke semua sekolah, elak dedah data guru sekolah lain).
   var seen={}, list=[];
   var kodUp=String(kodSekolah||'').toUpperCase().trim();
-  // Cuba cari untuk sekolah spesifik dahulu
+  if(!kodUp) return list;
   (_aP||[]).forEach(function(r){
-    if(!kodUp||String(r['Kod Sekolah']||'').toUpperCase().trim()!==kodUp) return;
+    if(String(r['Kod Sekolah']||'').toUpperCase().trim()!==kodUp) return;
     var kp=String(r['No KP Guru']||'').trim();
     var nm=String(r['Nama Guru']||'').trim();
     if(!nm) return;
     var key=kp||nm;
     if(!seen[key]){seen[key]=1;list.push({nama:nm,kp:kp,bangsa:String(r['Bangsa Guru']||'').trim(),jantina:String(r['Jantina Guru']||'').trim(),tel:String(r['No Tel Guru']||'').trim()});}
   });
-  // Jika tiada rekod untuk sekolah ini, ambil semua rekod guru dari _aP
-  if(!list.length){
-    (_aP||[]).forEach(function(r){
-      var kp=String(r['No KP Guru']||'').trim();
-      var nm=String(r['Nama Guru']||'').trim();
-      if(!nm) return;
-      var key=kp||nm;
-      if(!seen[key]){seen[key]=1;list.push({nama:nm,kp:kp,bangsa:String(r['Bangsa Guru']||'').trim(),jantina:String(r['Jantina Guru']||'').trim(),tel:String(r['No Tel Guru']||'').trim()});}
-    });
-  }
   list.sort(function(a,b){return a.nama.localeCompare(b.nama);});
   return list;
 }
 
 function _getPesSyorFromAP(kodSekolah){
+  // HANYA untuk sekolah dipilih (tiada fallback ke semua sekolah).
   var seen={}, list=[];
   var kodUp=String(kodSekolah||'').toUpperCase().trim();
-  // Cuba cari untuk sekolah spesifik dahulu
+  if(!kodUp) return list;
   (_aP||[]).forEach(function(r){
-    if(!kodUp||String(r['Kod Sekolah']||'').toUpperCase().trim()!==kodUp) return;
+    if(String(r['Kod Sekolah']||'').toUpperCase().trim()!==kodUp) return;
     var kp=String(r['No KP Peserta']||'').trim();
     var nm=String(r['Nama Peserta']||'').trim();
     var kat=String(r['Kategori Penyertaan']||'').toUpperCase();
@@ -5736,17 +5725,6 @@ function _getPesSyorFromAP(kodSekolah){
     var key=kp||nm;
     if(!seen[key]){seen[key]=1;list.push({nama:nm,kp:kp,jantina:String(r['Jantina Peserta']||'').trim(),bangsa:String(r['Bangsa Peserta']||'').trim()});}
   });
-  // Jika tiada rekod untuk sekolah ini, ambil semua rekod peserta dari _aP
-  if(!list.length){
-    (_aP||[]).forEach(function(r){
-      var kp=String(r['No KP Peserta']||'').trim();
-      var nm=String(r['Nama Peserta']||'').trim();
-      var kat=String(r['Kategori Penyertaan']||'').toUpperCase();
-      if(!nm||kat==='GURU') return;
-      var key=kp||nm;
-      if(!seen[key]){seen[key]=1;list.push({nama:nm,kp:kp,jantina:String(r['Jantina Peserta']||'').trim(),bangsa:String(r['Bangsa Peserta']||'').trim()});}
-    });
-  }
   list.sort(function(a,b){return a.nama.localeCompare(b.nama);});
   return list;
 }
@@ -6680,6 +6658,7 @@ function resetPeny(){
   _stopPenyAutoSave();
   ['daf-sek','daf-kod'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var dsSel=document.getElementById('daf-sek-select');if(dsSel)dsSel.value='';
+  var dsSrch=document.getElementById('daf-sek-search');if(dsSrch)dsSrch.value='';
   var dsNm=document.getElementById('daf-nmsek');if(dsNm)dsNm.value='';
   window._pendingDraft=null; // P11
   var ks=document.getElementById('kod-stat');if(ks)ks.innerHTML='';
@@ -8016,7 +7995,6 @@ async function loadSekolahMaster(){
       _sekolahMasterLoaded = true;
       // Segar semula dropdown yang mungkin sudah terpapar
       _populateDafSekDropdown();
-      if(typeof _populateSekDropdown==='function') _populateSekDropdown();
     }
   }catch(e){
     console.warn('loadSekolahMaster gagal (guna senarai statik sedia ada):', e);
@@ -8076,28 +8054,40 @@ function _setRkJenis(type, jenis, btnEl){
   _renderRkType(type);
 }
 
-// == DROPDOWN SEKOLAH =========================================
-// PEMBETULAN: guna _getSekSuggestions() — sumber & susunan sama dengan
-// modal "Edit Maklumat" di tab Akaun (bukan _SEKOLAH_STATIK mentah sahaja),
-// supaya sekolah baharu (dari _sekExtraDb / rekod _aP) turut disenaraikan.
-function _populateSekDropdown(){
-  var sel=document.getElementById('daf-sek-select');
-  if(!sel) return;
-  var sk=_getSekSuggestions().slice().sort(function(a,b){return a.nama.localeCompare(b.nama);});
-  var grpSK=sk.filter(function(s){return s.kod.charAt(1)==='B'||s.kod.charAt(1)==='A';});
-  var grpSJK=sk.filter(function(s){return s.kod.charAt(1)==='C';});
-  var grpSMK=sk.filter(function(s){return s.kod.charAt(1)==='E';});
-  var grpLain=sk.filter(function(s){var c=s.kod.charAt(1);return c!=='B'&&c!=='A'&&c!=='C'&&c!=='E';});
-  function mkOpts(arr){
-    return arr.map(function(s){
-      return '<option value="'+s.kod+'">'+s.nama+' ('+s.kod+')</option>';
-    }).join('');
-  }
-  sel.innerHTML='<option value="">— Pilih sekolah anda —</option>'
-    +'<optgroup label="Sekolah Kebangsaan">'+mkOpts(grpSK)+'</optgroup>'
-    +'<optgroup label="SJK (Cina)">'+mkOpts(grpSJK)+'</optgroup>'
-    +'<optgroup label="Sekolah Menengah">'+mkOpts(grpSMK)+'</optgroup>'
-    +(grpLain.length ? '<optgroup label="Lain-lain">'+mkOpts(grpLain)+'</optgroup>' : '');
+// == SEKOLAH (tab Penyertaan) — autocomplete ikut corak tab Pengelola =======
+// Medan kekal teks bebas + cadangan, nilai kod sebenar disimpan dlm #daf-sek-select (hidden).
+function onSugSekPeny(q){
+  var drop=document.getElementById('sug-daf-sek'); if(!drop)return;
+  var v=(q||'').trim();
+  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
+  var lv=v.toLowerCase();
+  var items=_getSekSuggestions().filter(function(s){
+    return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
+  }).sort(function(a,b){return a.nama.localeCompare(b.nama);}).slice(0,8);
+  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g5);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
+  drop.innerHTML=items.map(function(s){
+    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+esc(s.nama)+' ('+esc(s.kod)+')</span></div>';
+  }).join('');
+  drop.querySelectorAll('.sug-item[data-sug-kod]').forEach(function(el){
+    el.addEventListener('mousedown',function(){pickSekPeny(decodeURIComponent(el.dataset.sugKod),decodeURIComponent(el.dataset.sugSek));});
+  });
+  drop.classList.add('on');
+}
+function pickSekPeny(kod,nama){
+  var hid=document.getElementById('daf-sek-select'); if(hid) hid.value=kod;
+  var vis=document.getElementById('daf-sek-search'); if(vis) vis.value=nama+' ('+kod+')';
+  hideSug('sug-daf-sek');
+  onSekSelect(kod);
+}
+// Segerak paparan teks input drpd nilai kod tersembunyi — dipanggil selepas
+// kod diset secara program (draf, auto-pilih guru/pkk, dsb.)
+function _syncDafSekDisplay(){
+  var hid=document.getElementById('daf-sek-select'); var vis=document.getElementById('daf-sek-search');
+  if(!hid||!vis) return;
+  var kod=hid.value||'';
+  if(!kod){ vis.value=''; return; }
+  var nama=_getNamaSekolahByKod(kod);
+  vis.value = nama ? (nama+' ('+kod+')') : kod;
 }
 
 function onSekSelect(kod){
@@ -8298,90 +8288,36 @@ function pickSugProg(kod,nama){
 }
 
 // == Suggestion helpers untuk borang DAFTAR AKAUN ============
-// PEMBETULAN KRITIKAL #4: onDafSekSelect menggantikan onDafKodSekIn / onDafSugSek
-// Bila dropdown sekolah dipilih, auto-fill hidden field nama sekolah
-function onDafSekSelect(kod){
-  var seks=_getSekSuggestions();
-  var found=seks.find(function(s){return s.kod===kod;});
-  var nmEl=document.getElementById('daf-nmsek');
-  if(nmEl) nmEl.value=found?found.nama:'';
-}
-
-// Populate dropdown daftar akaun dengan senarai sekolah — dipanggil selepas data sekolah sedia
-function _populateDafSekDropdown(){
-  var sel=document.getElementById('daf-kodsek');
-  if(!sel||sel.tagName!=='SELECT') return;
-  var seks=_getSekSuggestions();
-  var curVal=sel.value;
-  var opts='<option value="">— Pilih sekolah anda —</option>';
-  seks.forEach(function(s){
-    opts+='<option value="'+esc(s.kod)+'"'+(s.kod===curVal?' selected':'')+'>'+esc(s.kod)+' — '+esc(s.nama)+'</option>';
-  });
-  sel.innerHTML=opts;
-}
-
-function onDafKodSekIn(q){
-  // Auto-fill nama sekolah dari senarai statik
-  var k=(q||'').toUpperCase().trim();
-  var namaEl=document.getElementById('daf-nmsek');
-  if(namaEl && !namaEl.value.trim()){
-    var autoNama=_getNamaSekolahByKod(k);
-    if(autoNama) namaEl.value=autoNama;
-  }
-  onDafSugKod(q);
-}
-
-function onDafSugKod(q){
-  var drop=document.getElementById('daf-sug-kod'); if(!drop)return;
+// Autocomplete ikut corak tab Pengelola — medan #daf-kodsek-search (paparan)
+// + #daf-kodsek (hidden, nilai kod) + #daf-nmsek (hidden, nama).
+function onSugDafSek(q){
+  var drop=document.getElementById('sug-daf-kodsek'); if(!drop)return;
   var v=(q||'').trim();
   if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
   var lv=v.toLowerCase();
   var items=_getSekSuggestions().filter(function(s){
     return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
-  }).slice(0,6);
-  if(!items.length){drop.innerHTML='';drop.classList.remove('on');return;}
+  }).sort(function(a,b){return a.nama.localeCompare(b.nama);}).slice(0,8);
+  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g5);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
   drop.innerHTML=items.map(function(s){
-    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🔑</span><span>'+s.kod+' — '+s.nama+'</span></div>';
+    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+esc(s.nama)+' ('+esc(s.kod)+')</span></div>';
   }).join('');
-  drop.querySelectorAll('.sug-item').forEach(function(el){
-    el.addEventListener('mousedown',function(){
-      var kod=decodeURIComponent(el.dataset.sugKod), nama=decodeURIComponent(el.dataset.sugSek);
-      var ki=document.getElementById('daf-kodsek'); if(ki)ki.value=kod;
-      var si=document.getElementById('daf-nmsek'); if(si)si.value=nama;
-      _tambahSekExtra(kod,nama);
-      hideSug('daf-sug-kod'); hideSug('daf-sug-sek');
-      // Kemaskini dropdown guru & peserta berdasarkan sekolah baharu
-      renderMainGuruList(); renderMainPesList();
-    });
+  drop.querySelectorAll('.sug-item[data-sug-kod]').forEach(function(el){
+    el.addEventListener('mousedown',function(){pickDafSek(decodeURIComponent(el.dataset.sugKod),decodeURIComponent(el.dataset.sugSek));});
   });
   drop.classList.add('on');
 }
-
-function onDafSugSek(q){
-  var drop=document.getElementById('daf-sug-sek'); if(!drop)return;
-  var v=(q||'').trim();
-  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
-  var lv=v.toLowerCase();
-  var items=_getSekSuggestions().filter(function(s){
-    return s.nama.toLowerCase().indexOf(lv)>-1;
-  }).slice(0,6);
-  if(!items.length){drop.innerHTML='';drop.classList.remove('on');return;}
-  drop.innerHTML=items.map(function(s){
-    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+s.nama+'</span></div>';
-  }).join('');
-  drop.querySelectorAll('.sug-item').forEach(function(el){
-    el.addEventListener('mousedown',function(){
-      var kod=decodeURIComponent(el.dataset.sugKod), nama=decodeURIComponent(el.dataset.sugSek);
-      var si=document.getElementById('daf-nmsek'); if(si)si.value=nama;
-      var ki=document.getElementById('daf-kodsek'); if(ki&&!ki.value)ki.value=kod;
-      _tambahSekExtra(kod,nama);
-      hideSug('daf-sug-sek');
-      // Kemaskini dropdown guru & peserta berdasarkan sekolah baharu
-      renderMainGuruList(); renderMainPesList();
-    });
-  });
-  drop.classList.add('on');
+function pickDafSek(kod,nama){
+  var hidK=document.getElementById('daf-kodsek'); if(hidK) hidK.value=kod;
+  var hidN=document.getElementById('daf-nmsek'); if(hidN) hidN.value=nama;
+  var vis=document.getElementById('daf-kodsek-search'); if(vis) vis.value=nama+' ('+kod+')';
+  hideSug('sug-daf-kodsek');
 }
+// Fungsi lama (_populateDafSekDropdown / onDafSekSelect / onDafKodSekIn / onDafSugKod / onDafSugSek)
+// dibuang — digantikan sepenuhnya oleh autocomplete di atas. Kekalkan sebagai no-op
+// supaya panggilan sedia ada di tempat lain (jika ada) tidak ranap.
+function _populateDafSekDropdown(){}
+function onDafSekSelect(){}
 
 // == DASHBOARD BIDANG FILTER ==================================
 var _dashBidang = 'semua'; // 'semua' | 'sukan' | 'koku'
@@ -8831,6 +8767,7 @@ function _applyRoleUI(){
     // Auto-pilih sekolah + buka borang berlaku dalam pilihProg() selepas guru pilih program.
     var selEl = document.getElementById('daf-sek-select');
     if(selEl && _sesi.kodSekolah) selEl.value = _sesi.kodSekolah;
+    _syncDafSekDisplay();
   }
 }
 
@@ -8875,7 +8812,7 @@ function lgKeluar(){
 
   // 3. Kosongkan input KP & semua input login by ID
   ['lg-kp','lg-pin','lg-admin-kod','daf-nama','daf-kp','daf-tel',
-   'daf-kodsek','daf-nmsek','daf-pin','daf-pin2'].forEach(function(id){
+   'daf-kodsek','daf-kodsek-search','daf-nmsek','daf-pin','daf-pin2'].forEach(function(id){
     var el = document.getElementById(id);
     if(el) el.value = '';
   });
@@ -8953,7 +8890,7 @@ async function lgDaftar(){
     hideOv();
     if(r&&r.ok){
       lgMsg('daf-ok','✅ '+r.msg+' Kelulusan biasanya dalam 1–2 hari bekerja.');
-      ['daf-nama','daf-kp','daf-tel','daf-kodsek','daf-nmsek','daf-pin','daf-pin2'].forEach(function(id){
+      ['daf-nama','daf-kp','daf-tel','daf-kodsek','daf-kodsek-search','daf-nmsek','daf-pin','daf-pin2'].forEach(function(id){
         var el=document.getElementById(id); if(el) el.value='';
       });
     } else {
@@ -9237,8 +9174,8 @@ function akEditMaklumat(noKP){
   var existing = document.getElementById('mo-edit-maklumat');
   if(existing) _closeDynMo('mo-edit-maklumat');
 
-  var sekOpts = _getSekSuggestions().sort(function(x,y){return x.nama.localeCompare(y.nama);})
-    .map(function(s){ return '<option value="'+esc(s.kod)+'"'+(s.kod===a.kodSekolah?' selected':'')+'>'+esc(s.nama)+' ('+esc(s.kod)+')</option>'; }).join('');
+  var sekNamaSemasa = a.kodSekolah ? (_getNamaSekolahByKod(a.kodSekolah)||'') : '';
+  var sekDisplaySemasa = a.kodSekolah ? (sekNamaSemasa ? sekNamaSemasa+' ('+a.kodSekolah+')' : a.kodSekolah) : '';
 
   var mo = document.createElement('div');
   mo.className = 'mo on'; mo.id = 'mo-edit-maklumat';
@@ -9247,9 +9184,12 @@ function akEditMaklumat(noKP){
     +'<div class="mb">'
     +'<div class="fi full" style="margin-bottom:.6rem;"><label>Nama Penuh</label>'
     +'<input type="text" id="edm-nama" value="'+esc(a.nama)+'" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.78rem;box-sizing:border-box;text-transform:uppercase;"></div>'
-    +'<div class="fi full" style="margin-bottom:.6rem;"><label>Sekolah</label>'
-    +'<select id="edm-sekolah" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.78rem;box-sizing:border-box;">'
-    +'<option value="">— PILIH SEKOLAH —</option>'+sekOpts+'</select></div>'
+    +'<div class="fi full" style="margin-bottom:.6rem;position:relative;"><label>Sekolah</label>'
+    +'<input type="text" id="edm-sekolah-search" value="'+esc(sekDisplaySemasa)+'" placeholder="Taip nama atau kod sekolah..." autocomplete="off"'
+    +' style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.78rem;box-sizing:border-box;"'
+    +' oninput="onSugEdmSek(this.value)" onfocus="onSugEdmSek(this.value)" onblur="hideSug(\'sug-edm-sekolah\')">'
+    +'<div class="sug-drop" id="sug-edm-sekolah"></div>'
+    +'<input type="hidden" id="edm-sekolah" value="'+esc(a.kodSekolah||'')+'"></div>'
     +'<div class="fi full" style="margin-bottom:.6rem;"><label>No. Telefon</label>'
     +'<input type="tel" id="edm-tel" value="'+esc(a.noTel||'')+'" placeholder="0128887272" style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:.78rem;box-sizing:border-box;"></div>'
     +'<div id="edm-err" style="display:none;background:#fdf2f2;border:1px solid #f5c6c6;border-radius:var(--r);padding:.4rem .65rem;font-size:.68rem;color:var(--red);margin-bottom:.6rem;"></div>'
@@ -9259,6 +9199,30 @@ function akEditMaklumat(noKP){
     +'</div></div></div>';
   _openDynMo(mo);
   setTimeout(function(){ var i=document.getElementById('edm-nama'); if(i) i.focus(); },100);
+}
+
+// Autocomplete sekolah dalam modal Edit Maklumat (Akaun)
+function onSugEdmSek(q){
+  var drop=document.getElementById('sug-edm-sekolah'); if(!drop)return;
+  var v=(q||'').trim();
+  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
+  var lv=v.toLowerCase();
+  var items=_getSekSuggestions().filter(function(s){
+    return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
+  }).sort(function(a,b){return a.nama.localeCompare(b.nama);}).slice(0,8);
+  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g5);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
+  drop.innerHTML=items.map(function(s){
+    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+esc(s.nama)+' ('+esc(s.kod)+')</span></div>';
+  }).join('');
+  drop.querySelectorAll('.sug-item[data-sug-kod]').forEach(function(el){
+    el.addEventListener('mousedown',function(){
+      var kod=decodeURIComponent(el.dataset.sugKod), nama=decodeURIComponent(el.dataset.sugSek);
+      var hid=document.getElementById('edm-sekolah'); if(hid) hid.value=kod;
+      var vis=document.getElementById('edm-sekolah-search'); if(vis) vis.value=nama+' ('+kod+')';
+      hideSug('sug-edm-sekolah');
+    });
+  });
+  drop.classList.add('on');
 }
 
 async function akSimpanMaklumat(noKP){
