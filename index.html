@@ -1405,7 +1405,7 @@ body.view-list .pc::after { display: none; }
       </div>
       <span class="lg-role-tag" id="nav-role-tag"></span>
     </div>
-    <button class="nav-logout" onclick="lgKeluar()">🚪 Keluar</button>
+    <button class="nav-logout" onclick="lgKeluarConfirm()">🚪 Keluar</button>
   </div>
 </nav>
 
@@ -2807,7 +2807,8 @@ function _isPenyFormAktif(){
 }
 
 // Paparkan dialog pengesahan tinggalkan penyertaan
-function _tunjukDialogTinggal(pgTuju){
+// pgTujuOrFn: nama tab (string) untuk _doShowPage, ATAU fungsi callback (cth. utk logout)
+function _tunjukDialogTinggal(pgTujuOrFn){
   var progName = (document.getElementById('sel-name')||{}).textContent || 'ini';
   var nameEl = document.getElementById('tinggal-prog-name');
   if(nameEl) nameEl.textContent = progName;
@@ -2818,9 +2819,10 @@ function _tunjukDialogTinggal(pgTuju){
   };
   document.getElementById('tinggal-btn-pergi').onclick = function(){
     closeMo('mo-tinggal');
-    // Reset penyertaan dulu, kemudian pergi ke tab
+    // Reset penyertaan dulu, kemudian teruskan
     resetPeny();
-    _doShowPage(pgTuju);
+    if(typeof pgTujuOrFn === 'function') pgTujuOrFn();
+    else _doShowPage(pgTujuOrFn);
   };
 
   openMo('mo-tinggal');
@@ -8592,11 +8594,10 @@ function _mulakanSesi(data){
   // Tunjuk/sembunyikan tab mengikut role
   _applyRoleUI();
 
-  // Load data — ikut tab yang aktif semasa log masuk
-  var _activePg = (document.querySelector('.pg.on')||{}).id||'';
-  if(_activePg==='pg-dashboard') loadDash(false);
-  else if(_activePg==='pg-peserta') loadProgsForPeny(false);
-  else loadProgs(false); // default: tab pengelola
+  // Default view mengikut peranan — tidak bergantung pada tab aktif sesi sebelumnya
+  // (mengelakkan paparan sisa cth. tab AKAUN admin masih terpapar bila guru log masuk)
+  var defaultPg = _sesi.role==='admin' ? 'akaun' : (_sesi.role==='pkk' ? 'dashboard' : 'peserta');
+  _doShowPage(defaultPg);
 }
 
 function _refreshNavUser(){
@@ -8636,6 +8637,16 @@ function _applyRoleUI(){
   }
 }
 
+// == Log keluar (dengan semakan borang aktif) =================
+// Dipanggil oleh butang "Keluar" — elak kehilangan draf tanpa sedar
+function lgKeluarConfirm(){
+  if(_isPenyFormAktif()){
+    _tunjukDialogTinggal(function(){ lgKeluar(); });
+    return;
+  }
+  lgKeluar();
+}
+
 // == Log keluar ==============================================
 function lgKeluar(){
   // 0. Tutup semua modal yang terbuka & reset scroll lock
@@ -8646,6 +8657,10 @@ function lgKeluar(){
   // T2: Hentikan autosave dan padam draf sebelum kosongkan sesi
   _stopPenyAutoSave();
   window._pendingDraft=null;
+
+  // PEMBETULAN: Kosongkan sepenuhnya borang/draf penyertaan (memori + DOM)
+  // supaya penyertaan yang belum dihantar tidak terbawa ke sesi log masuk seterusnya
+  resetPeny();
 
   // 1. Kosongkan sesi & cache
   _sesi = null;
