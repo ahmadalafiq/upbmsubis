@@ -5433,8 +5433,9 @@ function _startPenyAutoSave(){
   clearInterval(_penyAutoSaveTimer);
   _penyAutoSaveTimer=setInterval(_penyAutoSave,30000); // 30 saat
 }
-function _stopPenyAutoSave(){
+function _stopPenyAutoSave(keepDraft){
   clearInterval(_penyAutoSaveTimer);
+  if(keepDraft) return; // idle-logout: biar draf kekal untuk dipulihkan selepas log masuk semula
   try{sessionStorage.removeItem('upbm_peny_draft');}catch(e){}
 }
 function _checkPenyDraft(){
@@ -8817,19 +8818,25 @@ function lgKeluarConfirm(){
 }
 
 // == Log keluar ==============================================
-function lgKeluar(){
+// idleMode=true: dipanggil oleh idle-timer (log keluar automatik akibat tidak aktif).
+// Dalam kes ini draf borang penyertaan TIDAK dipadam supaya boleh dipulihkan
+// (ditawarkan semula via _checkPenyDraft) selepas user log masuk semula.
+function lgKeluar(idleMode){
   // 0. Tutup semua modal yang terbuka & reset scroll lock
   document.querySelectorAll('.mo.on').forEach(function(el){ el.classList.remove('on'); });
   _moOpenCount=0;
   document.body.classList.remove('modal-open');
 
-  // T2: Hentikan autosave dan padam draf sebelum kosongkan sesi
-  _stopPenyAutoSave();
+  // T2: Hentikan autosave. Padam draf HANYA jika ini bukan log keluar automatik akibat idle —
+  // idle-logout mesti kekalkan draf sebagai jaring keselamatan data peserta yang belum dihantar.
+  _stopPenyAutoSave(idleMode===true);
   window._pendingDraft=null;
 
-  // PEMBETULAN: Kosongkan sepenuhnya borang/draf penyertaan (memori + DOM)
-  // supaya penyertaan yang belum dihantar tidak terbawa ke sesi log masuk seterusnya
-  resetPeny();
+  // PEMBETULAN: Kosongkan borang/draf penyertaan dalam memori + DOM — TAPI bukan semasa
+  // idle-logout, kerana resetPeny() turut memadam draf tersimpan (via _stopPenyAutoSave).
+  if(idleMode!==true){
+    resetPeny();
+  }
 
   // 1. Kosongkan sesi & cache
   _sesi = null;
@@ -8838,7 +8845,11 @@ function lgKeluar(){
   // PEMBETULAN KRITIKAL #3: Buang hanya kunci spesifik — bukan clear() semua storage
   // clear() akan padam sesi semua tab dan data tidak berkaitan (upbm_view, dll)
   try{
-    ['upbm_sesi','upbm_peny_draft'].forEach(function(k){ try{sessionStorage.removeItem(k);}catch(e){} });
+    if(idleMode===true){
+      try{sessionStorage.removeItem('upbm_sesi');}catch(e){} // kekalkan upbm_peny_draft
+    }else{
+      ['upbm_sesi','upbm_peny_draft'].forEach(function(k){ try{sessionStorage.removeItem(k);}catch(e){} });
+    }
     ['upbm_sesi','upbm_peny_draft','upbm_sek_extra'].forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
   }catch(e){}
 
@@ -9612,22 +9623,32 @@ function _patchPadamSekBtns(){
   });
 }
 
-// == IDLE TIMER — log keluar automatik selepas 5 minit tidak aktif ===========
+// == IDLE TIMER — log keluar automatik selepas tidak aktif ===================
 (function(){
-  var IDLE_MS = 5 * 60 * 1000; // 5 minit
+  var IDLE_MS = 5 * 60 * 1000;      // 5 minit — keadaan biasa
+  var IDLE_MS_FORM = 15 * 60 * 1000; // 15 minit — semasa borang penyertaan (ramai peserta) sedang diisi
   var _idleTimer = null;
   function _resetIdleTimer(){
     clearTimeout(_idleTimer);
     // Hanya jalankan jika pengguna sedang log masuk
     if(!document.body.classList.contains('loggedin')) return;
+    // PEMBETULAN: panjangkan had idle bila borang penyertaan sedang aktif diisi —
+    // sesi isi data ramai peserta biasanya ambil masa lebih 5 minit.
+    var formAktif = (typeof _isPenyFormAktif === 'function') && _isPenyFormAktif();
+    var ms = formAktif ? IDLE_MS_FORM : IDLE_MS;
     _idleTimer = setTimeout(function(){
       if(document.body.classList.contains('loggedin')){
-        toast('Sesi tamat kerana tidak aktif. Sila log masuk semula.','in');
-        setTimeout(function(){ lgKeluar(); }, 1200);
+        toast('Sesi tamat kerana tidak aktif. Sila log masuk semula — draf borang anda disimpan.','in');
+        // PEMBETULAN KRITIKAL: guna lgKeluar(true) — mod idle — supaya draf borang
+        // penyertaan TIDAK dipadam dan boleh dipulihkan selepas log masuk semula.
+        setTimeout(function(){ lgKeluar(true); }, 1200);
       }
-    }, IDLE_MS);
+    }, ms);
   }
-  ['mousemove','mousedown','keydown','touchstart','scroll','click'].forEach(function(ev){
+  // PEMBETULAN: tambah 'input' & 'change' — sesetengah papan kekunci maya (mobile)
+  // tidak sentiasa lepaskan event 'keydown' semasa menaip, menyebabkan timer tidak reset
+  // walaupun user sebenarnya aktif menaip/memilih dropdown.
+  ['mousemove','mousedown','keydown','input','change','touchstart','scroll','click'].forEach(function(ev){
     document.addEventListener(ev, _resetIdleTimer, {passive:true});
   });
   // Mula semak apabila log masuk (body.loggedin)
