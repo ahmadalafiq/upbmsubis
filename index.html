@@ -2653,35 +2653,55 @@ function _uniq(arr){var s={},r=[];(arr||[]).forEach(function(v){if(!s[v]){s[v]=1
   }, true);
 })();
 
-// == SUPABASE REALTIME (2-HALA SYNC) =========================================
+// == SUPABASE REALTIME (2-HALA SYNC — SENYAP DI BELAKANG TABIR) ===============
+// P12: Sebelum ini SETIAP perubahan (mana-mana sekolah/program) trigger reload
+// PENUH (spinner/overlay) untuk SEMUA pengguna online — punca skrin "sentiasa
+// memuatkan semula" bila ramai akses serentak. Sekarang: kumpul perubahan
+// dalam queue, kemaskini data DI BELAKANG TABIR (tanpa spinner/overlay, tanpa
+// reset scroll), dan tangguh sepenuhnya jika pengguna sedang isi borang/modal.
 var _realtimeBustTimer = null;
+var _realtimeQueue = [];
+
 function _initRealtimeSync() {
   if (!sb) return;
 
-  function _triggerRealtimeSync(payload) {
-    console.log('Perubahan Real-time Dikesan:', payload);
+  function _queueChange(payload) {
+    _realtimeQueue.push(payload);
     clearTimeout(_realtimeBustTimer);
-    _realtimeBustTimer = setTimeout(function(){
-      cBust(); // Kosongkan cache klien
-      var activePg = (document.querySelector('.pg.on')||{}).id||'';
+    _realtimeBustTimer = setTimeout(_flushRealtimeQueueSilently, 2000); // 2 saat — kumpul burst jadi 1 kemaskini
+  }
 
-      // Elak reload jika ada modal aktif/pengguna sedang mengisi borang
-      if(document.getElementById('ov').classList.contains('on')) return;
-      if(activePg==='pg-peserta' && _isPenyFormAktif()) return;
-      if(activePg==='pg-pengelola' && document.getElementById('mo-edit').classList.contains('on')) return;
+  function _flushRealtimeQueueSilently() {
+    var batch = _realtimeQueue.splice(0, _realtimeQueue.length);
+    if (!batch.length) return;
 
-      // Reload tab aktif secara automatik
-      if(activePg==='pg-dashboard') loadDash(true);
-      else if(activePg==='pg-pengelola') loadProgs(true);
-      else if(activePg==='pg-peserta') loadProgsForPeny(true);
-      else if(activePg==='pg-akaun') loadAkaun(true);
-    }, 1500); // 1.5 saat debounce
+    // Tangguh sepenuhnya (bukan buang) jika borang/modal aktif — proses lepas ditutup
+    if (document.getElementById('ov').classList.contains('on') ||
+        (document.querySelector('.pg.on')||{}).id==='pg-peserta' && _isPenyFormAktif() ||
+        (document.querySelector('.pg.on')||{}).id==='pg-pengelola' && document.getElementById('mo-edit').classList.contains('on')) {
+      _realtimeQueue = batch.concat(_realtimeQueue);
+      clearTimeout(_realtimeBustTimer);
+      _realtimeBustTimer = setTimeout(_flushRealtimeQueueSilently, 2000);
+      return;
+    }
+
+    cBust(); // kosongkan cache klien untuk fetch akan datang
+    var activePg = (document.querySelector('.pg.on')||{}).id||'';
+    var scrollY = window.scrollY;
+
+    function _restoreScroll(){ requestAnimationFrame(function(){ window.scrollTo({top: scrollY}); }); }
+
+    // silent=true -> tiada spinner/overlay/reset UI, data dikemaskini terus di belakang tabir
+    if(activePg==='pg-dashboard'){ loadDash(false, true); _restoreScroll(); }
+    else if(activePg==='pg-pengelola'){ loadProgs(false, true); _restoreScroll(); }
+    else if(activePg==='pg-peserta'){ loadProgsForPeny(false, null, true); _restoreScroll(); }
+    else if(activePg==='pg-akaun'){ loadAkaun(false, true); _restoreScroll(); }
   }
 
   sb.channel('db-changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PROGRAM }, _triggerRealtimeSync)
-    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PENYERTAAN }, _triggerRealtimeSync)
-    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PENCAPAIAN }, _triggerRealtimeSync)
+    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PROGRAM }, _queueChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PENYERTAAN }, _queueChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: TBL_PENCAPAIAN }, _queueChange)
     .subscribe(function(status) {
       console.log('Status Realtime Supabase:', status);
     });
@@ -3059,11 +3079,13 @@ function clearPF(){
   });
 }
 
-async function loadProgs(bust){
+async function loadProgs(bust, silent){
   if(bust)cBust();
   var el=document.getElementById('prog-list');
-  el.innerHTML='<div class="ld"><div class="sp"></div>Memuatkan...</div>';
-  setBtn('btn-rp',true);
+  if(!silent){
+    el.innerHTML='<div class="ld"><div class="sp"></div>Memuatkan...</div>';
+    setBtn('btn-rp',true);
+  }
   try{
     var r=await run('getAllDataGS');
     var d=(r&&r.programs)?r.programs:[];
@@ -3092,15 +3114,18 @@ async function loadProgs(bust){
     _updateStabCounts(d);
     applyProgFilt();
   }catch(e2){
-    var msg2 = e2.message||'';
-    var isAuth = msg2.indexOf('Authorization')>=0||msg2.indexOf('permission')>=0||msg2.indexOf('DriveApp')>=0||msg2.indexOf('drive')>=0;
-    document.getElementById('prog-list').innerHTML=
-      '<div class="empty"><div class="ei">'+(isAuth?'🔐':'⚠')+'</div>'
-      +'<h3>'+(isAuth?'Kebenaran Drive Diperlukan':'Gagal: '+msg2)+'</h3>'
-      +(isAuth?'<p style="font-size:.8rem;color:#666;max-width:340px;margin:.5rem auto;">Sila buka <b>Apps Script Editor → Deploy → Manage Deployments</b>, padam deployment lama, buat <b>New Deployment</b> dan buka semula URL baru. Klik <b>Allow</b> apabila diminta kebenaran.</p>':'')
-      +'</div>';
+    if(silent){ console.warn('loadProgs(silent) gagal, diabaikan senyap:', e2.message); }
+    else{
+      var msg2 = e2.message||'';
+      var isAuth = msg2.indexOf('Authorization')>=0||msg2.indexOf('permission')>=0||msg2.indexOf('DriveApp')>=0||msg2.indexOf('drive')>=0;
+      document.getElementById('prog-list').innerHTML=
+        '<div class="empty"><div class="ei">'+(isAuth?'🔐':'⚠')+'</div>'
+        +'<h3>'+(isAuth?'Kebenaran Drive Diperlukan':'Gagal: '+msg2)+'</h3>'
+        +(isAuth?'<p style="font-size:.8rem;color:#666;max-width:340px;margin:.5rem auto;">Sila buka <b>Apps Script Editor → Deploy → Manage Deployments</b>, padam deployment lama, buat <b>New Deployment</b> dan buka semula URL baru. Klik <b>Allow</b> apabila diminta kebenaran.</p>':'')
+        +'</div>';
+    }
   }
-  finally{setBtn('btn-rp',false);}
+  finally{ if(!silent) setBtn('btn-rp',false); }
 }
 
 function populateMonthFilt(progs){
@@ -5513,10 +5538,10 @@ function _restorePenyDraft(draft){
   toast('Draf dipulihkan \u2014 semak sekolah & data sebelum hantar \u2713','ok');
 }
 
-async function loadProgsForPeny(bust, _doneCallback){
+async function loadProgsForPeny(bust, _doneCallback, silent){
   if(bust)cBust();
   var el=document.getElementById('peny-pilih');
-  el.innerHTML='<div class="ld"><div class="sp"></div></div>';
+  if(!silent) el.innerHTML='<div class="ld"><div class="sp"></div></div>';
   try{
     var r=await run('getAllDataGS');
     var allProg=(r&&r.programs)?r.programs:[];
@@ -5540,7 +5565,10 @@ async function loadProgsForPeny(bust, _doneCallback){
     }
     renderPenyList(aktif);
     if(typeof _doneCallback === 'function') _doneCallback();
-  }catch(e){document.getElementById('peny-pilih').innerHTML='<div style="padding:1rem;color:var(--red);font-size:.74rem;">⚠ '+e.message+'</div>';}
+  }catch(e){
+    if(silent){ console.warn('loadProgsForPeny(silent) gagal, diabaikan senyap:', e.message); }
+    else{ document.getElementById('peny-pilih').innerHTML='<div style="padding:1rem;color:var(--red);font-size:.74rem;">⚠ '+e.message+'</div>'; }
+  }
 }
 
 var _penyView = 'kad'; // 'kad' atau 'senarai'
@@ -6880,9 +6908,9 @@ function _updateDashTimestamp(){
   var hh=String(now.getHours()).padStart(2,'0'), mm=String(now.getMinutes()).padStart(2,'0');
   el.textContent='Dikemaskini: '+hh+':'+mm;
 }
-async function loadDash(bust){
+async function loadDash(bust, silent){
   if(bust)cBust();
-  showOv('MEMUATKAN DASHBOARD...');
+  if(!silent) showOv('MEMUATKAN DASHBOARD...');
   try{
     var r=await run('getAllDataGS');
     var pg=(r&&r.programs)?r.programs:[];
@@ -6900,7 +6928,7 @@ async function loadDash(bust){
     animateCounter(document.getElementById('st-ps'), _stPs);
     buildMarkahGrid();
     _updateDashTimestamp();
-    hideOv(); // release overlay early
+    if(!silent) hideOv(); // release overlay early
 
     // Reset all filters on fresh load
     resetDashFilters(true); // true = silent (no rebuildDash yet, called below)
@@ -6909,7 +6937,10 @@ async function loadDash(bust){
     requestAnimationFrame(function(){
       rebuildDash();
     });
-  }catch(e){hideOv();toast('Gagal: '+e.message,'er');}
+  }catch(e){
+    if(silent){ console.warn('loadDash(silent) gagal, diabaikan senyap:', e.message); }
+    else{ hideOv(); toast('Gagal: '+e.message,'er'); }
+  }
 }
 
 // ISU 4: Kedudukan keutamaan tempat — guna untuk susun rekod Pencapaian sebelum diproses,
@@ -8958,16 +8989,17 @@ var _akaunSekFilt = 'semua';
 var _akaunSearchQ = '';
 var _akaunGroupBySek = false;
 
-async function loadAkaun(bust){
+async function loadAkaun(bust, silent){
   if(bust) cBust();
-  document.getElementById('akaun-list').innerHTML='<div class="ld"><div class="sp"></div>Memuatkan...</div>';
+  if(!silent) document.getElementById('akaun-list').innerHTML='<div class="ld"><div class="sp"></div>Memuatkan...</div>';
   try{
     var r = await run('getAkaunListGS');
     _akaunData = (r&&r.data)||[];
     _populateAkFiltSek();
     renderAkaun();
   }catch(e){
-    document.getElementById('akaun-list').innerHTML='<div class="empty"><div class="ei">⚠</div><h3>Gagal memuatkan: '+e.message+'</h3></div>';
+    if(silent){ console.warn('loadAkaun(silent) gagal, diabaikan senyap:', e.message); }
+    else{ document.getElementById('akaun-list').innerHTML='<div class="empty"><div class="ei">⚠</div><h3>Gagal memuatkan: '+e.message+'</h3></div>'; }
   }
 }
 
