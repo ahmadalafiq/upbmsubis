@@ -3,22 +3,20 @@ name: Deploy Supabase Edge Functions
 on:
   push:
     branches:
-      - main # Workflow ini berjalan setiap kali anda push ke branch main
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Ambil kod terkini dari repository GitHub
+      # 1. Ambil kod terkini dari repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Pasang Supabase CLI di pelayan GitHub Actions
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      # 2. Pasang Supabase CLI menggunakan Node.js/NPM (Lebih stabil)
+      - name: Install Supabase CLI
+        run: npm install -g supabase
 
       # 3. Deploy Edge Function 'ai-chat' ke Supabase
       - name: Deploy ai-chat function
