@@ -1235,6 +1235,47 @@ body.view-list .pc::after { display: none; }
 #sel-tahun{background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.28);border-radius:var(--r);padding:.28rem .55rem;color:#fff;font-family:'Open Sans',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;min-height:34px;text-transform:none;}
 #sel-tahun option{background:var(--g8);color:#fff;}
 @media(max-width:600px){.tahun-sel-wrap label{display:none;}}
+/* ================= GEMINI AI CHAT WIDGET (FASA 1) ================= */
+.ai-fab{position:fixed;right:1.1rem;bottom:1.1rem;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--rdk));color:#fff;border:none;box-shadow:0 4px 16px rgba(192,57,43,.4);cursor:pointer;z-index:850;font-size:1.35rem;display:flex;align-items:center;justify-content:center;transition:transform .18s,box-shadow .18s;-webkit-tap-highlight-color:transparent;}
+.ai-fab:hover{transform:scale(1.06);box-shadow:0 6px 20px rgba(192,57,43,.5);}
+.ai-fab:active{transform:scale(.96);}
+.ai-fab .ai-dot{position:absolute;top:2px;right:2px;width:11px;height:11px;border-radius:50%;background:#27ae60;border:2px solid #fff;}
+.ai-panel{position:fixed;right:1.1rem;bottom:5rem;width:340px;max-width:calc(100vw - 2.2rem);height:480px;max-height:calc(100vh - 7.5rem);background:#fff;border-radius:var(--rl);box-shadow:var(--sl);z-index:851;display:none;flex-direction:column;overflow:hidden;border:1px solid var(--g2);}
+.ai-panel.on{display:flex;animation:fi .18s ease;}
+.ai-ph{background:linear-gradient(135deg,var(--red),var(--rdk));color:#fff;padding:.85rem 1rem;display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.ai-ph b{font-family:'Montserrat',sans-serif;font-size:.82rem;font-weight:800;}
+.ai-ph small{display:block;font-size:.6rem;color:rgba(255,255,255,.8);font-weight:600;}
+.ai-ph .ai-close{margin-left:auto;background:rgba(255,255,255,.18);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center;}
+.ai-body{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:.6rem;background:#f7f8fa;}
+.ai-msg{max-width:85%;padding:.5rem .7rem;border-radius:12px;font-size:.76rem;line-height:1.42;white-space:pre-wrap;word-break:break-word;}
+.ai-msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--g2);color:var(--g9);border-bottom-left-radius:3px;}
+.ai-msg.usr{align-self:flex-end;background:var(--red);color:#fff;border-bottom-right-radius:3px;}
+.ai-msg.err{align-self:flex-start;background:var(--rp);color:var(--red);border:1px solid rgba(192,57,43,.2);}
+.ai-typing{align-self:flex-start;display:flex;gap:.22rem;padding:.5rem .7rem;background:#fff;border:1px solid var(--g2);border-radius:12px;border-bottom-left-radius:3px;}
+.ai-typing span{width:6px;height:6px;border-radius:50%;background:var(--g5);animation:aiblink 1.1s infinite;}
+.ai-typing span:nth-child(2){animation-delay:.15s;} .ai-typing span:nth-child(3){animation-delay:.3s;}
+@keyframes aiblink{0%,60%,100%{opacity:.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-2px);}}
+.ai-ftr{border-top:1px solid var(--g2);padding:.6rem;display:flex;gap:.4rem;flex-shrink:0;background:#fff;}
+.ai-ftr textarea{flex:1;resize:none;border:1.5px solid var(--g3);border-radius:14px;padding:.5rem .75rem;font-family:inherit;font-size:.76rem;font-weight:400;text-transform:none;max-height:80px;outline:none;}
+.ai-ftr textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--rt);}
+.ai-ftr button{width:38px;height:38px;border-radius:50%;border:none;background:var(--red);color:#fff;cursor:pointer;font-size:.9rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.ai-ftr button:disabled{opacity:.4;cursor:not-allowed;}
+.ai-hint{font-size:.6rem;color:var(--g5);text-align:center;padding:.3rem 0 0;}
+.ai-sugg{display:flex;flex-wrap:wrap;gap:.32rem;padding:0 .9rem .7rem;flex-shrink:0;background:#f7f8fa;}
+.ai-sugg button{background:#fff;border:1.5px solid var(--g3);color:var(--g7);font-size:.63rem;font-weight:700;padding:.28rem .6rem;border-radius:16px;cursor:pointer;font-family:inherit;text-transform:none;min-height:auto;}
+.ai-sugg button:hover{border-color:var(--red);color:var(--red);}
+@media(max-width:480px){.ai-panel{right:.6rem;bottom:4.6rem;width:calc(100vw - 1.2rem);}.ai-fab{right:.8rem;bottom:.8rem;}}
+/* ============ FLOATING "+ TAMBAH PESERTA" (borang Penyertaan) ============ */
+.fab-peny{position:fixed;left:1.1rem;bottom:1.1rem;z-index:840;display:none;align-items:center;gap:.4rem;background:#27ae60;color:#fff;border:none;border-radius:26px;padding:.7rem 1.05rem;font-family:'Open Sans',sans-serif;font-size:.74rem;font-weight:800;text-transform:uppercase;letter-spacing:.3px;box-shadow:0 4px 16px rgba(39,174,96,.4);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s,box-shadow .15s,opacity .18s;}
+.fab-peny.show{display:inline-flex;animation:fabIn .2s ease;}
+.fab-peny:active{transform:scale(.95);}
+.fab-peny .fab-ic{font-size:.95rem;line-height:1;}
+@keyframes fabIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fab-peny-menu{position:fixed;left:1.1rem;bottom:4.3rem;z-index:841;background:#fff;border:1px solid var(--g2);border-radius:var(--rl);box-shadow:var(--sl);padding:.4rem;display:none;flex-direction:column;gap:.2rem;min-width:190px;}
+.fab-peny-menu.on{display:flex;animation:fi .16s ease;}
+.fab-peny-menu button{background:none;border:none;text-align:left;padding:.55rem .7rem;border-radius:8px;font-size:.72rem;font-weight:700;color:var(--g8);cursor:pointer;font-family:inherit;text-transform:none;display:flex;align-items:center;gap:.5rem;}
+.fab-peny-menu button:hover{background:var(--g1);}
+@media(max-width:480px){.fab-peny{left:.8rem;bottom:.8rem;padding:.65rem .9rem;}.fab-peny-menu{left:.8rem;bottom:4rem;}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -1379,6 +1420,34 @@ body.view-list .pc::after { display: none; }
 <!-- UP ARROW -->
 <button class="up-arrow" id="up-arrow-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ke atas">▲</button>
 
+<!-- ================= GEMINI AI CHAT WIDGET (FASA 1) ================= -->
+<button class="ai-fab" id="ai-fab-btn" onclick="aiTogglePanel()" title="Bantuan AI">
+  🤖<span class="ai-dot" id="ai-fab-dot" style="display:none;"></span>
+</button>
+<div class="ai-panel" id="ai-panel">
+  <div class="ai-ph">
+    <div>🤖</div>
+    <div><b>Pembantu AI UPBM</b><small>Ditenagai Gemini · Sedia membantu</small></div>
+    <button class="ai-close" onclick="aiTogglePanel(false)">✕</button>
+  </div>
+  <div class="ai-body" id="ai-body"></div>
+  <div class="ai-sugg" id="ai-sugg"></div>
+  <div class="ai-ftr">
+    <textarea id="ai-input" rows="1" placeholder="Taip soalan anda..." onkeydown="aiOnKeydown(event)"></textarea>
+    <button id="ai-send-btn" onclick="aiSend()">➤</button>
+  </div>
+  <div class="ai-hint">AI boleh tersilap. Sahkan maklumat penting sebelum bertindak.</div>
+</div>
+
+<!-- ============ FLOATING "+ TAMBAH" (borang Penyertaan) ============ -->
+<div class="fab-peny-menu" id="fab-peny-menu">
+  <button onclick="fabDoAddPes()">🧑‍🎓 Tambah Peserta</button>
+  <button onclick="fabDoAddGuru()">👨‍🏫 Tambah Guru Pengiring</button>
+</div>
+<button class="fab-peny" id="fab-peny-btn" onclick="fabPenyToggleMenu()">
+  <span class="fab-ic">＋</span> TAMBAH
+</button>
+
 <nav>
   <div class="logo"><img src="https://drive.google.com/thumbnail?id=16W_2I2bcuea1YwDnya0v-M94AGB-A1A3&sz=w400" class="nav-logo-img" alt="UPBM Subis" onerror="this.style.display='none'"><span>UPBM SUBIS</span></div>
   <div class="nclock"><div class="nct" id="nct">--:--:--</div><div class="ncd" id="ncd">-- --</div></div>
@@ -1495,6 +1564,14 @@ body.view-list .pc::after { display: none; }
     <button class="stab on-aktif" id="stab-aktif" onclick="_setStab('AKTIF')">AKTIF <span class="stab-ct stab-ct-a" id="stab-ct-a">0</span></button>
     <button class="stab" id="stab-tutup" onclick="_setStab('TUTUP')">TUTUP <span class="stab-ct stab-ct-t" id="stab-ct-t">0</span></button>
     <button class="stab" id="stab-semua" onclick="_setStab('')">SEMUA <span class="stab-ct stab-ct-s" id="stab-ct-s">0</span></button>
+  </div>
+  <div style="margin:.5rem 0 .3rem;">
+    <div style="position:relative;">
+      <span style="position:absolute;left:.7rem;top:50%;transform:translateY(-50%);font-size:.8rem;pointer-events:none;">🔍</span>
+      <input type="text" id="flt-nama" placeholder="Taip untuk cari nama program..." autocomplete="off"
+        style="width:100%;box-sizing:border-box;padding:.38rem .75rem .38rem 2rem;border:1.5px solid var(--g3);border-radius:20px;font-size:.74rem;font-family:inherit;background:var(--g1);"
+        oninput="applyProgFilt()">
+    </div>
   </div>
   <div class="pfilt" id="prog-filt">
     <select id="flt-bulan" onchange="applyProgFilt()"><option value="">📅 SEMUA BULAN</option></select>
@@ -3169,11 +3246,13 @@ function _updateStabCounts(progs){
   var ss=document.getElementById('stab-ct-s'); if(ss)ss.textContent=progs.length;
 }
 function applyProgFilt(){
+  var nama  =document.getElementById('flt-nama')&&document.getElementById('flt-nama').value.trim().toUpperCase();
   var bulan =document.getElementById('flt-bulan')&&document.getElementById('flt-bulan').value;
   var bidang=document.getElementById('flt-bidang')&&document.getElementById('flt-bidang').value;
   var clrBtn=document.getElementById('btn-flt-clr');
-  if(clrBtn)clrBtn.style.display=(bulan||bidang)?'block':'none';
+  if(clrBtn)clrBtn.style.display=(nama||bulan||bidang)?'block':'none';
   var filtered=_allProg.filter(function(p){
+    if(nama&&(p['Nama Program']||'').toUpperCase().indexOf(nama)===-1)return false;
     if(bulan){var d=new Date(p['Tarikh']);if(isNaN(d))return false;var k=d.getFullYear()+'-'+(d.getMonth()+1);if(k!==bulan)return false;}
     if(bidang&&(p['Bidang']||'').toUpperCase()!==bidang.toUpperCase())return false;
     if(_activeStab){
@@ -3186,7 +3265,7 @@ function applyProgFilt(){
   renderProgList(filtered);
 }
 function clearProgFilt(){
-  ['flt-bulan','flt-bidang'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['flt-nama','flt-bulan','flt-bidang'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var clrBtn=document.getElementById('btn-flt-clr');if(clrBtn)clrBtn.style.display='none';
   applyProgFilt();
 }
@@ -10510,6 +10589,180 @@ function _onFsChange() {
 })();
 
 // P3: F11 dashboard fullscreen dibuang.
+
+// ================= GEMINI AI CHAT WIDGET (FASA 1) =================
+// NOTA PELAKSANAAN:
+// Widget ini TIDAK memanggil Gemini API terus dari browser (kunci API tidak
+// boleh didedahkan pada sisi client). Ia memanggil Supabase Edge Function
+// 'ai-chat' yang bertindak sebagai proksi selamat ke Gemini API.
+// Edge Function tersebut perlu dideploy berasingan (lihat nota di bawah chat).
+var _aiHist = [];      // {role:'user'|'model', text}
+var _aiOpened = false;
+var _aiBusy = false;
+
+var AI_SARANAN_AWAL = [
+  'Macam mana nak daftar program baharu?',
+  'Kenapa saya tak boleh hantar penyertaan?',
+  'Apa maksud status DRAFT vs AKTIF?'
+];
+
+function aiTogglePanel(force){
+  var panel = document.getElementById('ai-panel');
+  var show = (typeof force === 'boolean') ? force : !panel.classList.contains('on');
+  panel.classList.toggle('on', show);
+  if(show && !_aiOpened){
+    _aiOpened = true;
+    aiAppendMsg('bot', 'Hai! 👋 Saya pembantu AI UPBM Subis. Saya boleh bantu jawab soalan tentang penggunaan sistem ini. Apa yang boleh saya bantu?');
+    aiRenderSugg(AI_SARANAN_AWAL);
+    document.getElementById('ai-fab-dot').style.display='none';
+  }
+  if(show) setTimeout(function(){ var i=document.getElementById('ai-input'); if(i) i.focus(); }, 150);
+}
+
+function aiRenderSugg(list){
+  var wrap = document.getElementById('ai-sugg');
+  wrap.innerHTML = '';
+  (list||[]).forEach(function(s){
+    var b = document.createElement('button');
+    b.textContent = s;
+    b.onclick = function(){ document.getElementById('ai-input').value = s; aiSend(); };
+    wrap.appendChild(b);
+  });
+}
+
+function aiOnKeydown(e){
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    aiSend();
+  }
+}
+
+function aiAppendMsg(kind, text){
+  var body = document.getElementById('ai-body');
+  var d = document.createElement('div');
+  d.className = 'ai-msg ' + kind;
+  d.textContent = text;
+  body.appendChild(d);
+  body.scrollTop = body.scrollHeight;
+}
+
+function aiShowTyping(show){
+  var body = document.getElementById('ai-body');
+  var existing = document.getElementById('ai-typing-ind');
+  if(show){
+    if(existing) return;
+    var d = document.createElement('div');
+    d.className = 'ai-typing'; d.id = 'ai-typing-ind';
+    d.innerHTML = '<span></span><span></span><span></span>';
+    body.appendChild(d);
+    body.scrollTop = body.scrollHeight;
+  } else if(existing){
+    existing.remove();
+  }
+}
+
+// Konteks ringkas halaman semasa — dihantar bersama supaya jawapan lebih relevan.
+// Fasa akan datang akan tambah konteks lanjut (program dipilih, data dimuatkan, dll).
+function aiBuildContext(){
+  return {
+    halamanSemasa: (document.querySelector('.pg.on')||{}).id || '',
+    peranan: (_sesi && _sesi.role) || 'tetamu',
+    kodSekolah: (_sesi && _sesi.kodSekolah) || ''
+  };
+}
+
+async function aiSend(){
+  if(_aiBusy) return;
+  var input = document.getElementById('ai-input');
+  var msg = (input.value || '').trim();
+  if(!msg) return;
+  input.value = '';
+  document.getElementById('ai-sugg').innerHTML = '';
+  aiAppendMsg('usr', msg);
+  _aiHist.push({role:'user', text: msg});
+  _aiBusy = true;
+  document.getElementById('ai-send-btn').disabled = true;
+  aiShowTyping(true);
+  try{
+    // Panggil Supabase Edge Function 'ai-chat' (proksi Gemini API selamat).
+    var res = await sb.functions.invoke('ai-chat', {
+      body: { message: msg, history: _aiHist.slice(-10), context: aiBuildContext() }
+    });
+    aiShowTyping(false);
+    if(res.error) throw new Error(res.error.message || 'Ralat sambungan AI');
+    var jwp = (res.data && res.data.reply) ? res.data.reply : 'Maaf, saya tidak pasti jawapannya buat masa ini.';
+    aiAppendMsg('bot', jwp);
+    _aiHist.push({role:'model', text: jwp});
+  }catch(e){
+    aiShowTyping(false);
+    aiAppendMsg('err', '⚠ Pembantu AI belum tersedia sepenuhnya. (Edge Function "ai-chat" belum dideploy atau ralat rangkaian.) Sila cuba lagi kemudian.');
+    console.warn('AI chat error:', e.message);
+  }finally{
+    _aiBusy = false;
+    document.getElementById('ai-send-btn').disabled = false;
+  }
+}
+
+// ============ FLOATING "+ TAMBAH" (borang Penyertaan) ============
+// Tunjuk butang terapung bila user dah scroll melepasi butang asal
+// "+ TAMBAH GURU" / "+ TAMBAH PESERTA" supaya tak perlu scroll balik ke atas.
+function _fabPenyCheck(){
+  var fab = document.getElementById('fab-peny-btn');
+  if(!fab) return;
+  var pgEl = document.getElementById('pg-peserta');
+  var formWrap = document.getElementById('peny-form-wrap');
+  var isActivePg = pgEl && pgEl.classList.contains('on');
+  var isFormShown = formWrap && formWrap.style.display !== 'none' && formWrap.offsetParent !== null;
+  if(!isActivePg || !isFormShown){
+    fab.classList.remove('show');
+    _fabPenyCloseMenu();
+    return;
+  }
+  var anchor = document.getElementById('btn-add-main-pes');
+  var rect = anchor ? anchor.getBoundingClientRect() : null;
+  // Tunjuk hanya bila butang asal dah keluar dari viewport (scroll ke bawah)
+  var shouldShow = rect && rect.bottom < 40;
+  fab.classList.toggle('show', !!shouldShow);
+  if(!shouldShow) _fabPenyCloseMenu();
+}
+window.addEventListener('scroll', _fabPenyCheck, {passive:true});
+setInterval(_fabPenyCheck, 500); // fallback — tangkap perubahan bila tukar tab/buka borang tanpa scroll event
+
+function fabPenyToggleMenu(){
+  var menu = document.getElementById('fab-peny-menu');
+  menu.classList.toggle('on');
+}
+function _fabPenyCloseMenu(){
+  var menu = document.getElementById('fab-peny-menu');
+  if(menu) menu.classList.remove('on');
+}
+function _fabScrollToLast(containerId){
+  setTimeout(function(){
+    var list = document.getElementById(containerId);
+    if(list && list.lastElementChild){
+      list.lastElementChild.scrollIntoView({behavior:'smooth', block:'center'});
+    }
+  }, 80);
+}
+function fabDoAddPes(){
+  _fabPenyCloseMenu();
+  addMainPes();
+  _fabScrollToLast('main-pes-list');
+}
+function fabDoAddGuru(){
+  _fabPenyCloseMenu();
+  addMainGuru();
+  _fabScrollToLast('main-guru-list');
+}
+// Tutup menu bila klik di luar
+document.addEventListener('click', function(e){
+  var menu = document.getElementById('fab-peny-menu');
+  var btn = document.getElementById('fab-peny-btn');
+  if(!menu || !menu.classList.contains('on')) return;
+  if(e.target === btn || btn.contains(e.target)) return;
+  if(!menu.contains(e.target)) _fabPenyCloseMenu();
+});
+
 
 
 </script>
