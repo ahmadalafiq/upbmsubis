@@ -2289,7 +2289,7 @@ var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Kod induk untuk log masuk admin tanpa PIN (mod "adminKod" pada skrin log masuk).
 // TUKAR nilai ini kepada kod rahsia anda sendiri sebelum deploy ke production.
-var ADMIN_MASTER_KOD = 'SUBIS-ADMIN-2026';
+// ADMIN_MASTER_KOD dah dipindah ke jadual app_secrets di Supabase — disemak via RPC login_admin()
 
 // Nama jadual Supabase — kekalkan seperti skema SQL anda. Tukar di sini sahaja
 // jika nama jadual sebenar anda berbeza.
@@ -2482,27 +2482,19 @@ async function _supaDispatch(fn, payload){
   if(fn === 'kemaskiniProgramGS'){
     var tar2 = payload.tarikh;
     var thn2 = tar2 ? new Date(tar2).getFullYear() : new Date().getFullYear();
-    var updP = {
-      nama_program: payload.nama, pengelola: payload.pengelola, kod_pengelola: payload.kodPengelola,
-      bidang: payload.bidang, kategori: (payload.kategori||[]).join(','), peringkat: payload.peringkat,
-      tarikh: tar2, tempat: payload.tempat, status: payload.status||'AKTIF', tahun: thn2
-    };
-    var rUpd = await sb.from(TBL_PROGRAM).update(updP).eq('id', payload.id);
-    _throwIfErr(rUpd.error);
-    // Segerakkan salinan 'nama_program' yang disimpan berasingan (denormalized) dalam Penyertaan & Pencapaian —
-    // tanpa ini, nama lama kekal terpapar walaupun program sudah ditukar nama.
-    var rUpdPy = await sb.from(TBL_PENYERTAAN).update({nama_program: payload.nama}).eq('program_id', payload.id);
-    _throwIfErr(rUpdPy.error);
-    var rUpdPc = await sb.from(TBL_PENCAPAIAN).update({nama_program: payload.nama}).eq('program_id', payload.id);
-    _throwIfErr(rUpdPc.error);
+    var rKp = await sb.rpc('kemaskini_program_cascade', {
+      p_id: payload.id, p_nama: payload.nama, p_pengelola: payload.pengelola,
+      p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
+      p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
+      p_tarikh: tar2, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn2
+    });
+    _throwIfErr(rKp.error);
     return {ok:true, msg:'Program berjaya dikemaskini'};
   }
 
   if(fn === 'padamProgramGS'){
-    var idDel = payload.id;
-    var d1 = await sb.from(TBL_PENYERTAAN).delete().eq('program_id', idDel); _throwIfErr(d1.error);
-    var d2 = await sb.from(TBL_PENCAPAIAN).delete().eq('program_id', idDel); _throwIfErr(d2.error);
-    var d3 = await sb.from(TBL_PROGRAM).delete().eq('id', idDel); _throwIfErr(d3.error);
+    var rPd = await sb.rpc('padam_program_cascade', {p_id: payload.id});
+    _throwIfErr(rPd.error);
     return {ok:true, msg:'Program dipadam'};
   }
 
@@ -2526,11 +2518,8 @@ async function _supaDispatch(fn, payload){
   // -------- PENCAPAIAN (sheet 'Pencapaian') --------
   if(fn === 'simpanPencapaianGS'){
     var thnPc = new Date().getFullYear();
-    var dPc = await sb.from(TBL_PENCAPAIAN).delete().eq('program_id', payload.programId);
-    _throwIfErr(dPc.error);
     var entriesIn = (payload.entries||[]).map(function(e){
       return {
-        program_id: payload.programId,
         nama_program: payload.programNama,
         kategori: e.kategori,
         nama_sekolah: e.sekolah,
@@ -2544,47 +2533,48 @@ async function _supaDispatch(fn, payload){
         tahun: thnPc
       };
     });
-    if(entriesIn.length){
-      var iPc = await sb.from(TBL_PENCAPAIAN).insert(entriesIn);
-      _throwIfErr(iPc.error);
-    }
+    var rPc = await sb.rpc('replace_pencapaian', {p_program_id: payload.programId, p_entries: entriesIn});
+    _throwIfErr(rPc.error);
     return {ok:true, msg:'Pencapaian disimpan'};
   }
 
   // -------- PENGGUNA / PIN (sheet 'PIN') --------
   if(fn === 'loginGS'){
-    var rU = await sb.from(TBL_PENGGUNA).select('*').eq('no_kp', payload.noKP).maybeSingle();
+    // Mod admin — kod induk (kini disemak server-side via RPC, bukan ADMIN_MASTER_KOD dlm JS)
+    if(payload.adminKod){
+      var rA = await sb.rpc('login_admin', {p_no_kp: payload.noKP, p_admin_kod: payload.adminKod});
+      _throwIfErr(rA.error);
+      var uA = (rA.data||[])[0];
+      if(!uA) return {ok:false, msg:'Kod admin tidak sah.'};
+      return {ok:true, skipPin:true, role:uA.role, nama:uA.nama, kodSekolah:uA.kod_sekolah, namaSekolah:uA.nama_sekolah};
+    }
+
+    // Semakan status akaun — masih perlu select ringkas, TANPA lajur 'kod' (PIN)
+    var rU = await sb.from(TBL_PENGGUNA).select('nama,role,status,kod_sekolah,nama_sekolah').eq('no_kp', payload.noKP).maybeSingle();
     _throwIfErr(rU.error);
     var u = rU.data;
     if(!u) return {ok:false, status:'TIADA', msg:'Akaun tidak dijumpai. Sila daftar akaun baharu.'};
     if(u.status === 'TUNGGU') return {ok:false, status:'TUNGGU', msg:'Akaun anda sedang menunggu kelulusan admin.'};
     if(u.status === 'TOLAK') return {ok:false, status:'TOLAK', msg:'Akaun anda tidak aktif. Sila hubungi admin.'};
 
-    // Mod admin — kod induk menggantikan PIN
-    if(payload.adminKod){
-      if(payload.adminKod !== ADMIN_MASTER_KOD || u.role !== 'admin'){
-        return {ok:false, msg:'Kod admin tidak sah.'};
-      }
-      return {ok:true, skipPin:true, role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah};
-    }
-
     if(payload.checkOnly){
       return {ok:true, skipPin:false, role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah};
     }
 
-    if(String(payload.pin||'') !== String(u.kod||'')){
-      return {ok:false, msg:'PIN salah. Sila cuba semula.'};
-    }
-    return {ok:true, role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah};
+    var rL = await sb.rpc('login_pengguna', {p_no_kp: payload.noKP, p_pin: payload.pin});
+    _throwIfErr(rL.error);
+    var uL = (rL.data||[])[0];
+    if(!uL) return {ok:false, msg:'PIN salah. Sila cuba semula.'};
+    return {ok:true, role:uL.role, nama:uL.nama, kodSekolah:uL.kod_sekolah, namaSekolah:uL.nama_sekolah};
   }
 
   if(fn === 'verifyPinGS'){
     if(!_sesi || !_sesi.noKP) return {ok:false, msg:'Sesi tidak sah. Sila log masuk semula.'};
-    var rV = await sb.from(TBL_PENGGUNA).select('*').eq('no_kp', _sesi.noKP).maybeSingle();
+    var rV = await sb.rpc('login_pengguna', {p_no_kp: _sesi.noKP, p_pin: payload.pin});
     _throwIfErr(rV.error);
-    var uv = rV.data;
-    if(!uv || String(payload.pin||'') !== String(uv.kod||'')) return {ok:false, msg:'PIN tidak sah.'};
-    return {ok:true, role:uv.role, kod:uv.kod};
+    var uv = (rV.data||[])[0];
+    if(!uv) return {ok:false, msg:'PIN tidak sah.'};
+    return {ok:true, role:uv.role};
   }
 
   if(fn === 'daftarAkaunGS'){
@@ -2594,14 +2584,16 @@ async function _supaDispatch(fn, payload){
     var iU = await sb.from(TBL_PENGGUNA).insert({
       no_kp: payload.noKP, nama: payload.nama, role: payload.role,
       kod_sekolah: payload.kodSekolah, nama_sekolah: payload.namaSekolah,
-      no_tel: payload.noTel, kod: payload.pin, status: 'TUNGGU'
+      no_tel: payload.noTel, status: 'TUNGGU'
     });
     _throwIfErr(iU.error);
+    var rSp = await sb.rpc('set_pin', {p_no_kp: payload.noKP, p_pin: payload.pin});
+    _throwIfErr(rSp.error);
     return {ok:true, msg:'Permohonan akaun berjaya dihantar.'};
   }
 
   if(fn === 'getAkaunListGS'){
-    var rA = await sb.from(TBL_PENGGUNA).select('*').order('tarikh_daftar',{ascending:false});
+    var rA = await sb.from(TBL_PENGGUNA).select('id,nama,role,no_kp,no_tel,kod_sekolah,nama_sekolah,status,tarikh_daftar').order('tarikh_daftar',{ascending:false});
     _throwIfErr(rA.error);
     return {ok:true, data:(rA.data||[]).map(_mapAkaunOut)};
   }
@@ -2616,7 +2608,7 @@ async function _supaDispatch(fn, payload){
 
   if(fn === 'resetPinGS'){
     var pinBaharu = payload.pin && String(payload.pin).length===6 ? String(payload.pin) : String(Math.floor(100000+Math.random()*900000));
-    var rRp = await sb.from(TBL_PENGGUNA).update({kod: pinBaharu}).eq('no_kp', payload.noKP);
+    var rRp = await sb.rpc('set_pin', {p_no_kp: payload.noKP, p_pin: pinBaharu});
     _throwIfErr(rRp.error);
     return {ok:true, pinBaharu:pinBaharu, msg:'PIN berjaya ditetapkan'};
   }
@@ -3194,11 +3186,11 @@ async function loadProgs(bust, silent){
     if(silent){ console.warn('loadProgs(silent) gagal, diabaikan senyap:', e2.message); }
     else{
       var msg2 = e2.message||'';
-      var isAuth = msg2.indexOf('Authorization')>=0||msg2.indexOf('permission')>=0||msg2.indexOf('DriveApp')>=0||msg2.indexOf('drive')>=0;
+      var isAuth = msg2.indexOf('permission')>=0||msg2.indexOf('RLS')>=0||msg2.indexOf('row-level security')>=0||msg2.indexOf('JWT')>=0;
       document.getElementById('prog-list').innerHTML=
         '<div class="empty"><div class="ei">'+(isAuth?'🔐':'⚠')+'</div>'
-        +'<h3>'+(isAuth?'Kebenaran Drive Diperlukan':'Gagal: '+msg2)+'</h3>'
-        +(isAuth?'<p style="font-size:.8rem;color:#666;max-width:340px;margin:.5rem auto;">Sila buka <b>Apps Script Editor → Deploy → Manage Deployments</b>, padam deployment lama, buat <b>New Deployment</b> dan buka semula URL baru. Klik <b>Allow</b> apabila diminta kebenaran.</p>':'')
+        +'<h3>'+(isAuth?'Kebenaran Pangkalan Data Diperlukan':'Gagal: '+msg2)+'</h3>'
+        +(isAuth?'<p style="font-size:.8rem;color:#666;max-width:340px;margin:.5rem auto;">Akses ke pangkalan data Supabase disekat. Sila semak dasar <b>Row Level Security (RLS)</b> untuk jadual berkaitan, atau hubungi admin sistem.</p>':'')
         +'</div>';
     }
   }
@@ -3671,8 +3663,8 @@ function _prefillPenyertaanEdit(prog, kodSek, sekNm, rows){
       if(fw && fw.style.display !== 'none'){
         fw.scrollIntoView({behavior:'smooth', block:'start'});
       } else {
-        var sb = document.getElementById('sbox-sekolah');
-        if(sb) sb.scrollIntoView({behavior:'smooth', block:'nearest'});
+        var sbEl = document.getElementById('sbox-sekolah');
+        if(sbEl) sbEl.scrollIntoView({behavior:'smooth', block:'nearest'});
       }
     }, 300);
   }, 200);
@@ -3733,11 +3725,11 @@ var _editSaved = false;
 function _onEditChange(){
   if(!_editSaved) return;
   // Ada perubahan selepas simpan — aktifkan semula butang
-  var sb = document.getElementById('btn-edit-simpan');
-  if(sb && sb.disabled){
-    sb.textContent = '💾 SIMPAN PROGRAM';
-    sb.style.background = '';
-    sb.disabled = false;
+  var simpanBtn = document.getElementById('btn-edit-simpan');
+  if(simpanBtn && simpanBtn.disabled){
+    simpanBtn.textContent = '💾 SIMPAN PROGRAM';
+    simpanBtn.style.background = '';
+    simpanBtn.disabled = false;
   }
   // Buang butang tutup lama jika ada
   var tb = document.querySelector('#mo-edit-foot .btn-tutup-edit');
@@ -3787,8 +3779,8 @@ async function saveEdit(){
       cBust();
       await loadProgs(true);
       // Kemas butang simpan
-      var sb = document.getElementById('btn-edit-simpan');
-      if(sb){ sb.textContent='✓ DISIMPAN'; sb.style.background='#27ae60'; sb.disabled=true; }
+      var simpanBtn = document.getElementById('btn-edit-simpan');
+      if(simpanBtn){ simpanBtn.textContent='✓ DISIMPAN'; simpanBtn.style.background='#27ae60'; simpanBtn.disabled=true; }
       // Tambah butang tutup jika belum ada
       var ef = document.getElementById('mo-edit-foot');
       if(ef && !ef.querySelector('.btn-tutup-edit')){
@@ -4632,8 +4624,8 @@ async function doSavePenc(){
           closeMo('mo-penc-confirm');
           setTimeout(function(){
             var b=document.querySelector('#mo-penc-confirm-foot .btn-tutup-penc');if(b)b.remove();
-            var sb=document.getElementById('btn-penc-sahkan');
-            if(sb){sb.textContent='💾 SIMPAN PENCAPAIAN';sb.style.background='';sb.disabled=false;}
+            var simpanBtn=document.getElementById('btn-penc-sahkan');
+            if(simpanBtn){simpanBtn.textContent='💾 SIMPAN PENCAPAIAN';simpanBtn.style.background='';simpanBtn.disabled=false;}
           },400);
         };
         _ef.insertBefore(_tbtn,_ef.firstChild);
@@ -5602,7 +5594,7 @@ function _restorePenyDraft(draft){
   document.getElementById('sel-edit-info').style.display='none';
   document.getElementById('sbox-sekolah').style.display='block';
   // Set hidden inputs
-  _populateDafSekDropdown(); // PEMBETULAN KRITIKAL #4
+  _populateDafSekDropdown(); // NOTA: fungsi ini sengaja no-op (lihat definisi) — nilai sekolah diisi terus melalui input tersembunyi di bawah, bukan dropdown
   if(draft.kod){
     var ke=document.getElementById('daf-kod'); if(ke) ke.value=draft.kod;
     var selEl=document.getElementById('daf-sek-select'); if(selEl) selEl.value=draft.kod;
@@ -5748,7 +5740,7 @@ function pilihProg(id,nm,cardEl){
   _penyData={guruList:[],pesList:[]};
   _pGCnt=0; _pPCnt=0;
   // Reset medan sekolah
-  _populateDafSekDropdown(); // PEMBETULAN KRITIKAL #4
+  _populateDafSekDropdown(); // NOTA: fungsi ini sengaja no-op (lihat definisi) — nilai sekolah diisi terus melalui input tersembunyi di bawah, bukan dropdown
   var selEl=document.getElementById('daf-sek-select');
   // PEMBETULAN KRITIKAL #1: Guru/PKK — auto-pilih sekolah sendiri dan buka borang terus
   var _autoKod = (_sesi && (_sesi.role==='guru'||_sesi.role==='pkk') && _sesi.kodSekolah) ? _sesi.kodSekolah : '';
@@ -5773,8 +5765,8 @@ function pilihProg(id,nm,cardEl){
     onSekSelect(_autoKod);
   }
   // Scroll ke bahagian sekolah
-  var sb=document.getElementById('sbox-sekolah');
-  if(sb) setTimeout(function(){sb.scrollIntoView({behavior:'smooth',block:'nearest'});},120);
+  var sbEl=document.getElementById('sbox-sekolah');
+  if(sbEl) setTimeout(function(){sbEl.scrollIntoView({behavior:'smooth',block:'nearest'});},120);
   _startPenyAutoSave();
 }
 
@@ -6116,7 +6108,6 @@ function janOpt(sel){
   return ['','LELAKI','PEREMPUAN']
     .map(function(j){return '<option value="'+j+'"'+(sel===j?' selected':'')+'>'+( j||'—')+'</option>';}).join('');
 }
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
 function semakPeny(){
   // Validate
@@ -6313,7 +6304,7 @@ async function hantarPeny(){
 
   var allRows=[];
   pesFilled.forEach(function(p){
-    var katSah=p.kategori.filter(function(k){return k&&k!=='GURU'&&k!=='KESELURUHAN';});
+    var katSah=p.kategori.filter(function(k){return k&&k!=='GURU';});
     if(!katSah.length)return;
     var g=guruFilled[0]||{nama:'',kp:'',bangsa:'',jantina:'',tel:''};
     katSah.forEach(function(k){
@@ -6668,7 +6659,6 @@ function buildSalinanPortal(payload, allRows){
     'KESELURUHAN':'#c0392b','TERBUKA':'#e67e22','TERBUKA INDIVIDU':'#e67e22','TERBUKA BERKUMPULAN':'#d35400'};
   var RED='#BF3829';
 
-  function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
   // == Bina HTML — gaya semakPeny =========================================
   var h='<div style="font-family:\'Open Sans\',sans-serif;font-size:.85rem;color:#222;padding:.75rem;">';
@@ -10707,6 +10697,8 @@ async function aiSend(){
 // Tunjuk butang terapung bila user dah scroll melepasi butang asal
 // "+ TAMBAH GURU" / "+ TAMBAH PESERTA" supaya tak perlu scroll balik ke atas.
 function _fabPenyCheck(){
+  // Elak kerja sia-sia setiap 500ms bila tak log masuk / bukan di tab Penyertaan
+  if(!document.body.classList.contains('loggedin')) return;
   var fab = document.getElementById('fab-peny-btn');
   if(!fab) return;
   var pgEl = document.getElementById('pg-peserta');
