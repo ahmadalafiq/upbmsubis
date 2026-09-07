@@ -2442,30 +2442,45 @@ function _throwIfErr(err){ if(err) throw new Error(err.message||String(err)); }
 // == SUPABASE DISPATCHER — gantikan google.script.run =============
 // Setiap "fn" di bawah sepadan dengan nama fungsi *GS asal.
 // ================================================================
+// P: Baca SEMUA baris jadual secara bersegmen (elak had lalai 1000 baris PostgREST).
+// Order by 'id' wajib supaya paginasi stabil/konsisten (tanpa order, susunan antara
+// segmen tidak terjamin, boleh sebabkan baris tertinggal/pendua semasa baca berperingkat).
+async function _fetchAllPaged(tableName, tahun, tahunCol){
+  var PAGE=1000, from=0, all=[];
+  while(true){
+    var q = sb.from(tableName).select('*').order('id');
+    if(tahun && tahun !== 'SEMUA') q = q.eq(tahunCol||'tahun', tahun);
+    var r = await q.range(from, from+PAGE-1);
+    _throwIfErr(r.error);
+    var rows = r.data||[];
+    all = all.concat(rows);
+    if(rows.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 async function _supaDispatch(fn, payload){
   payload = payload || {};
 
   // -------- PROGRAM (sheet 'Program') --------
   if(fn === 'getAllDataGS'){
     var tahun = payload.tahun;
-    var qP = sb.from(TBL_PROGRAM).select('*').order('tarikh',{ascending:false});
+    // P: select('*') tanpa .range() dihadkan diam-diam oleh PostgREST (lalai 1000 baris).
+    // Dengan >2000 rekod penyertaan, sebahagian data "hilang" secara senyap dari kad/dashboard/
+    // Excel walaupun wujud di DB. Baca SEMUA baris secara bersegmen (1000/segmen) sehingga habis.
+    var qP = sb.from(TBL_PROGRAM).select('*').order('tarikh',{ascending:false}).order('id');
     if(tahun && tahun !== 'SEMUA') qP = qP.eq('tahun', tahun);
     var rp = await qP; _throwIfErr(rp.error);
-    var progIds = (rp.data||[]).map(function(p){return p.id;});
 
-    var qPy = sb.from(TBL_PENYERTAAN).select('*');
-    qPy = (tahun && tahun !== 'SEMUA') ? qPy.eq('tahun', tahun) : qPy;
-    var rpy = await qPy; _throwIfErr(rpy.error);
-
-    var qPc = sb.from(TBL_PENCAPAIAN).select('*');
-    qPc = (tahun && tahun !== 'SEMUA') ? qPc.eq('tahun', tahun) : qPc;
-    var rpc = await qPc; _throwIfErr(rpc.error);
+    var allPy = await _fetchAllPaged(TBL_PENYERTAAN, tahun);
+    var allPc = await _fetchAllPaged(TBL_PENCAPAIAN, tahun);
 
     return {
       ok:true,
       programs: (rp.data||[]).map(_mapProgramOut),
-      penyertaan: (rpy.data||[]).map(_mapPenyertaanOut),
-      pencapaian: (rpc.data||[]).map(_mapPencapaianOut)
+      penyertaan: allPy.map(_mapPenyertaanOut),
+      pencapaian: allPc.map(_mapPencapaianOut)
     };
   }
 
@@ -5389,11 +5404,14 @@ async function expXlsx(prog){
   if(typeof XLSX==='undefined'){toast('Sila tunggu, memuatkan...','in');return;}
   showOv('MENYEDIAKAN EXCEL...');
   try{
-    // Ambil data penyertaan untuk program ini
-    var pny=(_aP||[]).filter(function(r){return r['Program ID']===prog['ID'];});
+    // P: Fetch fresh terus dari server (bukan cache _aP yang boleh stale/terpotong
+    // had 1000 baris) — sama pendekatan seperti lihatPeny(). Guna getEditDataGS supaya
+    // penyertaan & pencapaian program ni diambil sekali gus, tepat & terkini.
+    var r = await run('getEditDataGS', prog['ID']);
+    var pny = (r && r.penyertaan) ? r.penyertaan : [];
     if(!pny.length){hideOv();toast('Tiada data penyertaan','er');return;}
 
-    var pnc2=(_aPnc||[]).filter(function(r){return r['Program ID']===prog['ID'];});
+    var pnc2 = (r && r.pencapaian) ? r.pencapaian : [];
     var wb=_buildXlsxWorkbook(prog, pny, pnc2);
 
     // == Download ==
@@ -7254,19 +7272,22 @@ function getSkor(pc, field, py, pg){
     var progKey=(p['Program ID']||p['Nama Program'])||'';
 
     // Dedup untuk Sekolah, Guru dan Peserta:
-    // Markah unik kepada prog+kat+tempat+entiti — elak pengiraan berganda.
+    // P: 'tempat' SENGAJA DIBUANG dari kunci dedup — data sudah disusun ikut
+    // kedudukan terbaik dahulu (_tempatRank di atas), jadi kunci hanya prog+kat+entiti
+    // memastikan HANYA kedudukan TERBAIK per peserta/guru/sekolah dikira, walaupun ada
+    // >1 baris pencapaian (kedudukan berlainan) untuk entiti sama akibat kesilapan input.
+    // Sebelum ini 'tempat' turut dalam kunci — 2 kedudukan berbeza untuk orang sama
+    // dikira DUA-DUA (markah bertindih/inflated).
     if(field==='Nama Sekolah'){
-      var dk=progKey+'|'+kat+'|'+(p['Tempat']||'')+'|'+k;
+      var dk=progKey+'|'+kat+'|'+k;
       if(bSeen[dk]) return; bSeen[dk]=1;
     } else if(field==='Nama Guru'){
-      // Guru: unik per prog+kat+tempat+sekolah+guru
-      var dk2=progKey+'|'+kat+'|'+(p['Tempat']||'')+'|'+sek+'|'+k;
+      // Guru: unik per prog+kat+sekolah+guru
+      var dk2=progKey+'|'+kat+'|'+sek+'|'+k;
       if(bSeen[dk2]) return; bSeen[dk2]=1;
     } else if(field==='Nama Peserta'){
-      // Peserta: unik per prog+kat+tempat+peserta
-      // Elak peserta TERBUKA BERKUMPULAN dikira berganda jika
-      // ada berbilang baris untuk sekolah yang sama dalam sheet PENCAPAIAN
-      var dk3=progKey+'|'+kat+'|'+(p['Tempat']||'')+'|'+k;
+      // Peserta: unik per prog+kat+peserta
+      var dk3=progKey+'|'+kat+'|'+k;
       if(bSeen[dk3]) return; bSeen[dk3]=1;
     }
 
