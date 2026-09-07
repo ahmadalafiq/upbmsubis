@@ -9,7 +9,8 @@ _Kemas kini terakhir: 7 Sept 2026 — disimpan dalam repo GitHub supaya jadi ruj
 | Kerja 1 — RLS (kunci akses data) | ⛔ BELUM — sengaja ditangguh, baca sebab di bawah |
 | Kerja 1 — Google Sign-In & claim akaun | ⛔ BELUM — draf sedia, belum dijalankan |
 | Kerja 2 — Pembantu AI (chat) | ✅ SIAP & BERFUNGSI, 2 bug dijumpai+dibetulkan |
-| GitHub ↔ Supabase sync | ✅ Segerak (push terakhir: `b99b861`) |
+| Bulk daftar peserta via Excel | ✅ SIAP — templat + muat naik + validasi |
+| GitHub ↔ Supabase sync | ✅ Segerak (push terakhir: `a413b24`) |
 
 ---
 
@@ -80,7 +81,21 @@ via CI/CD (`deploy-edge-functions.yml`).
 
 ---
 
-## Semakan tambahan (bukan bug — pengesahan sahaja)
+## Bulk Daftar Peserta/Guru via Excel — ✅ SIAP (baharu)
+Ciri baharu dalam tab Penyertaan (`index.html`, commit `a413b24`):
+- **📥 TEMPLAT EXCEL** — muat turun fail `.xlsx` kosong (sheet PESERTA + GURU + PANDUAN),
+  senarai kategori sah untuk program yang dipilih terus disertakan dalam sheet PANDUAN
+- **📤 MUAT NAIK EXCEL** — baca fail `.xlsx` yang diisi, validasi setiap baris (No.KP format,
+  jantina LELAKI/PEREMPUAN, kategori sepadan senarai program), amaran dipapar kalau ada ralat
+- Data yang lulus/separuh lulus terus diisi ke senarai peserta/guru **sedia ada** dalam borang
+  (guna struktur `_penyData.pesList`/`guruList` yang sama dgn "+ TAMBAH PESERTA" manual) —
+  jadi terus guna semula flow `semakPeny`/`hantarPeny` sedia ada, tiada perubahan backend perlu
+- Perlu program dipilih dahulu (untuk tahu senarai kategori sah) sebelum boleh muat turun/naik
+
+**Belum dibuat (peningkatan akan datang, tak wajib sekarang):**
+- Validasi bantuan AI (auto-mapping lajur kalau format Excel pengguna sedikit berbeza)
+- Semakan pendua (peserta sama dimuat naik dua kali)
+
 **Soalan: bila banyak user submit serentak, semua orang dapat "global refresh"?**
 Jawapan: **TIDAK, ini sudah direka dengan betul.** `_initRealtimeSync()` guna Supabase Realtime
 dengan debounce 2 saat, tangguh kemaskini jika user ada borang/modal aktif, refresh silent
