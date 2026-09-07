@@ -3476,15 +3476,13 @@ function reqLihat(id,nm){
 async function lihatPeny(pid,nm){
   showOv('MEMUATKAN...');
   try{
-    // Guna data tempatan _aP dulu (sudah diisi oleh loadProgs/loadProgsForPeny)
-    // Jika _aP kosong, fetch dari server
-    var d = (_aP && _aP.length)
-      ? _aP.filter(function(x){ return x['Program ID']===pid; })
-      : [];
-    if(!d.length && _aP && !_aP.length){
-      var r=await run('getPenyertaanByProgramGS',pid);
-      d=(r&&r.data)?r.data:[];
-    }
+    // P: Sentiasa fetch fresh terus dari server (sama macam getRumusanGS).
+    // SEBAB: cache _aP global boleh jadi stale/tidak lengkap (contohnya selepas
+    // tukar tab atau tapisan tahun berbeza), menyebabkan penapisan tempatan
+    // x['Program ID']===pid pulangkan kosong walaupun data sebenar wujud di
+    // Supabase (RUMUSAN yang fetch fresh tetap tepat, tapi DATA tunjuk kosong).
+    var r=await run('getPenyertaanByProgramGS',pid);
+    var d=(r&&r.data)?r.data:[];
     document.getElementById('lihat-tit').textContent='📋 PENYERTAAN — '+nm;
     if(!d.length){
       document.getElementById('lihat-body').innerHTML='<div class="empty"><div class="ei">📭</div><h3>Tiada penyertaan</h3></div>';
