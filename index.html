@@ -7784,7 +7784,9 @@ function _renderTablePage(){
 }
 
 // == MODAL & UTILS ==================================
-var _zTop=250;
+var _zTop=900; // PEMBETULAN: dulu 250 — lebih rendah dari #pg-login (z-index:800), sebabkan
+                // modal (cth. mo-claim lepas Google sign-in) terbuka tapi tersembunyi DI BELAKANG
+                // skrin log masuk. Kini 900 supaya modal sentiasa di atas #pg-login.
 var _moOpenCount=0;
 var _moFocusStack=[]; // P1-C: fokus stack
 function openMo(id){
@@ -9956,34 +9958,26 @@ function loginGoogle(){
 }
 
 function _initGoogleAuth(){
-  console.log('[DEBUG-GOOGLE] _initGoogleAuth() dipanggil');
   sb.auth.onAuthStateChange(function(event, session){
-    console.log('[DEBUG-GOOGLE] onAuthStateChange event=', event, 'ada session?', !!session);
     if(event === 'SIGNED_IN' && session){
       _semakSesiGoogle(session);
     }
   });
   // Semak juga sesi sedia ada (kes lepas redirect OAuth, sebelum event sempat tercetus)
   sb.auth.getSession().then(function(r){
-    console.log('[DEBUG-GOOGLE] getSession() result:', r.data && r.data.session ? 'ADA SESSION (email='+r.data.session.user.email+')' : 'TIADA SESSION', r.error||'');
     if(r.data && r.data.session) _semakSesiGoogle(r.data.session);
   });
 }
 
 async function _semakSesiGoogle(session){
-  console.log('[DEBUG-GOOGLE] _semakSesiGoogle() dipanggil, _sesi sedia ada?', !!_sesi);
-  if(_sesi) { console.log('[DEBUG-GOOGLE] berhenti sebab _sesi dah wujud'); return; } // sudah log masuk (No.KP/PIN atau Google sedia ada) — elak konflik
+  if(_sesi) return; // sudah log masuk (No.KP/PIN atau Google sedia ada) — elak konflik
   try{
-    console.log('[DEBUG-GOOGLE] memanggil rpc login_via_google...');
     var r = await sb.rpc('login_via_google');
-    console.log('[DEBUG-GOOGLE] rpc login_via_google result:', JSON.stringify(r.data), 'error:', r.error);
     if(r.error){ console.error(r.error); return; }
     var u = (r.data||[])[0];
     if(u){
-      console.log('[DEBUG-GOOGLE] akaun dijumpai, mulakan sesi', u);
       _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp});
     } else {
-      console.log('[DEBUG-GOOGLE] akaun belum diikat, buka modal claim');
       // Belum pernah diikat — minta sahkan No.KP+PIN sedia ada
       var emel = session.user && session.user.email || '';
       document.getElementById('claim-emel').textContent = emel;
@@ -9992,7 +9986,7 @@ async function _semakSesiGoogle(session){
       document.getElementById('claim-pin').value = '';
       openMo('mo-claim');
     }
-  }catch(e){ console.error('[DEBUG-GOOGLE] EXCEPTION:', e); }
+  }catch(e){ console.error(e); }
 }
 
 async function claimAkaunGoogle(){
