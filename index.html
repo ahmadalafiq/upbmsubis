@@ -1647,6 +1647,9 @@ body.view-list .pc::after { display: none; }
     <div class="sbox">
       <div class="sbt" style="margin-bottom:.5rem;">🧑‍🎓 SENARAI PESERTA &amp; KATEGORI
         <button class="btn bs bsm" id="btn-add-main-pes" onclick="addMainPes()">+ TAMBAH PESERTA</button>
+        <button class="btn bg bsm" id="btn-templat-xlsx" onclick="muatTurunTemplatXlsx()" style="margin-left:.3rem;">📥 TEMPLAT EXCEL</button>
+        <button class="btn bg bsm" id="btn-upload-xlsx" onclick="document.getElementById('inp-upload-xlsx').click()" style="margin-left:.3rem;">📤 MUAT NAIK EXCEL</button>
+        <input type="file" id="inp-upload-xlsx" accept=".xlsx,.xls" style="display:none;" onchange="onXlsxFileSelected(event)">
       </div>
       <div id="peny-kat-legend" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.7rem;padding:.5rem;background:var(--g1);border-radius:var(--r);"></div>
       <div id="main-pes-list"></div>
@@ -6001,6 +6004,141 @@ function _autoAssignKatByJantina(pesId, jantina){
 function removeMainPes(id){
   _penyData.pesList=_penyData.pesList.filter(function(p){return p.id!==id;});
   renderMainPesList();
+}
+
+// == BULK DAFTAR PESERTA/GURU VIA EXCEL ==========================
+function muatTurunTemplatXlsx(){
+  if(typeof XLSX==='undefined'){toast('Sila tunggu, memuatkan...','in');return;}
+  if(!_selKatList.length){toast('Sila pilih program dahulu sebelum muat turun templat.','er');return;}
+  var wb=XLSX.utils.book_new();
+
+  var pesRows=[['NAMA PESERTA','NO. KP','JANTINA','BANGSA','KATEGORI']];
+  pesRows.push(['CONTOH: AHMAD BIN ALI','010101-13-0001','LELAKI','BUMIPUTERA', _selKatList[0]||'']);
+  var wsPes=XLSX.utils.aoa_to_sheet(pesRows);
+  wsPes['!cols']=[{wch:28},{wch:16},{wch:12},{wch:14},{wch:28}];
+  XLSX.utils.book_append_sheet(wb,wsPes,'PESERTA');
+
+  var guruRows=[['NAMA GURU','NO. KP','JANTINA','BANGSA','NO. TEL']];
+  guruRows.push(['CONTOH: SITI BINTI HASSAN','850101-13-5678','PEREMPUAN','MELAYU','0191234567']);
+  var wsGuru=XLSX.utils.aoa_to_sheet(guruRows);
+  wsGuru['!cols']=[{wch:28},{wch:16},{wch:12},{wch:14},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,wsGuru,'GURU');
+
+  var panduanRows=[
+    ['PANDUAN ISI TEMPLAT'],[''],
+    ['1. Jangan tukar nama sheet (PESERTA / GURU) atau susunan lajur.'],
+    ['2. Padam baris CONTOH sebelum isi data sebenar.'],
+    ['3. JANTINA: LELAKI atau PEREMPUAN sahaja.'],
+    ['4. KATEGORI mesti sama ejaan dengan senarai di bawah (jika lebih dari satu, asingkan dengan koma).'],
+    ['5. No. KP boleh isi dengan/tanpa sengkang (-), sistem akan format automatik.'],
+    [''],['KATEGORI SAH UNTUK PROGRAM INI:'],
+  ];
+  _selKatList.forEach(function(k){panduanRows.push([k]);});
+  var wsPanduan=XLSX.utils.aoa_to_sheet(panduanRows);
+  wsPanduan['!cols']=[{wch:50}];
+  XLSX.utils.book_append_sheet(wb,wsPanduan,'PANDUAN');
+
+  XLSX.writeFile(wb,'Templat_Penyertaan.xlsx');
+  toast('Templat Excel dimuat turun ✓','ok');
+}
+
+function onXlsxFileSelected(ev){
+  var file=ev.target.files && ev.target.files[0];
+  ev.target.value='';
+  if(!file) return;
+  if(typeof XLSX==='undefined'){toast('Sila tunggu, memuatkan...','in');return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      _prosesBulkXlsx(wb);
+    }catch(err){
+      toast('Gagal baca fail Excel: '+err.message,'er');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function _prosesBulkXlsx(wb){
+  if(!_selKatList.length){toast('Sila pilih program dahulu sebelum muat naik Excel.','er');return;}
+  var errors=[];
+  var pesBaru=[], guruBaru=[];
+  var katSahSet={}; _selKatList.forEach(function(k){katSahSet[k.toUpperCase()]=true;});
+
+  var wsPes=wb.Sheets['PESERTA'];
+  if(wsPes){
+    var rowsPes=XLSX.utils.sheet_to_json(wsPes,{header:1,blankrows:false});
+    for(var i=1;i<rowsPes.length;i++){
+      var r=rowsPes[i]; if(!r||!r.length) continue;
+      var nama=String(r[0]||'').trim();
+      if(!nama || nama.toUpperCase().indexOf('CONTOH')===0) continue;
+      var kpRaw=String(r[1]||'').trim();
+      var jantina=String(r[2]||'').trim().toUpperCase();
+      var bangsa=String(r[3]||'').trim().toUpperCase();
+      var katRaw=String(r[4]||'').trim();
+      var baris=i+1;
+
+      var kp=normKP(kpRaw);
+      if(kpRaw && !/^\d{6}-\d{2}-\d{4}$/.test(kp)){
+        errors.push('Peserta baris '+baris+' ("'+nama+'"): No. KP tidak sah — '+kpRaw);
+      }
+      if(jantina && jantina!=='LELAKI' && jantina!=='PEREMPUAN'){
+        errors.push('Peserta baris '+baris+' ("'+nama+'"): Jantina mesti LELAKI/PEREMPUAN, dapat "'+jantina+'"');
+      }
+      var katList=katRaw.split(',').map(function(k){return k.trim().toUpperCase();}).filter(Boolean);
+      var katTakSah=katList.filter(function(k){return !katSahSet[k];});
+      if(katTakSah.length){
+        errors.push('Peserta baris '+baris+' ("'+nama+'"): Kategori tidak sah — '+katTakSah.join(', '));
+      }
+      if(!katList.length){
+        errors.push('Peserta baris '+baris+' ("'+nama+'"): Kategori kosong');
+      }
+
+      _pPCnt++;
+      pesBaru.push({id:'mp-'+_pPCnt, nama:nama.toUpperCase(), kp:kp, jantina:jantina, bangsa:bangsa, kategori:katList.filter(function(k){return katSahSet[k];})});
+    }
+  } else {
+    errors.push('Sheet "PESERTA" tidak dijumpai dalam fail — pastikan guna templat rasmi.');
+  }
+
+  var wsGuru=wb.Sheets['GURU'];
+  if(wsGuru){
+    var rowsGuru=XLSX.utils.sheet_to_json(wsGuru,{header:1,blankrows:false});
+    for(var j=1;j<rowsGuru.length;j++){
+      var rg=rowsGuru[j]; if(!rg||!rg.length) continue;
+      var namaG=String(rg[0]||'').trim();
+      if(!namaG || namaG.toUpperCase().indexOf('CONTOH')===0) continue;
+      var kpG=normKP(String(rg[1]||'').trim());
+      var jantinaG=String(rg[2]||'').trim().toUpperCase();
+      var bangsaG=String(rg[3]||'').trim().toUpperCase();
+      var telRaw=String(rg[4]||'').replace(/\D/g,'');
+      var tel=telRaw?(telRaw.indexOf('60')===0?'+'+telRaw:'+60'+telRaw.replace(/^0/,'')):'';
+      var barisG=j+1;
+      if(rg[1] && !/^\d{6}-\d{2}-\d{4}$/.test(kpG)){
+        errors.push('Guru baris '+barisG+' ("'+namaG+'"): No. KP tidak sah — '+rg[1]);
+      }
+      _pGCnt++;
+      guruBaru.push({id:'mg-'+_pGCnt, nama:namaG.toUpperCase(), kp:kpG, jantina:jantinaG, bangsa:bangsaG, tel:tel});
+    }
+  }
+
+  if(!pesBaru.length && !guruBaru.length){
+    toast('Tiada data sah dijumpai dalam fail. Semak templat & cuba lagi.','er');
+    return;
+  }
+
+  _penyData.pesList = _penyData.pesList.concat(pesBaru);
+  _penyData.guruList = _penyData.guruList.concat(guruBaru);
+  renderMainPesList();
+  renderMainGuruList();
+
+  var ringkasan=pesBaru.length+' peserta & '+guruBaru.length+' guru berjaya dimuat naik.';
+  if(errors.length){
+    ringkasan+=' ⚠ '+errors.length+' amaran — sila semak & betulkan dalam senarai sebelum hantar:\n\n• '+errors.slice(0,10).join('\n• ')+(errors.length>10?'\n...dan '+(errors.length-10)+' lagi.':'');
+    alert(ringkasan);
+  } else {
+    toast(ringkasan+' ✓','ok');
+  }
 }
 
 function renderMainPesList(){
