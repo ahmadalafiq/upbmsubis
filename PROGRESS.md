@@ -10,7 +10,8 @@ _Kemas kini terakhir: 7 Sept 2026 — disimpan dalam repo GitHub supaya jadi ruj
 | Kerja 1 — Google Sign-In & claim akaun | ⛔ BELUM — draf sedia, belum dijalankan |
 | Kerja 2 — Pembantu AI (chat) | ✅ SIAP & BERFUNGSI, 2 bug dijumpai+dibetulkan |
 | Bulk daftar peserta via Excel | ✅ SIAP — templat + muat naik + validasi |
-| GitHub ↔ Supabase sync | ✅ Segerak (push terakhir: `a413b24`) |
+| Google Sign-In & Claim Akaun | 🟡 KOD SIAP — perlu 2 langkah manual anda dahulu (baca bawah) |
+| GitHub ↔ Supabase sync | ✅ Segerak (push terakhir: `96db63b`) |
 
 ---
 
@@ -58,10 +59,35 @@ browser — perlukan RLS terbuka untuk berfungsi buat masa ini.
 
 ⚠️ **Jangan tampal polisi RLS ketat tanpa (a) atau (b) siap dulu — admin panel/dashboard akan rosak.**
 
-### Google Sign-In & Claim Akaun (Bahagian E) — ⛔ BELUM
-Draf reka bentuk (Pilihan A — sahkan No.KP+PIN sedia ada sekali sebelum ikat ke akaun Google)
-sudah dibincang tapi belum dijalankan. Guna semula lajur `emel_aktif` sedia ada + tambah
-lajur `auth_uid`. No.KP+PIN dikekalkan sebagai fallback untuk yang tiada Google.
+### Google Sign-In & Claim Akaun (Bahagian E) — 🟡 KOD SIAP, TUNGGU SETUP MANUAL
+Sudah siap & live (commit `96db63b`):
+- Lajur `auth_uid` ditambah pada `pengguna`; guna semula `emel_aktif` sedia ada
+- RPC `claim_akaun_google(no_kp, pin)` — sahkan No.KP+PIN sedia ada, ikat ke akaun Google
+- RPC `login_via_google()` — log masuk automatik untuk akaun yang dah diikat
+- Butang "Log Masuk dengan Google" di skrin log masuk
+- Modal "Sahkan Akaun Sedia Ada" — muncul automatik lepas Google sign-in kalau akaun belum diikat
+- `sb.auth.signOut()` ditambah pada fungsi logout sedia ada
+- No.KP+PIN LAMA dikekalkan sepenuhnya sebagai cara log masuk — tiada apa yang dibuang
+
+**⚠️ BELUM BOLEH DIGUNAKAN — 2 langkah manual WAJIB dibuat dahulu (di luar akses Claude):**
+
+1. **Google Cloud Console** — https://console.cloud.google.com
+   - Cipta projek baharu (atau guna sedia ada) → APIs & Services → Credentials
+   - Create Credentials → OAuth Client ID → Application type: **Web application**
+   - Authorized redirect URI: `https://pztuvriqjgfwczkuguky.supabase.co/auth/v1/callback`
+   - Salin **Client ID** dan **Client Secret**
+
+2. **Supabase Dashboard** — https://supabase.com/dashboard/project/pztuvriqjgfwczkuguky/auth/providers
+   - Cari **Google** dalam senarai provider → Enable
+   - Tampal Client ID + Client Secret dari langkah 1 → Save
+   - Di **Auth → URL Configuration**, pastikan domain tempat app di-hosting disenaraikan
+     dalam "Redirect URLs" (cth. URL GitHub Pages/hosting sebenar anda)
+
+**Lepas 2 langkah ni siap**, butang "Log Masuk dengan Google" di app akan terus berfungsi —
+tiada kod tambahan diperlukan. Uji dengan: (a) akaun Google + No.KP yang belum pernah
+diikat (patut papar modal claim), (b) log masuk kali kedua dengan akaun Google yang sama
+(patut terus masuk tanpa modal claim).
+
 
 ---
 
