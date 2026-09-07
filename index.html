@@ -9952,7 +9952,12 @@ function loginGoogle(){
   var cleanUrl = window.location.origin + window.location.pathname;
   sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: cleanUrl }
+    options: {
+      redirectTo: cleanUrl,
+      // 'hd' cuma menapis akaun yang dipaparkan dalam pemilih Google — BUKAN sekatan
+      // keselamatan sebenar (boleh dipintas). Sekatan sebenar disemak di server (RPC).
+      queryParams: { hd: 'moe-dl.edu.my' }
+    }
   }).then(function(r){
     if(r.error) lgMsg('lg-err','Gagal sambung ke Google: '+r.error.message);
   });
@@ -9974,7 +9979,14 @@ async function _semakSesiGoogle(session){
   if(_sesi) return; // sudah log masuk (No.KP/PIN atau Google sedia ada) — elak konflik
   try{
     var r = await sb.rpc('login_via_google');
-    if(r.error){ console.error(r.error); return; }
+    if(r.error){
+      // PEMBETULAN: domain emel ditolak oleh server (atau ralat lain) — log keluar
+      // sesi Google supaya tak tersangkut, dan tunjuk mesej jelas di skrin log masuk.
+      console.error(r.error);
+      try{ await sb.auth.signOut(); }catch(e){}
+      lgMsg('lg-err', r.error.message || 'Akaun Google ini tidak dibenarkan.');
+      return;
+    }
     var u = (r.data||[])[0];
     if(u){
       _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp});
