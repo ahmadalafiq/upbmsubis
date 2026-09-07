@@ -2585,12 +2585,13 @@ async function _supaDispatch(fn, payload){
     }
 
     // Semakan status akaun — masih perlu select ringkas, TANPA lajur 'kod' (PIN)
-    var rU = await sb.from(TBL_PENGGUNA).select('nama,role,status,kod_sekolah,nama_sekolah').eq('no_kp', payload.noKP).maybeSingle();
+    var rU = await sb.from(TBL_PENGGUNA).select('nama,role,status,kod_sekolah,nama_sekolah,auth_uid').eq('no_kp', payload.noKP).maybeSingle();
     _throwIfErr(rU.error);
     var u = rU.data;
     if(!u) return {ok:false, status:'TIADA', msg:'Akaun tidak dijumpai. Sila daftar akaun baharu.'};
     if(u.status === 'TUNGGU') return {ok:false, status:'TUNGGU', msg:'Akaun anda sedang menunggu kelulusan admin.'};
     if(u.status === 'TOLAK') return {ok:false, status:'TOLAK', msg:'Akaun anda tidak aktif. Sila hubungi admin.'};
+    if(u.auth_uid) return {ok:false, status:'GOOGLE_SAHAJA', msg:'Akaun ini telah diikat ke akaun Google. Sila log masuk dengan butang "Log Masuk dengan Google".'};
 
     if(payload.checkOnly){
       return {ok:true, skipPin:false, role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah};
