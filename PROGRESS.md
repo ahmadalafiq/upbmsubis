@@ -202,3 +202,17 @@ Semak seluruh jadual, jumpa 3 KATEGORI berbeza pendua — **bukan semua selamat 
   jadual `pencapaian` terus (2 baris x 4 peserta = 8 baris perlu disemak)
 - [ ] 17 kes No.KP bertindih sekolah-berbeza — perlu proses sahkan dgn sekolah berkenaan
   (senarai penuh sudah dijana, boleh diminta semula bila perlu)
+
+### ✅ Ditutup (7 Sept) — kedua-dua item tergantung dipadam atas arahan user
+Keputusan: padam terus data yang tak boleh disahkan mana satu betul, sekolah akan
+kemaskini semula pendaftaran/pencapaian secara berasingan bila perlu.
+- **Drone Challenge** (8 baris pencapaian, 4 peserta x 2 kedudukan bertindih) — DIPADAM
+- **17 kes No.KP bertindih sekolah-berbeza** (28 baris penyertaan tersisa selepas 3 kes
+  Bridge Building diselesaikan awal) — DIPADAM
+- Jumlah akhir: `penyertaan` 2,123 → **2,083** baris | `pencapaian` 266 → **258** baris
+- Tiada tindakan lanjut diperlukan dari Claude — sekolah akan daftar semula bila bersedia
+
+## STATUS AKHIR SESI (7 Sept, ~18:xx)
+Semua kerja aktif ditutup. Tiada item terbuka yang perlu tindakan segera. Sesi akan
+datang boleh mula dari: (a) sahkan Google Sign-In berfungsi penuh di app sebenar,
+(b) RLS (masih ditangguh, rujuk bahagian awal), (c) apa-apa isu baharu yang timbul.
