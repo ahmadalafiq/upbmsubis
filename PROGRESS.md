@@ -149,3 +149,56 @@ dengan debounce 2 saat, tangguh kemaskini jika user ada borang/modal aktif, refr
 2. Untuk kerja RLS/Google Sign-In: baca bahagian berkaitan di atas dahulu SEBELUM buat perubahan
 3. Sambung Supabase MCP connector di awal sesi (projek: `UPBMSUBIS` / `pztuvriqjgfwczkuguky`)
 4. Kalau perlu push ke GitHub, sediakan PAT baharu (skop "Contents: Read and write" untuk repo ni)
+
+---
+
+## Sesi Penyelarasan & Siasat Data (7 Sept, lanjutan) — Fasa 0-3
+
+### Fasa 0 — Penyelarasan
+Ditemui 6 commit yang user buat sendiri (`91f8029`...`fab3606`) membetulkan bug Google
+Sign-In (z-index modal tersembunyi di belakang skrin login, URL fragment `##access_token`,
+auth_uid check, error handling). Semua disahkan & diselaraskan ke kerja Claude.
+
+### Fasa 1 — Bug sistemik "data hilang" (kes: program tunjuk 19 tapi Excel/kad kosong)
+**Punca akar:** `getAllDataGS` guna `select('*')` TANPA `.range()`/paginasi pada jadual
+`penyertaan` (2,123 baris) & `pencapaian` — PostgREST hadkan diam-diam kepada 1000 baris
+lalai. Program yang jatuh selepas had 1000 "hilang" dari kad Pengelola/Dashboard walaupun
+wujud di DB. `expXlsx` turut guna cache `_aP` stale (sama corak bug macam `lihatPeny` lama).
+
+**Dibetulkan (commit `94b960f`):**
+- Fungsi baharu `_fetchAllPaged()` — baca semua baris secara bersegmen 1000/segmen,
+  order by `id` untuk paginasi stabil
+- `getAllDataGS` guna fungsi ni untuk penyertaan & pencapaian
+- `expXlsx` tak lagi guna `_aP` — fetch fresh via `getEditDataGS` (sama pendekatan `lihatPeny`)
+
+### Fasa 1b — Bug pemarkahan `getSkor`
+Kod sengaja susun ikut kedudukan terbaik dahulu (komen "ISU 4"), tapi kunci dedup masih
+sertakan `tempat` — niat asal (kekal terbaik sahaja) gagal dilaksanakan. Peserta dgn >1
+kedudukan (cth. 1st DAN 2nd direkod utk acara sama) markah dikira DUA-DUA (inflated).
+**Dibetulkan (commit `94b960f`):** buang `tempat` dari kunci dedup (peserta/guru/sekolah) —
+kedudukan terbaik sahaja dikira, selari dgn susunan `_tempatRank` yang sedia ada.
+
+### Fasa 2 — Audit pendua (penyertaan & pencapaian)
+Semak seluruh jadual, jumpa 3 KATEGORI berbeza pendua — **bukan semua selamat dipadam**:
+
+1. **9 baris — pendua "double-click" sah** (SK Rumah Barat, jurang 12.3 saat, kelompok
+   sama) — **DIPADAM** (commit tindakan DB terus, bukan commit kod).
+2. **3 baris — Bridge Building** (kod sekolah "YBB 4403" tertulis dlm medan nama, patut
+   "SK KAMPUNG IRAN"; guru & peserta sama) — **DIPADAM**, kekal entri dgn nama sekolah penuh.
+3. **17 kes — No.KP sama, SEKOLAH BERBEZA, ejaan nama sedikit berbeza** (cth. "LOVELIA USUN
+   LUCAS" vs "LOVELA USUN LUCAS", guru & sekolah berlainan sama sekali) — **TIDAK DIPADAM**.
+   Analisis kuat menunjukkan ini kemungkinan 2 PELAJAR SEBENAR BERBEZA yang bertindih No.KP
+   (kesilapan taip IC), BUKAN satu pelajar didaftar dua kali. Padam salah satu berisiko
+   hapuskan pendaftaran sah pelajar sekolah lain. **PERLU disahkan oleh sekolah berkenaan.**
+4. **1 kes — JUSCHENA ROVESHA** (SK Kampung Iran, jurang 64 hari) — diasingkan dari
+   kelompok "double-click", TIDAK dipadam (jurang terlalu jauh utk anggap tak sengaja).
+5. **Pencapaian Drone Challenge** (4 peserta SMK Bekenu, TERBUKA BERKUMPULAN DAERAH) —
+   setiap peserta ada 2 rekod (TEMPAT PERTAMA markah 11 DAN TEMPAT KEDUA markah 10,
+   timestamp SAMA ke milisaat). **TIDAK DIPADAM** — perlu pengesahan kedudukan sebenar
+   pasukan (1st atau 2nd) daripada rekod rasmi pertandingan sebelum boleh betulkan.
+
+### ⏳ Belum selesai — menunggu keputusan/input
+- [ ] Kedudukan sebenar pasukan Drone Challenge SMK Bekenu (1st/2nd) — untuk betulkan
+  jadual `pencapaian` terus (2 baris x 4 peserta = 8 baris perlu disemak)
+- [ ] 17 kes No.KP bertindih sekolah-berbeza — perlu proses sahkan dgn sekolah berkenaan
+  (senarai penuh sudah dijana, boleh diminta semula bila perlu)
