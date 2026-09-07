@@ -1298,6 +1298,14 @@ body.view-list .pc::after { display: none; }
         <button class="lg-tab" id="lgtab-daftar" onclick="lgTab('daftar')">📝 Daftar Akaun</button>
       </div>
 
+      <div style="padding:.9rem 1rem 0;">
+        <button class="lg-btn" id="lg-btn-google" onclick="loginGoogle()" style="background:#fff;color:#3c4043;border:1.5px solid #dadce0;display:flex;align-items:center;justify-content:center;gap:.5rem;">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="">
+          Log Masuk dengan Google
+        </button>
+        <div style="text-align:center;font-size:.65rem;color:var(--g5);margin:.6rem 0;">— ATAU —</div>
+      </div>
+
       <!-- == PANEL LOGIN == -->
       <div class="lg-panel on" id="lgp-login">
         <div class="lg-dots">
@@ -2066,6 +2074,30 @@ body.view-list .pc::after { display: none; }
     <div class="mt2 fx gu">
       <button class="btn bp" onclick="doPin()">✓ SAHKAN</button>
       <button class="btn bs" onclick="closeMo('mo-pin');pAct=null;">BATAL</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CLAIM AKAUN GOOGLE -->
+<div class="mo" id="mo-claim">
+  <div class="md" style="max-width:420px;">
+    <div class="mh">🔗 SAHKAN AKAUN SEDIA ADA</div>
+    <div class="pin-wrap">
+      <p>Akaun Google anda (<b id="claim-emel"></b>) belum diikat ke mana-mana akaun UPBM Subis.
+      Sila sahkan No. KP dan PIN akaun sedia ada anda untuk mengikatnya.</p>
+      <div class="lg-fi">
+        <label>No. Kad Pengenalan <span class="req">*</span></label>
+        <input type="text" id="claim-nokp" placeholder="000000-00-0000" maxlength="14" inputmode="numeric" oninput="fmtKP(this)">
+      </div>
+      <div class="lg-fi">
+        <label>PIN <span class="req">*</span></label>
+        <input type="password" id="claim-pin" placeholder="PIN sedia ada" maxlength="12" onkeydown="if(event.key==='Enter')claimAkaunGoogle()">
+      </div>
+      <div class="pin-err" id="claim-err"></div>
+    </div>
+    <div class="mt2 fx gu">
+      <button class="btn bp" onclick="claimAkaunGoogle()">✓ SAHKAN &amp; IKAT AKAUN</button>
+      <button class="btn bs" onclick="closeMo('mo-claim');sb.auth.signOut();">BATAL</button>
     </div>
   </div>
 </div>
@@ -9060,6 +9092,9 @@ function lgKeluarConfirm(){
 // Dalam kes ini draf borang penyertaan TIDAK dipadam supaya boleh dipulihkan
 // (ditawarkan semula via _checkPenyDraft) selepas user log masuk semula.
 function lgKeluar(idleMode){
+  // Tamatkan sesi Google Sign-In juga (kalau ada) — tak ganggu kalau tiada sesi Google
+  try{ sb.auth.signOut(); }catch(e){}
+
   // 0. Tutup semua modal yang terbuka & reset scroll lock
   document.querySelectorAll('.mo.on').forEach(function(el){ el.classList.remove('on'); });
   _moOpenCount=0;
@@ -9906,6 +9941,65 @@ function _patchPadamSekBtns(){
 
 // == INIT ====================================================
 // INIT — klien Supabase sedia serta-merta (tiada handshake tak segerak diperlukan)
+// == GOOGLE SIGN-IN & CLAIM AKAUN =================================
+function loginGoogle(){
+  sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.href }
+  }).then(function(r){
+    if(r.error) lgMsg('lg-err','Gagal sambung ke Google: '+r.error.message);
+  });
+}
+
+function _initGoogleAuth(){
+  sb.auth.onAuthStateChange(function(event, session){
+    if(event === 'SIGNED_IN' && session){
+      _semakSesiGoogle(session);
+    }
+  });
+  // Semak juga sesi sedia ada (kes lepas redirect OAuth, sebelum event sempat tercetus)
+  sb.auth.getSession().then(function(r){
+    if(r.data && r.data.session) _semakSesiGoogle(r.data.session);
+  });
+}
+
+async function _semakSesiGoogle(session){
+  if(_sesi) return; // sudah log masuk (No.KP/PIN atau Google sedia ada) — elak konflik
+  try{
+    var r = await sb.rpc('login_via_google');
+    if(r.error){ console.error(r.error); return; }
+    var u = (r.data||[])[0];
+    if(u){
+      _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp});
+    } else {
+      // Belum pernah diikat — minta sahkan No.KP+PIN sedia ada
+      var emel = session.user && session.user.email || '';
+      document.getElementById('claim-emel').textContent = emel;
+      document.getElementById('claim-err').textContent = '';
+      document.getElementById('claim-nokp').value = '';
+      document.getElementById('claim-pin').value = '';
+      openMo('mo-claim');
+    }
+  }catch(e){ console.error(e); }
+}
+
+async function claimAkaunGoogle(){
+  var noKP = document.getElementById('claim-nokp').value.trim();
+  var pin  = document.getElementById('claim-pin').value.trim();
+  var errEl = document.getElementById('claim-err');
+  errEl.textContent = '';
+  if(!noKP || !pin){ errEl.textContent = 'Sila isi No. KP dan PIN.'; return; }
+  try{
+    var r = await sb.rpc('claim_akaun_google', {p_no_kp: noKP, p_pin: pin});
+    if(r.error){ errEl.textContent = r.error.message.replace(/^.*: /,''); return; }
+    var u = (r.data||[])[0];
+    if(!u){ errEl.textContent = 'No.KP atau PIN tidak sepadan.'; return; }
+    closeMo('mo-claim');
+    toast('Akaun berjaya diikat ke Google!','ok');
+    _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp});
+  }catch(e){ errEl.textContent = 'Ralat: '+e.message; }
+}
+
 function _initApp(){
   if(!sb){
     document.getElementById('prog-list').innerHTML =
@@ -9918,6 +10012,8 @@ function _initApp(){
 
   // Cuba pulihkan sesi dari sessionStorage
   _initSesiDariStorage();
+  // Sesi Google Sign-In (kalau ada) — semak & layan claim/log masuk automatik
+  _initGoogleAuth();
   // PEMBETULAN: pra-isi dropdown sekolah di skrin Daftar Akaun sejak awal
   _populateDafSekDropdown();
   // Muat senarai sekolah kanonik sebenar dari DB (gantikan senarai statik bila tersedia)
