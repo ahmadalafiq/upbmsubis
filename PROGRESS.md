@@ -96,6 +96,14 @@ Ciri baharu dalam tab Penyertaan (`index.html`, commit `a413b24`):
 - Validasi bantuan AI (auto-mapping lajur kalau format Excel pengguna sedikit berbeza)
 - Semakan pendua (peserta sama dimuat naik dua kali)
 
+**Diuji (7 Sept 2026):** Kod sebenar `_prosesBulkXlsx()` di-extract terus dari index.html dan
+dijalankan (Node.js + SheetJS) terhadap fail Excel ujian dengan 6 jenis ralat sengaja
+(No.KP tanpa sengkang, kategori berganda, No.KP tak sah, jantina tak sah, kategori tak wujud,
+kategori kosong, baris CONTOH/kosong). Semua kes dikendali dengan betul. Disahkan juga:
+fungsi `semakPeny()` sedia ada (tak diubah) sudah jadi lapisan pemeriksaan kedua yang blok
+penghantaran untuk sebarang data tak lengkap (termasuk kategori kosong) — tiada risiko data
+bulk-import hilang senyap ke pangkalan data.
+
 **Soalan: bila banyak user submit serentak, semua orang dapat "global refresh"?**
 Jawapan: **TIDAK, ini sudah direka dengan betul.** `_initRealtimeSync()` guna Supabase Realtime
 dengan debounce 2 saat, tangguh kemaskini jika user ada borang/modal aktif, refresh silent
