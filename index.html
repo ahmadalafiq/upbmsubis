@@ -9943,9 +9943,13 @@ function _patchPadamSekBtns(){
 // INIT — klien Supabase sedia serta-merta (tiada handshake tak segerak diperlukan)
 // == GOOGLE SIGN-IN & CLAIM AKAUN =================================
 function loginGoogle(){
+  // PEMBETULAN: guna URL bersih (origin+pathname) — window.location.href boleh
+  // bawa '#' tertinggal, sebabkan Supabase tambah '#access_token=...' jadi '##access_token=...'
+  // yang gagal di-parse oleh Supabase JS client (sesi tak dikesan lepas redirect balik).
+  var cleanUrl = window.location.origin + window.location.pathname;
   sb.auth.signInWithOAuth({
     provider: 'google',
-    options: { redirectTo: window.location.href }
+    options: { redirectTo: cleanUrl }
   }).then(function(r){
     if(r.error) lgMsg('lg-err','Gagal sambung ke Google: '+r.error.message);
   });
