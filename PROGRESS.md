@@ -224,3 +224,22 @@ datang boleh mula dari: (a) sahkan Google Sign-In berfungsi penuh di app sebenar
   2111→2083 baris penyertaan) — sekolah akan daftar semula pendaftaran yang terjejas
 
 **STATUS: Semua kerja siasat data untuk sesi ini SELESAI.**
+
+---
+
+## Ciri baharu + fix (7 Sept, sesi lanjutan)
+1. **Auto-clear ruang carian bila tukar tab** — `_resetTabFilters()` kini clear `peny-srch`
+   (tab Penyertaan) dan `ak-cari` (tab Akaun) setiap kali user tukar tab. (commit `7cb459a`)
+2. **Khas ADMIN — senarai sekolah menyertai program**: bila admin klik kad program di tab
+   Penyertaan, bullet senarai sekolah yang menyertai (dgn bilangan peserta) dipaparkan bawah
+   notis pengesahan. Klik bullet → modal papar guru pengiring + senarai peserta sekolah tu
+   untuk program tersebut. Fungsi: `_lihatSekolahDlmProgram()`. (commit `7cb459a`)
+3. **Khas ADMIN — bilangan penyertaan pada kad/baris program**: badge "👥 N" dipaparkan
+   terus pada kad (mod kad) & baris (mod senarai) tab Penyertaan, khas untuk admin sahaja.
+   (commit `7cb459a`)
+4. **Fix format AI**: system prompt `ai-chat` dikemaskini — arah Gemini elak simbol markdown
+   (**tebal**, # tajuk, - bullet) sebab UI papar plain text (`textContent`), bukan render
+   markdown. (commit `c16b930`)
+
+**Nota:** Ciri #2/#3 guna data dari `_aP` (cache client, sudah dibetulkan paginasi penuh
+sesi lepas) — tak perlu panggilan server tambahan, terus guna data yang sedia dimuat.
