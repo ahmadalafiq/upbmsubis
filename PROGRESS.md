@@ -243,3 +243,7 @@ datang boleh mula dari: (a) sahkan Google Sign-In berfungsi penuh di app sebenar
 
 **Nota:** Ciri #2/#3 guna data dari `_aP` (cache client, sudah dibetulkan paginasi penuh
 sesi lepas) — tak perlu panggilan server tambahan, terus guna data yang sedia dimuat.
+
+**Kemas kini kecil (commit `53360d8`):** bilangan penyertaan pada kad program kini di baris
+baharu (bukan sebaris dgn nama); modal lihat sekolah (dari bullet, khas admin) kini ada
+butang EDIT — guna semula flow `_openPenyertaanEdit` sama seperti di Pengelola.
