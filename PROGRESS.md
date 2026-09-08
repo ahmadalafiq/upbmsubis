@@ -247,3 +247,57 @@ sesi lepas) — tak perlu panggilan server tambahan, terus guna data yang sedia 
 **Kemas kini kecil (commit `53360d8`):** bilangan penyertaan pada kad program kini di baris
 baharu (bukan sebaris dgn nama); modal lihat sekolah (dari bullet, khas admin) kini ada
 butang EDIT — guna semula flow `_openPenyertaanEdit` sama seperti di Pengelola.
+
+---
+
+## Sesi malam (8-9 Sept) — Google-first registration + AI Analitik
+
+### Google Sign-In pendaftaran terus (No.KP+PIN tak lagi wajib untuk pengguna baharu)
+**STATUS: SUDAH SIAP SEPENUHNYA** — dibina oleh USER SENDIRI (bukan Claude) melalui commit
+terdahulu ("Enhance Google sign-in options") + RPC terus di Supabase SQL Editor semasa Claude
+sedang menunggu arahan. Disahkan oleh Claude (semakan konsistensi, bukan pembinaan):
+- Modal claim ada 2 mod bertogol: "Sahkan akaun sedia ada" (No.KP+PIN) vs "Daftar akaun
+  baharu terus" (Nama/No.KP/No.Tel/Sekolah, TANPA PIN — Google jadi kaedah log masuk)
+- RPC `daftar_akaun_google()`, `claim_akaun_google()`, `login_via_google()` — SEMUA konsisten
+  guna `_domain_dibenarkan()` (hadkan ke emel `@moe-dl.edu.my` sahaja)
+- Akaun baharu tetap status TUNGGU — kelulusan admin masih wajib sebelum log masuk berjaya
+- Claude cuma bersihkan 1 RPC draf sendiri (`semak_nokp_google`) yang jadi berlebihan/tak dipakai
+- **BELUM diuji end-to-end oleh manusia sebenar dalam browser** — kod & RPC disahkan konsisten
+  dari sudut Claude sahaja, disyorkan uji manual: Google baharu → daftar → admin lulus → login
+
+### AI Analitik — akses data sistem sebenar (BAHARU, dibina & DIUJI malam ni)
+**STATUS: SIAP & DIUJI BERJAYA.**
+
+RPC (7 fungsi, dijumpai SUDAH wujud di Supabase — turut dibina user sendiri semasa Claude
+menunggu, nama hampir sama dgn draf Claude yg dibuang):
+`analitik_ringkasan`, `analitik_sekolah_penyertaan`, `analitik_sekolah_pencapaian`,
+`analitik_guru_terbaik`, `analitik_murid_terbaik`, `analitik_program_popular`,
+`analitik_carian_sekolah`.
+
+**Kerja Claude malam ni**: sambungkan Edge Function `ai-chat` ke 7 RPC ni melalui Gemini
+**function-calling** (bukan hantar semua data dlm prompt — Gemini pilih fungsi berkaitan
+ikut soalan, panggil RPC, baca hasil, jana jawapan berdasarkan data sebenar).
+
+**2 bug dijumpai & dibetulkan semasa uji:**
+1. Role `'function'` ditolak Gemini (API versi ni guna role `'user'` untuk functionResponse)
+2. Model `gemini-3.6-flash` (generasi baharu) WAJIB `thoughtSignature` dikembalikan verbatim
+   bersama `functionCall` dlm sejarah perbualan — kod asal bina semula objek baharu (buang
+   medan tu) → Gemini tolak 400 INVALID_ARGUMENT. Dibetulkan: hantar balik part asal
+   sepenuhnya, bukan reconstruct.
+
+**Diuji langsung (pg_net dari dalam Supabase, bukan hanya baca kod):**
+- ✅ "Sekolah mana paling tinggi penyertaan?" → jawapan tepat + top-5, data sebenar
+  (SK KAMPUNG ANGUS, 191 penyertaan)
+- ✅ Soalan majmuk "Siapa guru terbaik DAN murid terbaik?" → 2 panggilan fungsi berasingan
+  dilayan betul dlm 1 respons, data tepat, tiada simbol markdown
+- ✅ CI/CD disahkan segerak (push → GitHub Actions success → Supabase versi 15)
+
+**Soalan yang disokong sekarang**: sekolah tertinggi penyertaan, sekolah banyak pencapaian,
+guru terbaik, murid terbaik, program paling popular, ringkasan statistik keseluruhan, carian
+statistik sekolah tertentu — dan gabungan/susulan drpd ni (Gemini function-calling generalize
+melangkaui contoh tetap).
+
+### Belum diuji / boleh disemak esok
+- [ ] Uji ciri AI Analitik dalam APP SEBENAR (bukan pg_net) — buka panel AI, cuba tanya soalan
+- [ ] Uji flow Google-first registration end-to-end dgn akaun sebenar
+- [ ] Pertimbang tambah lebih banyak RPC analitik jika ada soalan lain yang AI tak dapat jawab
