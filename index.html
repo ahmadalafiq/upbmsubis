@@ -3616,6 +3616,23 @@ async function padamSekPeny(progId,progNm,sekNm,kodSek){
   finally{hideOv();}
 }
 
+// Khas ADMIN: butang EDIT dalam modal lihat sekolah (dari bullet tab Penyertaan) —
+// guna semula logik akses & flow yang sama dengan reqEditSek() di Pengelola.
+function _editSekolahDariBullet(progId, progNm, sekNm, kodSek){
+  var prog=(_allProg||[]).filter(function(p){return p['ID']===progId;})[0];
+  var progPengKod = prog ? String(prog['Kod Pengelola']||'').toUpperCase() : '';
+  if(!canPadamSek(kodSek, progPengKod)){
+    toast('Anda tidak dibenarkan mengedit penyertaan ini.','er');
+    return;
+  }
+  closeMo('mo-srch');
+  setTimeout(function(){
+    if(!prog){ toast('Data program tidak dijumpai.','er'); return; }
+    _curProg = prog;
+    _openPenyertaanEdit(prog, kodSek, sekNm);
+  }, 220);
+}
+
 function reqEditSek(progId,progNm,sekNm,kodSek){
   // Semak akses — sama dengan canPadamSek
   var prog=(_allProg||[]).filter(function(p){return p['ID']===progId;})[0];
@@ -5784,7 +5801,8 @@ function renderPenyList(list){
       var card=document.createElement('div');
       card.className='psc'+(selId===p['ID']?' on':'');
       card.setAttribute('data-pid', p['ID']);
-      card.innerHTML='<h4>'+hlMatch(esc(p['Nama Program']),srch)+(hasRec?'&nbsp;<span style="font-size:.55rem;background:#e8f5e9;color:#27ae60;border-radius:20px;padding:.08rem .35rem;font-weight:800;">✓ ADA REKOD</span>':'')+(isAdmin?'&nbsp;<span style="font-size:.55rem;background:#eef2ff;color:#4338ca;border-radius:20px;padding:.08rem .35rem;font-weight:800;">👥 '+(pnyCountMap[p['ID']]||0)+' penyertaan</span>':'')+'</h4>'
+      card.innerHTML='<h4>'+hlMatch(esc(p['Nama Program']),srch)+(hasRec?'&nbsp;<span style="font-size:.55rem;background:#e8f5e9;color:#27ae60;border-radius:20px;padding:.08rem .35rem;font-weight:800;">✓ ADA REKOD</span>':'')+'</h4>'
+        +(isAdmin?'<div style="margin:.15rem 0 .1rem;"><span style="font-size:.55rem;background:#eef2ff;color:#4338ca;border-radius:20px;padding:.08rem .35rem;font-weight:800;">👥 '+(pnyCountMap[p['ID']]||0)+' penyertaan</span></div>':'')
         +'<p>'+esc(p['Bidang']||'')+' &bull; '+esc(p['Kategori']||'')+' &bull; '+esc(p['Peringkat']||'')+(p['Tarikh']?' &bull; '+fd(p['Tarikh']):'')+'</p>';
       (function(pid,pnm,cel){cel.addEventListener('click',function(){pilihProg(pid,pnm,cel);});})(p['ID'],p['Nama Program'],card);
       el.appendChild(card);
@@ -5883,7 +5901,10 @@ function _lihatSekolahDlmProgram(kodSekolah, progId, progNama){
   // Senarai peserta (bukan baris GURU sahaja)
   var pesRows=rows.filter(function(r){return r['Kategori Penyertaan']!=='GURU' && r['Nama Peserta'];});
 
-  var html='<div style="margin-bottom:.6rem;font-size:.72rem;"><b>'+esc(progNama)+'</b><br><span style="color:var(--g5);">'+esc(namaSekolah)+' ('+kodSekolah+')</span></div>';
+  var html='<div style="margin-bottom:.6rem;font-size:.72rem;display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">'
+    +'<div><b>'+esc(progNama)+'</b><br><span style="color:var(--g5);">'+esc(namaSekolah)+' ('+kodSekolah+')</span></div>'
+    +'<button type="button" class="btn bp bsm" style="white-space:nowrap;" onclick="_editSekolahDariBullet(\''+progId+'\',\''+esc(progNama).replace(/'/g,"\\'")+'\',\''+esc(namaSekolah).replace(/'/g,"\\'")+'\',\''+kodSekolah+'\')">✏️ EDIT</button>'
+    +'</div>';
   if(guruList.length){
     html+='<div style="font-size:.65rem;font-weight:800;color:var(--g5);margin:.4rem 0 .2rem;">👨‍🏫 GURU PENGIRING</div>'
       +'<ul style="margin:0 0 .5rem 1.1rem;padding:0;font-size:.72rem;">'+guruList.map(function(g){return '<li>'+esc(g)+'</li>';}).join('')+'</ul>';
