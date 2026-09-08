@@ -1636,6 +1636,7 @@ body.view-list .pc::after { display: none; }
       </div>
     </div>
     <div id="kod-stat" class="mt1"></div>
+    <div id="peny-admin-sekolah-list" class="mt1"></div>
     <div id="kod-manual-wrap" style="display:none;margin-top:.5rem;">
       <button class="btn bp bsm" onclick="onKodIn();document.getElementById('kod-manual-wrap').style.display='none';">
         ▶ BUKA BORANG PENYERTAAN
@@ -3086,8 +3087,11 @@ function _resetTabFilters(pg){
   if(pg==='peserta'){
     var pb=document.getElementById('peny-flt-bulan');
     var pbd=document.getElementById('peny-flt-bidang');
+    var psr=document.getElementById('peny-srch');
     if(pb)pb.value='';
     if(pbd)pbd.value='';
+    if(psr){psr.value='';}
+    if(typeof applyPenyFilt==='function')applyPenyFilt();
   }
   if(pg==='dashboard'){
     // Reset bidang filter ke keseluruhan
@@ -3096,6 +3100,8 @@ function _resetTabFilters(pg){
   if(pg==='akaun'){
     // Reset akaun filter ke semua
     if(typeof akFilt==='function')akFilt('semua');
+    var akc=document.getElementById('ak-cari');
+    if(akc){akc.value=''; if(typeof akCari==='function')akCari('');}
   }
 }
 
@@ -5735,6 +5741,15 @@ function renderPenyList(list){
       if(String(r['Kod Sekolah']||'').toUpperCase()===userKod.toUpperCase()) hasRecSet[r['Program ID']||r['Nama Program']]=true;
     });
   }
+  var isAdmin = !!(_sesi && _sesi.role==='admin');
+  var pnyCountMap={};
+  if(isAdmin && _aP && _aP.length){
+    _aP.forEach(function(r){
+      if(r['Kategori Penyertaan']==='GURU') return;
+      var pid=r['Program ID']; if(!pid) return;
+      pnyCountMap[pid]=(pnyCountMap[pid]||0)+1;
+    });
+  }
   if(_penyView==='senarai'){
     var tbl=document.createElement('table');
     tbl.style.cssText='width:100%;border-collapse:collapse;font-size:.73rem;';
@@ -5746,7 +5761,7 @@ function renderPenyList(list){
       tr.style.cssText='cursor:pointer;border-bottom:1px solid var(--g2);transition:background .12s;'+(selId===p['ID']?'background:rgba(192,57,43,.07);':'');
       var stBg=p['Status']==='AKTIF'?'#e8f5e9':'#fef9e7';
       var stCl=p['Status']==='AKTIF'?'#27ae60':'#b7770d';
-      tr.innerHTML='<td style="padding:.42rem .6rem;font-weight:700;color:var(--g8);">'+hlMatch(esc(p['Nama Program']),srch)+(hasRec?'&nbsp;<span style="font-size:.55rem;background:#e8f5e9;color:#27ae60;border-radius:20px;padding:.08rem .35rem;font-weight:800;">\u2713 ADA REKOD</span>':'')+'</td>'
+      tr.innerHTML='<td style="padding:.42rem .6rem;font-weight:700;color:var(--g8);">'+hlMatch(esc(p['Nama Program']),srch)+(hasRec?'&nbsp;<span style="font-size:.55rem;background:#e8f5e9;color:#27ae60;border-radius:20px;padding:.08rem .35rem;font-weight:800;">\u2713 ADA REKOD</span>':'')+(isAdmin?'&nbsp;<span style="font-size:.55rem;background:#eef2ff;color:#4338ca;border-radius:20px;padding:.08rem .35rem;font-weight:800;">👥 '+(pnyCountMap[p['ID']]||0)+'</span>':'')+'</td>'
         +'<td style="padding:.42rem .6rem;color:var(--g5);">'+(p['Bidang']||'\u2014')+'</td>'
         +'<td style="padding:.42rem .6rem;color:var(--g5);">'+(p['Tarikh']?fd(p['Tarikh']):'\u2014')+'</td>'
         +'<td style="padding:.42rem .6rem;text-align:center;"><span style="font-size:.55rem;font-weight:800;padding:.1rem .38rem;border-radius:20px;background:'+stBg+';color:'+stCl+';">'+p['Status']+'</span></td>';
@@ -5769,7 +5784,7 @@ function renderPenyList(list){
       var card=document.createElement('div');
       card.className='psc'+(selId===p['ID']?' on':'');
       card.setAttribute('data-pid', p['ID']);
-      card.innerHTML='<h4>'+hlMatch(esc(p['Nama Program']),srch)+(hasRec?'&nbsp;<span style="font-size:.55rem;background:#e8f5e9;color:#27ae60;border-radius:20px;padding:.08rem .35rem;font-weight:800;">✓ ADA REKOD</span>':'')+'</h4>'
+      card.innerHTML='<h4>'+hlMatch(esc(p['Nama Program']),srch)+(hasRec?'&nbsp;<span style="font-size:.55rem;background:#e8f5e9;color:#27ae60;border-radius:20px;padding:.08rem .35rem;font-weight:800;">✓ ADA REKOD</span>':'')+(isAdmin?'&nbsp;<span style="font-size:.55rem;background:#eef2ff;color:#4338ca;border-radius:20px;padding:.08rem .35rem;font-weight:800;">👥 '+(pnyCountMap[p['ID']]||0)+' penyertaan</span>':'')+'</h4>'
         +'<p>'+esc(p['Bidang']||'')+' &bull; '+esc(p['Kategori']||'')+' &bull; '+esc(p['Peringkat']||'')+(p['Tarikh']?' &bull; '+fd(p['Tarikh']):'')+'</p>';
       (function(pid,pnm,cel){cel.addEventListener('click',function(){pilihProg(pid,pnm,cel);});})(p['ID'],p['Nama Program'],card);
       el.appendChild(card);
@@ -5812,6 +5827,34 @@ function pilihProg(id,nm,cardEl){
   } else {
     if(ks) ks.innerHTML='';
   }
+  // Ciri khas ADMIN: papar bullet senarai sekolah yang menyertai program ini
+  var aSekEl=document.getElementById('peny-admin-sekolah-list');
+  if(aSekEl){
+    if(_sesi && _sesi.role==='admin' && _aP && _aP.length){
+      var rowsProg=(_aP||[]).filter(function(r){return r['Program ID']===id && r['Kategori Penyertaan']!=='GURU';});
+      var bySek={};
+      rowsProg.forEach(function(r){
+        var kd=r['Kod Sekolah']||'';
+        if(!kd) return;
+        if(!bySek[kd]) bySek[kd]={nama:r['Nama Sekolah']||kd, bil:0};
+        bySek[kd].bil++;
+      });
+      var kodList=Object.keys(bySek).sort(function(a,b){return bySek[a].nama.localeCompare(bySek[b].nama);});
+      if(kodList.length){
+        aSekEl.innerHTML='<div style="font-size:.62rem;font-weight:800;color:var(--g5);margin-bottom:.35rem;">🏫 SEKOLAH YANG MENYERTAI ('+kodList.length+')</div>'
+          +'<div style="display:flex;flex-wrap:wrap;gap:.35rem;">'
+          +kodList.map(function(kd){
+            return '<button type="button" class="btn bs bsm" style="border-radius:20px;" onclick="_lihatSekolahDlmProgram(\''+kd+'\',\''+id+'\',\''+esc(nm).replace(/'/g,"\\'")+'\')">'
+              +esc(bySek[kd].nama)+' <span style="opacity:.7;">('+bySek[kd].bil+')</span></button>';
+          }).join('')
+          +'</div>';
+      } else {
+        aSekEl.innerHTML='';
+      }
+    } else {
+      aSekEl.innerHTML='';
+    }
+  }
   // PEMBETULAN KRITIKAL #1: Jika guru/pkk, panggil onSekSelect secara auto (selId sudah diset)
   if(_autoKod && selEl && selEl.value===_autoKod){
     onSekSelect(_autoKod);
@@ -5820,6 +5863,44 @@ function pilihProg(id,nm,cardEl){
   var sbEl=document.getElementById('sbox-sekolah');
   if(sbEl) setTimeout(function(){sbEl.scrollIntoView({behavior:'smooth',block:'nearest'});},120);
   _startPenyAutoSave();
+}
+
+// Khas ADMIN: papar data penyertaan satu sekolah dalam program terpilih (bila bullet diklik)
+function _lihatSekolahDlmProgram(kodSekolah, progId, progNama){
+  var rows=(_aP||[]).filter(function(r){return r['Program ID']===progId && r['Kod Sekolah']===kodSekolah;});
+  if(!rows.length){toast('Tiada data dijumpai.','er');return;}
+  var namaSekolah=rows[0]['Nama Sekolah']||kodSekolah;
+
+  // Kumpul guru unik
+  var guruSeen={}, guruList=[];
+  rows.forEach(function(r){
+    if(r['Kategori Penyertaan']==='GURU' || r['Nama Guru']){
+      var gk=(r['No KP Guru']||r['Nama Guru']);
+      if(gk && !guruSeen[gk]){ guruSeen[gk]=1; guruList.push(r['Nama Guru']+(r['No Tel Guru']?' — '+r['No Tel Guru']:'')); }
+    }
+  });
+
+  // Senarai peserta (bukan baris GURU sahaja)
+  var pesRows=rows.filter(function(r){return r['Kategori Penyertaan']!=='GURU' && r['Nama Peserta'];});
+
+  var html='<div style="margin-bottom:.6rem;font-size:.72rem;"><b>'+esc(progNama)+'</b><br><span style="color:var(--g5);">'+esc(namaSekolah)+' ('+kodSekolah+')</span></div>';
+  if(guruList.length){
+    html+='<div style="font-size:.65rem;font-weight:800;color:var(--g5);margin:.4rem 0 .2rem;">👨‍🏫 GURU PENGIRING</div>'
+      +'<ul style="margin:0 0 .5rem 1.1rem;padding:0;font-size:.72rem;">'+guruList.map(function(g){return '<li>'+esc(g)+'</li>';}).join('')+'</ul>';
+  }
+  html+='<div style="font-size:.65rem;font-weight:800;color:var(--g5);margin:.4rem 0 .2rem;">🧑‍🎓 PESERTA ('+pesRows.length+')</div>';
+  if(pesRows.length){
+    html+='<table style="width:100%;border-collapse:collapse;font-size:.71rem;">'
+      +'<thead><tr style="background:var(--g1);"><th style="text-align:left;padding:.3rem .4rem;">Nama</th><th style="text-align:left;padding:.3rem .4rem;">Kategori</th></tr></thead><tbody>'
+      +pesRows.map(function(r){return '<tr style="border-bottom:1px solid var(--g2);"><td style="padding:.3rem .4rem;">'+esc(r['Nama Peserta'])+'</td><td style="padding:.3rem .4rem;color:var(--g5);">'+esc(r['Kategori Penyertaan'])+'</td></tr>';}).join('')
+      +'</tbody></table>';
+  } else {
+    html+='<p style="font-size:.71rem;color:var(--g5);">Tiada peserta direkodkan.</p>';
+  }
+
+  document.getElementById('srch-q').textContent = namaSekolah;
+  document.getElementById('srch-body').innerHTML = html;
+  openMo('mo-srch');
 }
 
 function _buildKatLegend(){
