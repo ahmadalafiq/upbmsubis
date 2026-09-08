@@ -42,7 +42,95 @@ Peranan anda:
   JANGAN sekali-kali guna simbol pemformatan seperti **tebal**, *condong*, # tajuk,
   - senarai bullet, atau \`kod\`. Tulis dalam ayat biasa. Untuk senarai, guna nombor
   biasa (1. 2. 3.) atau ayat berterusan, bukan simbol bullet/asterisk.
+- ANDA ADA AKSES DATA SEBENAR sistem melalui fungsi (tools) yang disediakan — guna fungsi
+  berkenaan untuk jawab soalan seperti "sekolah tertinggi penyertaan", "sekolah banyak
+  pencapaian", "guru terbaik", "murid terbaik", "program paling popular", atau statistik
+  keseluruhan sistem. JANGAN reka/anggar angka — SENTIASA panggil fungsi yang berkaitan
+  dahulu sebelum jawab soalan berbentuk statistik/data. Jawapan akhir bina berdasarkan
+  data sebenar yang dipulangkan oleh fungsi tersebut sahaja.
 `.trim();
+
+// == RPC analitik yang boleh dipanggil Gemini (function-calling) ===
+// Fungsi ni SUDAH wujud di Supabase (dicipta terus, bukan melalui fail ni) —
+// senarai declaration di bawah mesti sepadan tepat dengan tandatangan sebenar.
+const SUPABASE_URL = "https://pztuvriqjgfwczkuguky.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6dHV2cmlxamdmd2N6a3VndWt5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxNDY4NjksImV4cCI6MjA5OTcyMjg2OX0.k6Y84-6C4pD7xXSD7gaVGBiVimhKi6eNjQ3H-DrVQqY";
+
+const ANALITIK_TOOLS = [
+  {
+    name: "analitik_ringkasan",
+    description: "Ringkasan keseluruhan sistem: jumlah program, program aktif, penyertaan, pencapaian, sekolah aktif, akaun pengguna.",
+    parameters: { type: "OBJECT", properties: {} },
+  },
+  {
+    name: "analitik_sekolah_penyertaan",
+    description: "Senarai sekolah dengan bilangan PENYERTAAN (peserta didaftarkan) tertinggi, susun menurun.",
+    parameters: {
+      type: "OBJECT",
+      properties: { p_limit: { type: "INTEGER", description: "Bilangan sekolah nak dipaparkan, lalai 10" } },
+    },
+  },
+  {
+    name: "analitik_sekolah_pencapaian",
+    description: "Senarai sekolah dengan bilangan & jumlah markah PENCAPAIAN (kemenangan/anugerah) tertinggi, susun menurun.",
+    parameters: {
+      type: "OBJECT",
+      properties: { p_limit: { type: "INTEGER", description: "Bilangan sekolah nak dipaparkan, lalai 10" } },
+    },
+  },
+  {
+    name: "analitik_guru_terbaik",
+    description: "Senarai guru pengiring dengan jumlah pencapaian/markah peserta bimbingan mereka tertinggi (\"guru terbaik\").",
+    parameters: {
+      type: "OBJECT",
+      properties: { p_limit: { type: "INTEGER", description: "Bilangan guru nak dipaparkan, lalai 10" } },
+    },
+  },
+  {
+    name: "analitik_murid_terbaik",
+    description: "Senarai peserta/murid dengan jumlah pencapaian/markah tertinggi (\"murid/peserta terbaik\").",
+    parameters: {
+      type: "OBJECT",
+      properties: { p_limit: { type: "INTEGER", description: "Bilangan murid nak dipaparkan, lalai 10" } },
+    },
+  },
+  {
+    name: "analitik_program_popular",
+    description: "Senarai program dengan bilangan penyertaan (peserta) tertinggi — program paling popular/ramai disertai.",
+    parameters: {
+      type: "OBJECT",
+      properties: { p_limit: { type: "INTEGER", description: "Bilangan program nak dipaparkan, lalai 10" } },
+    },
+  },
+  {
+    name: "analitik_carian_sekolah",
+    description: "Cari statistik satu sekolah tertentu (jumlah penyertaan, pencapaian, markah) ikut nama sekolah.",
+    parameters: {
+      type: "OBJECT",
+      properties: { p_nama: { type: "STRING", description: "Nama sekolah atau sebahagian nama untuk dicari" } },
+      required: ["p_nama"],
+    },
+  },
+];
+
+async function panggilRpcAnalitik(name: string, args: Record<string, unknown>) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+    },
+    body: JSON.stringify(args || {}),
+  });
+  if (!r.ok) {
+    const errText = await r.text();
+    console.error(`RPC ${name} gagal:`, errText);
+    throw new Error(`RPC ${name} gagal: ${r.status}`);
+  }
+  return await r.json();
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,7 +161,7 @@ serve(async (req: Request) => {
     }
 
     // Bina senarai "contents" ikut format Gemini — riwayat + mesej semasa
-    const contents: Array<{ role: string; parts: { text: string }[] }> = [];
+    const contents: Array<{ role: string; parts: any[] }> = [];
 
     if (Array.isArray(history)) {
       for (const h of history) {
@@ -100,6 +188,7 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents,
+        tools: [{ function_declarations: ANALITIK_TOOLS }],
         generationConfig: {
           temperature: 0.4,
           maxOutputTokens: 4096,
@@ -116,9 +205,57 @@ serve(async (req: Request) => {
       );
     }
 
-    const data = await geminiRes.json();
+    let data = await geminiRes.json();
+    let candidate = data?.candidates?.[0];
+    let loopCount = 0;
+
+    // Layan sehingga 3 pusingan function-calling (elak gelung tak berkesudahan)
+    while (loopCount < 3) {
+      const parts = candidate?.content?.parts || [];
+      const fnCallPart = parts.find((p: any) => p.functionCall);
+      if (!fnCallPart) break; // Gemini dah bagi jawapan teks akhir, keluar loop
+
+      const fnName = fnCallPart.functionCall.name;
+      const fnArgs = fnCallPart.functionCall.args || {};
+      let fnResult: unknown;
+      try {
+        fnResult = await panggilRpcAnalitik(fnName, fnArgs);
+      } catch (e) {
+        fnResult = { error: String(e) };
+      }
+
+      // Tambah giliran model (functionCall) + giliran functionResponse ke perbualan.
+      // PENTING: hantar SEMULA fnCallPart asal sepenuhnya (bukan bina objek baharu) —
+      // model 3.x Gemini sertakan medan 'thoughtSignature' bersama functionCall yang
+      // WAJIB dikembalikan verbatim, kalau tidak Gemini tolak (400 INVALID_ARGUMENT).
+      contents.push({ role: "model", parts: [fnCallPart] } as any);
+      contents.push({
+        role: "user",
+        parts: [{ functionResponse: { name: fnName, response: { result: fnResult } } }],
+      } as any);
+
+      const followUp = await fetch(GEMINI_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents,
+          tools: [{ function_declarations: ANALITIK_TOOLS }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 4096 },
+        }),
+      });
+      if (!followUp.ok) {
+        const errText = await followUp.text();
+        console.error("Gemini API error (follow-up):", errText);
+        break;
+      }
+      data = await followUp.json();
+      candidate = data?.candidates?.[0];
+      loopCount++;
+    }
+
     const reply =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+      candidate?.content?.parts?.find((p: any) => p.text)?.text?.trim() ||
       "Maaf, saya tidak dapat menjana jawapan buat masa ini.";
 
     return new Response(JSON.stringify({ reply }), {
