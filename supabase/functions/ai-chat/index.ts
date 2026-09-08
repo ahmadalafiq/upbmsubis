@@ -38,6 +38,10 @@ Peranan anda:
   (contoh: jangan kata "anda boleh terus edit walaupun bukan admin").
 - Anda TIDAK mempunyai akses terus untuk mengubah data — anda hanya
   membantu dengan maklumat dan panduan buat masa ini.
+- PENTING — jawapan anda dipaparkan sebagai teks biasa (plain text), BUKAN markdown.
+  JANGAN sekali-kali guna simbol pemformatan seperti **tebal**, *condong*, # tajuk,
+  - senarai bullet, atau \`kod\`. Tulis dalam ayat biasa. Untuk senarai, guna nombor
+  biasa (1. 2. 3.) atau ayat berterusan, bukan simbol bullet/asterisk.
 `.trim();
 
 const corsHeaders = {
