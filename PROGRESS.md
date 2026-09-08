@@ -216,3 +216,11 @@ kemaskini semula pendaftaran/pencapaian secara berasingan bila perlu.
 Semua kerja aktif ditutup. Tiada item terbuka yang perlu tindakan segera. Sesi akan
 datang boleh mula dari: (a) sahkan Google Sign-In berfungsi penuh di app sebenar,
 (b) RLS (masih ditangguh, rujuk bahagian awal), (c) apa-apa isu baharu yang timbul.
+
+### ✅ Fasa 3 — Kedua-dua item tergantung DISELESAIKAN (arahan user: padam sahaja)
+- **Drone Challenge**: 8 baris "TEMPAT KEDUA" dipadam, kekal "TEMPAT PERTAMA" sahaja
+  (266→258 baris pencapaian) — konsisten dgn dasar getSkor (kedudukan terbaik menang)
+- **17 kes No.KP bertindih sekolah-berbeza**: KEDUA-DUA entri konflik dipadam (28 baris,
+  2111→2083 baris penyertaan) — sekolah akan daftar semula pendaftaran yang terjejas
+
+**STATUS: Semua kerja siasat data untuk sesi ini SELESAI.**
