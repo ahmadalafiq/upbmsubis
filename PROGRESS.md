@@ -315,3 +315,23 @@ melangkaui contoh tetap).
 Tiada X-Frame-Options/CSP dalam index.html sendiri. Kemungkinan besar dari hosting platform
 tempat fail dihoskan (bukan repo ni - tiada workflow GitHub Pages). PERLU pautan sebenar
 hosting + pautan Google Sites daripada user untuk web_fetch & diagnosis tepat.
+
+---
+
+## Isu 403 Google Sites — DISELESAIKAN (commit `c9f765a`)
+**Punca sebenar** (bukan hosting/CSP index.html): `accounts.google.com` MEMANG tolak dimuatkan
+dalam iframe bersarang (403) — langkah keselamatan Google sendiri, elak clickjacking kata
+laluan. Bila app dibuka dlm iframe Google Sites dan `loginGoogle()` redirect terus dalam
+iframe tu, Google terus block. Disahkan dari mesej ralat browser sebenar yang user hantar
+(CSP frame-ancestors violation + 403 pada request ke accounts.google.com).
+
+**Fix:** `loginGoogle()` kini kesan `window.self !== window.top` (dalam iframe ke tidak).
+Kalau dalam iframe → guna `skipBrowserRedirect:true`, buka URL OAuth dalam **tab baharu**
+(`window.open`) — bukan redirect dalam iframe. Lepas log masuk berjaya (mana-mana flow:
+login_via_google/claim/daftar baharu — dicover terus dalam `_mulakanSesi()`), kalau tab
+tu dibuka via `window.opener`, papar notis hijau "boleh tutup tab ini". Sesi disegerakkan
+automatik ke tab/iframe asal via localStorage sama origin (mekanisme built-in Supabase JS).
+
+**Belum diuji langsung dalam Google Sites sebenar** — disyorkan uji: buka Google Sites →
+klik Log Masuk Google → sepatutnya buka tab baharu (bukan 403) → log masuk → notis hijau →
+tutup tab → kembali ke Google Sites → sepatutnya dah log masuk.
