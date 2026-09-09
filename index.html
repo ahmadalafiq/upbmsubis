@@ -9143,6 +9143,13 @@ function _mulakanSesi(data){
   // Simpan dalam sessionStorage
   try{ sessionStorage.setItem('upbm_sesi', JSON.stringify(_sesi)); }catch(e){}
 
+  // Reset panel AI supaya papar ucapan penuh (bukan amaran pre-login) bila dibuka semula
+  if(typeof _aiOpened !== 'undefined' && _aiOpened){
+    _aiOpened = false;
+    var aiBodyEl = document.getElementById('ai-body');
+    if(aiBodyEl) aiBodyEl.innerHTML='';
+  }
+
   // Tunjuk app, sembunyikan login
   document.body.classList.add('loggedin');
   var nav = document.querySelector('nav');
@@ -10970,15 +10977,23 @@ var AI_SARANAN_AWAL = [
   'Apa maksud status DRAFT vs AKTIF?'
 ];
 
+// Mesej khas bila cuba guna AI sebelum log masuk — statik sahaja, TIDAK panggil API AI.
+var AI_MESEJ_BELUM_LOGIN = 'Pembantu AI penuh hanya boleh digunakan selepas log masuk. Sebelum log masuk, saya cuma boleh bantu berkenaan 2 perkara: 1. Cara buat akaun pertama kali - klik tab Daftar Akaun di skrin log masuk, isi Peranan/Nama/No.KP/No.Tel/Sekolah, cipta PIN 6 digit, hantar permohonan. Akaun akan berstatus Tunggu sehingga admin lulus (biasanya 1-2 hari bekerja). 2. Cara claim akaun sedia ada dengan Google - klik Log Masuk dengan Google, pilih akaun Google sekolah anda (@moe-dl.edu.my), lepas itu masukkan No.KP dan PIN akaun sedia ada untuk mengikatnya. Kalau akaun belum wujud langsung, ada pilihan Daftar akaun baharu terus dalam modal yang sama, tiada PIN diperlukan sebab guna Google. Sila log masuk dahulu untuk soalan lain.';
+
 function aiTogglePanel(force){
   var panel = document.getElementById('ai-panel');
   var show = (typeof force === 'boolean') ? force : !panel.classList.contains('on');
   panel.classList.toggle('on', show);
   if(show && !_aiOpened){
     _aiOpened = true;
-    aiAppendMsg('bot', 'Hai! 👋 Saya pembantu AI UPBM Subis. Saya boleh bantu jawab soalan tentang penggunaan sistem ini. Apa yang boleh saya bantu?');
-    aiRenderSugg(AI_SARANAN_AWAL);
-    document.getElementById('ai-fab-dot').style.display='none';
+    if(!_sesi){
+      aiAppendMsg('err', '⚠ ' + AI_MESEJ_BELUM_LOGIN);
+      document.getElementById('ai-fab-dot').style.display='none';
+    } else {
+      aiAppendMsg('bot', 'Hai! 👋 Saya pembantu AI UPBM Subis. Saya boleh bantu jawab soalan tentang penggunaan sistem ini. Apa yang boleh saya bantu?');
+      aiRenderSugg(AI_SARANAN_AWAL);
+      document.getElementById('ai-fab-dot').style.display='none';
+    }
   }
   if(show) setTimeout(function(){ var i=document.getElementById('ai-input'); if(i) i.focus(); }, 150);
 }
@@ -11043,6 +11058,13 @@ async function aiSend(){
   input.value = '';
   document.getElementById('ai-sugg').innerHTML = '';
   aiAppendMsg('usr', msg);
+
+  if(!_sesi){
+    // AI penuh TIDAK aktif sebelum log masuk — tiada panggilan API AI dibuat langsung.
+    aiAppendMsg('err', '⚠ ' + AI_MESEJ_BELUM_LOGIN);
+    return;
+  }
+
   _aiHist.push({role:'user', text: msg});
   _aiBusy = true;
   document.getElementById('ai-send-btn').disabled = true;
