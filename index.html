@@ -9143,6 +9143,17 @@ function _mulakanSesi(data){
   // Simpan dalam sessionStorage
   try{ sessionStorage.setItem('upbm_sesi', JSON.stringify(_sesi)); }catch(e){}
 
+  // Tab ni dibuka via window.open() dari tab/iframe asal (cth: Google Sites, sebab Google
+  // OAuth tolak dimuatkan dalam iframe bersarang) — beritahu boleh tutup tab, sesi akan
+  // disegerakkan automatik ke tab asal (localStorage sama origin dikongsi Supabase JS).
+  if(window.opener){
+    try{
+      document.body.insertAdjacentHTML('afterbegin',
+        '<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#27ae60;color:#fff;text-align:center;padding:.6rem;font-size:.8rem;font-weight:700;">'
+        +'✓ Log masuk berjaya! Anda boleh tutup tab ini dan kembali ke tab/laman asal.</div>');
+    }catch(e){}
+  }
+
   // Reset panel AI supaya papar ucapan penuh (bukan amaran pre-login) bila dibuka semula
   if(typeof _aiOpened !== 'undefined' && _aiOpened){
     _aiOpened = false;
@@ -10078,6 +10089,32 @@ function loginGoogle(){
   // bawa '#' tertinggal, sebabkan Supabase tambah '#access_token=...' jadi '##access_token=...'
   // yang gagal di-parse oleh Supabase JS client (sesi tak dikesan lepas redirect balik).
   var cleanUrl = window.location.origin + window.location.pathname;
+
+  // PEMBETULAN: Google (accounts.google.com) TOLAK dimuatkan dalam iframe bersarang
+  // (403 — langkah keselamatan Google elak clickjacking kata laluan). Kalau app ni
+  // dibuka dalam iframe (cth: embed Google Sites), redirect OAuth biasa akan gagal.
+  // Elak dgn buka log masuk Google dalam TAB BAHARU — bukan redirect dalam iframe.
+  var dalamIframe = (window.self !== window.top);
+
+  if(dalamIframe){
+    sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: cleanUrl,
+        skipBrowserRedirect: true,
+        queryParams: { hd: 'moe-dl.edu.my' }
+      }
+    }).then(function(r){
+      if(r.error){ lgMsg('lg-err','Gagal sambung ke Google: '+r.error.message); return; }
+      if(r.data && r.data.url){
+        window.open(r.data.url, '_blank');
+        lgMsg('lg-err', '');
+        toast('Log masuk Google dibuka dalam tab baharu. Selepas selesai, kembali ke tab ini — sesi akan disegerakkan automatik.', 'in');
+      }
+    });
+    return;
+  }
+
   sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
