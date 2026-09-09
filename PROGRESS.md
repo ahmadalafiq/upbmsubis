@@ -301,3 +301,17 @@ melangkaui contoh tetap).
 - [ ] Uji ciri AI Analitik dalam APP SEBENAR (bukan pg_net) — buka panel AI, cuba tanya soalan
 - [ ] Uji flow Google-first registration end-to-end dgn akaun sebenar
 - [ ] Pertimbang tambah lebih banyak RPC analitik jika ada soalan lain yang AI tak dapat jawab
+
+---
+
+## AI gating - hanya aktif selepas login (commit `0fb6382`)
+- `aiTogglePanel()` & `aiSend()` kini semak `_sesi` dahulu. Belum log masuk → papar amaran
+  statik (TIADA panggilan ke Edge Function ai-chat dibuat langsung) yang cuma jelaskan
+  2 perkara: cara daftar akaun pertama kali, cara claim akaun sedia ada dengan Google.
+- `_mulakanSesi()` reset `_aiOpened` + kosongkan `ai-body` supaya lepas login, buka panel AI
+  papar ucapan penuh (bukan amaran lama).
+
+## Isu 403 embed Google Sites - MENUNGGU MAKLUMAT
+Tiada X-Frame-Options/CSP dalam index.html sendiri. Kemungkinan besar dari hosting platform
+tempat fail dihoskan (bukan repo ni - tiada workflow GitHub Pages). PERLU pautan sebenar
+hosting + pautan Google Sites daripada user untuk web_fetch & diagnosis tepat.
