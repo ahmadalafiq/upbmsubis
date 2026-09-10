@@ -2,16 +2,18 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    - cron: '0 3 */3 * *'   # setiap 3 hari, 3 pagi UTC (~11am MYT)
-  workflow_dispatch:         # boleh trigger manual dari tab Actions
+    # Runs daily at 03:00 UTC (11:00 MYT) to ensure the 7-day timer never expires
+    - cron: '0 3 * * *'
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
 
 jobs:
   ping-supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase table
+      - name: Call Supabase keep_alive RPC
         run: |
-          curl --fail -X GET \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/pengguna?select=id&limit=1" \
+          curl --fail --retry 3 --retry-delay 10 -X POST \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/keep_alive" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json"
