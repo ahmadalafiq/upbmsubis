@@ -404,3 +404,43 @@ _Mula: sekarang. Kemas kini checkpoint di bawah selepas setiap fasa siap._
 - [ ] Fasa F — Susun cadangan penambahbaikan (keutamaan tinggi -> rendah)
 
 ### Checkpoint semasa: **Fasa A — bermula**
+
+---
+
+## 🔴 KECEMASAN — dijumpai & dibetulkan semasa Fasa C (commit `08ec298`)
+
+Semasa senarai penuh semua RPC, jumpa **sistem token sesi selari** yang anda bina sendiri
+(`_sahkan_token`, `_set_session_token`, siri `admin_*`, `daftar_program`,
+`hantar_penyertaan_sekolah`, dll) — jauh LEBIH SELAMAT drpd pendekatan "semak No.KP sahaja"
+yang saya guna (token sesi sebenar tak boleh diteka, No.KP/IC berpotensi diketahui). TAPI:
+
+**Client JS (index.html) masih guna 0% daripada sistem token ni** — dan lebih teruk,
+beberapa RPC yang saya bina awal (`set_pin`, `replace_pencapaian`, `kemaskini_program_cascade`,
+`padam_program_cascade`) **signature ditukar/dibuang** oleh kerja token tu, tanpa saya sedar.
+Disahkan **PECAH LIVE**: pendaftaran akaun baharu, reset PIN, simpan pencapaian, edit program,
+padam program — SEMUA gagal (RLS dah kunci, tiada fallback terus jadual).
+
+**Dibetulkan serta-merta:**
+- `set_pin` — dicipta semula (2 param, terhad status='TUNGGU' sahaja — utk pendaftaran diri)
+- `pengguna_reset_pin` (BAHARU) — admin reset PIN pengguna lain
+- `pencapaian_ganti` (BAHARU) — ganti `replace_pencapaian`, admin/pkk-gated
+- `program_kemaskini` (BAHARU) — ganti `kemaskini_program_cascade` versi lama yg TIADA
+  sebarang semakan peranan (lubang keselamatan aktif, sesiapa boleh edit program)
+- `program_padam` (BAHARU) — ganti `padam_program_cascade` yg perlukan token (belum integrasi)
+- Disahkan: SEMUA 19 RPC yang dipanggil client JS kini sepadan TEPAT dgn signature DB sebenar
+
+### ⚠️ Keputusan senibina perlu dibuat — sistem token vs pattern semasa
+Ada **2 sistem authorization berselang wujud serentak sekarang**:
+1. Pattern saya (`p_no_kp_admin` sahaja) — ringkas, LEMAH (No.KP boleh diteka/diketahui
+   dlm komuniti sekolah), tapi INI yang client JS guna SEKARANG (berfungsi).
+2. Sistem token anda (`_sahkan_token`) — kukuh (token rawak sebenar), tapi client JS
+   TAK PERNAH panggil `_set_session_token()` selepas login utk dapatkan token, jadi
+   RPC yg perlukan token (`daftar_program`, `hantar_penyertaan_sekolah`, dll) **tak boleh
+   dipanggil client sekarang** — akan gagal sama macam yg baru dibetulkan tadi.
+
+**Cadangan:** migrasi PENUH ke sistem token (lebih selamat, tapi kerja besar — perlu ubah
+`_mulakanSesi()` simpan token, hantar token pada SETIAP panggilan admin/tulis) — atau kekal
+pattern semasa buat masa ini (dah cukup selamat berbanding sebelum ni) dan reserve sistem
+token utk migrasi besar akan datang. BELUM DIPUTUSKAN — perlu bincang dgn user.
+
+## Checkpoint semasa: **Fasa C siap (dgn kecemasan dibetulkan) — sambung Fasa D**
