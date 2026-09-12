@@ -2520,13 +2520,13 @@ async function _supaDispatch(fn, payload){
   if(fn === 'daftarProgramGS'){
     var tar1 = payload.tarikh;
     var thn1 = tar1 ? new Date(tar1).getFullYear() : new Date().getFullYear();
-    var insP = {
-      nama_program: payload.nama, pengelola: payload.pengelola, kod_pengelola: payload.kodPengelola,
-      bidang: payload.bidang, kategori: (payload.kategori||[]).join(','), peringkat: payload.peringkat,
-      tarikh: tar1, tempat: payload.tempat, status: payload.status||'AKTIF', tahun: thn1
-    };
-    var rIns = await sb.from(TBL_PROGRAM).insert(insP);
-    _throwIfErr(rIns.error);
+    var rInsP = await sb.rpc('program_daftar', {
+      p_no_kp_pemohon: (_sesi&&_sesi.noKP)||'', p_nama: payload.nama, p_pengelola: payload.pengelola,
+      p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
+      p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
+      p_tarikh: tar1, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn1
+    });
+    _throwIfErr(rInsP.error);
     return {ok:true, msg:'Program berjaya didaftarkan'};
   }
 
@@ -2552,17 +2552,16 @@ async function _supaDispatch(fn, payload){
   // -------- PENYERTAAN (sheet 'Penyertaan') --------
   if(fn === 'hantarPenyertaanGS' || fn === 'kemaskiniPenyertaanSekolahGS'){
     var thnPy = new Date().getFullYear();
-    if(fn === 'kemaskiniPenyertaanSekolahGS'){
-      // Buang dahulu rekod sedia ada bagi program+sekolah ini (termasuk kes 'padam' apabila rows=[])
-      var dPy = await sb.from(TBL_PENYERTAAN).delete()
-        .eq('program_id', payload.programId).eq('kod_sekolah', payload.kodSekolah);
-      _throwIfErr(dPy.error);
-    }
-    var rowsIn = (payload.rows||[]).map(function(row){return _rowArrToPenyertaanIn(row, thnPy);});
-    if(rowsIn.length){
-      var iPy = await sb.from(TBL_PENYERTAAN).insert(rowsIn);
-      _throwIfErr(iPy.error);
-    }
+    var rowsIn = (payload.rows||[]);
+    var rPh = await sb.rpc('penyertaan_hantar', {
+      p_no_kp_pemohon: (_sesi&&_sesi.noKP)||'',
+      p_program_id: payload.programId,
+      p_kod_sekolah: payload.kodSekolah,
+      p_rows: rowsIn,
+      p_mode: fn === 'kemaskiniPenyertaanSekolahGS' ? 'kemaskini' : 'baharu',
+      p_tahun: thnPy
+    });
+    _throwIfErr(rPh.error);
     return {ok:true, msg: fn==='kemaskiniPenyertaanSekolahGS' ? 'Penyertaan berjaya dikemaskini' : 'Penyertaan berjaya dihantar'};
   }
 
@@ -2600,10 +2599,10 @@ async function _supaDispatch(fn, payload){
       return {ok:true, skipPin:true, role:uA.role, nama:uA.nama, kodSekolah:uA.kod_sekolah, namaSekolah:uA.nama_sekolah};
     }
 
-    // Semakan status akaun — masih perlu select ringkas, TANPA lajur 'kod' (PIN)
-    var rU = await sb.from(TBL_PENGGUNA).select('nama,role,status,kod_sekolah,nama_sekolah,auth_uid').eq('no_kp', payload.noKP).maybeSingle();
+    // Semakan status akaun — RPC (jadual pengguna dikunci sepenuhnya, tiada select terus)
+    var rU = await sb.rpc('pengguna_semak_status', {p_no_kp: payload.noKP});
     _throwIfErr(rU.error);
-    var u = rU.data;
+    var u = (rU.data||[])[0];
     if(!u) return {ok:false, status:'TIADA', msg:'Akaun tidak dijumpai. Sila daftar akaun baharu.'};
     if(u.status === 'TUNGGU') return {ok:false, status:'TUNGGU', msg:'Akaun anda sedang menunggu kelulusan admin.'};
     if(u.status === 'TOLAK') return {ok:false, status:'TOLAK', msg:'Akaun anda tidak aktif. Sila hubungi admin.'};
@@ -2630,9 +2629,9 @@ async function _supaDispatch(fn, payload){
   }
 
   if(fn === 'daftarAkaunGS'){
-    var rExist = await sb.from(TBL_PENGGUNA).select('no_kp').eq('no_kp', payload.noKP).maybeSingle();
-    _throwIfErr(rExist.error);
-    if(rExist.data) return {ok:false, msg:'No. KP ini telah didaftarkan.'};
+    var rExistB = await sb.rpc('pengguna_wujud', {p_no_kp: payload.noKP});
+    _throwIfErr(rExistB.error);
+    if(rExistB.data) return {ok:false, msg:'No. KP ini telah didaftarkan.'};
     var iU = await sb.from(TBL_PENGGUNA).insert({
       no_kp: payload.noKP, nama: payload.nama, role: payload.role,
       kod_sekolah: payload.kodSekolah, nama_sekolah: payload.namaSekolah,
@@ -2645,15 +2644,16 @@ async function _supaDispatch(fn, payload){
   }
 
   if(fn === 'getAkaunListGS'){
-    var rA = await sb.from(TBL_PENGGUNA).select('id,nama,role,no_kp,no_tel,kod_sekolah,nama_sekolah,status,tarikh_daftar').order('tarikh_daftar',{ascending:false});
+    var rA = await sb.rpc('akaun_list', {p_no_kp_admin: (_sesi&&_sesi.noKP)||''});
     _throwIfErr(rA.error);
     return {ok:true, data:(rA.data||[]).map(_mapAkaunOut)};
   }
 
   if(fn === 'kemaskiniAkaunGS'){
-    var updU = {status: payload.status};
-    if(payload.role) updU.role = payload.role;
-    var rUu = await sb.from(TBL_PENGGUNA).update(updU).eq('no_kp', payload.noKP);
+    var rUu = await sb.rpc('akaun_kemaskini', {
+      p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_no_kp_target: payload.noKP,
+      p_status: payload.status, p_role: payload.role||null
+    });
     _throwIfErr(rUu.error);
     return {ok:true, msg:'Akaun dikemaskini'};
   }
@@ -2692,13 +2692,8 @@ async function _supaDispatch(fn, payload){
     var kodEdit = String(payload.kod||'').toUpperCase().trim();
     var namaEdit = String(payload.nama||'').toUpperCase().trim();
     if(!kodEdit||!namaEdit) return {ok:false, msg:'Kod dan nama sekolah wajib diisi.'};
-    var rUpS = await sb.from(TBL_SEKOLAH).update({nama:namaEdit}).eq('kod', kodEdit);
-    _throwIfErr(rUpS.error);
-    // Segerak salinan nama_sekolah yang tersimpan berasingan (denormalized) dalam pengguna & penyertaan
-    var rUpPg = await sb.from(TBL_PENGGUNA).update({nama_sekolah:namaEdit}).eq('kod_sekolah', kodEdit);
-    _throwIfErr(rUpPg.error);
-    var rUpPy2 = await sb.from(TBL_PENYERTAAN).update({nama_sekolah:namaEdit}).eq('kod_sekolah', kodEdit);
-    _throwIfErr(rUpPy2.error);
+    var rSk = await sb.rpc('sekolah_kemaskini', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_kod: kodEdit, p_nama_baru: namaEdit});
+    _throwIfErr(rSk.error);
     return {ok:true, msg:'Sekolah berjaya dikemaskini.'};
   }
 
@@ -2716,13 +2711,16 @@ async function _supaDispatch(fn, payload){
 
   // -------- KEMASKINI MAKLUMAT PENGGUNA (admin) --------
   if(fn === 'kemaskiniMaklumatPenggunaGS'){
-    var updM = {};
-    if(payload.nama!=null) updM.nama = String(payload.nama).toUpperCase().trim();
-    if(payload.kodSekolah!=null) updM.kod_sekolah = String(payload.kodSekolah).toUpperCase().trim();
-    if(payload.namaSekolah!=null) updM.nama_sekolah = String(payload.namaSekolah).toUpperCase().trim();
-    if(payload.noTel!=null) updM.no_tel = payload.noTel;
-    if(!Object.keys(updM).length) return {ok:false, msg:'Tiada maklumat untuk dikemaskini.'};
-    var rUpM = await sb.from(TBL_PENGGUNA).update(updM).eq('no_kp', payload.noKP);
+    if(payload.nama==null && payload.kodSekolah==null && payload.namaSekolah==null && payload.noTel==null){
+      return {ok:false, msg:'Tiada maklumat untuk dikemaskini.'};
+    }
+    var rUpM = await sb.rpc('pengguna_kemaskini_maklumat', {
+      p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_no_kp_target: payload.noKP,
+      p_nama: payload.nama!=null?String(payload.nama).toUpperCase().trim():null,
+      p_kod_sekolah: payload.kodSekolah!=null?String(payload.kodSekolah).toUpperCase().trim():null,
+      p_nama_sekolah: payload.namaSekolah!=null?String(payload.namaSekolah).toUpperCase().trim():null,
+      p_no_tel: payload.noTel!=null?payload.noTel:null
+    });
     _throwIfErr(rUpM.error);
     return {ok:true, msg:'Maklumat pengguna dikemaskini.'};
   }
@@ -2734,15 +2732,9 @@ async function _supaDispatch(fn, payload){
   }
 
   if(fn === 'backfillTahunGS'){
-    var rBf = await sb.from(TBL_PROGRAM).select('id,tarikh').is('tahun', null);
-    _throwIfErr(rBf.error);
-    var rows = rBf.data||[];
-    for(var i=0;i<rows.length;i++){
-      var yy = rows[i].tarikh ? new Date(rows[i].tarikh).getFullYear() : new Date().getFullYear();
-      var rU2 = await sb.from(TBL_PROGRAM).update({tahun:yy}).eq('id', rows[i].id);
-      _throwIfErr(rU2.error);
-    }
-    return {ok:true, msg:'Backfill selesai ('+rows.length+' rekod dikemaskini)'};
+    var rBf2 = await sb.rpc('program_backfill_tahun', {p_no_kp_admin: (_sesi&&_sesi.noKP)||''});
+    _throwIfErr(rBf2.error);
+    return {ok:true, msg:'Backfill selesai ('+(rBf2.data||0)+' rekod dikemaskini)'};
   }
 
   throw new Error('Fungsi tidak dikenali: '+fn);
