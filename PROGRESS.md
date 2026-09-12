@@ -335,3 +335,56 @@ automatik ke tab/iframe asal via localStorage sama origin (mekanisme built-in Su
 **Belum diuji langsung dalam Google Sites sebenar** — disyorkan uji: buka Google Sites →
 klik Log Masuk Google → sepatutnya buka tab baharu (bukan 403) → log masuk → notis hijau →
 tutup tab → kembali ke Google Sites → sepatutnya dah log masuk.
+
+---
+
+## 🔒 RLS dikunci sepenuhnya (commit `a6902f9`) — SELESAI
+
+### Kritikal dijumpai & dibetulkan serta-merta
+`app_secrets` (simpan kod admin) — RLS DIMATIKAN, anon ada akses SELECT/INSERT/UPDATE/DELETE
+penuh. Kod admin boleh dibaca terus dari browser console. **DIBETULKAN SERTA-MERTA**: RLS
+diaktifkan, semua grant anon/authenticated ditarik balik. Kod admin ditukar sebagai langkah
+berjaga-jaga: **`SUBIS-ADMIN-AQZD68OTYL`** (simpan tempat selamat).
+
+### Had seni bina penting (nota untuk rujukan akan datang)
+Sesi No.KP+PIN BUKAN sesi Supabase Auth sebenar — `auth.uid()` cuma wujud untuk pengguna
+yang dah link Google. RLS ikut `auth.uid()` semata tak boleh dipakai universal. Penyelesaian:
+SEMUA operasi tulis dipindah ke RPC `security definer` yang semak peranan di SERVER (guna
+No.KP yang caller hantar sebagai bukti identiti ringan) — SELECT kekal terbuka untuk
+programs/penyertaan/pencapaian (memang reka bentuk app, bukan kelemahan).
+
+### 8 RPC (5 dari sesi lepas + 3 baharu sesi ni)
+Sesi lepas: `pengguna_semak_status`, `pengguna_wujud`, `akaun_list`, `akaun_kemaskini`,
+`pengguna_kemaskini_maklumat` — semua guna helper `_adalah_admin_aktif()`.
+Sesi ni (baharu): `program_daftar` (sekat guru daftar program), `penyertaan_hantar`
+(ganti hantar/kemaskini penyertaan), `sekolah_kemaskini` (segerak nama sekolah merentasi
+3 jadual), `program_backfill_tahun` (utiliti admin).
+
+**2 bug dijumpai & dibetulkan semasa audit/ujian:**
+1. `akaun_list` — jenis lajur `id` salah (`bigint` patut `uuid`) — akan gagal runtime
+2. `kemaskiniSekolahGS` & `backfillTahunGS` — 2 laluan tulis terus ke `pengguna`/`programs`
+   yang terlepas pandang semasa audit pertama, dijumpai semasa "semak kali terakhir"
+
+### index.html dikemas kini — 8 handler `_supaDispatch` ganti akses terus dgn RPC:
+`loginGS`, `daftarAkaunGS`, `getAkaunListGS`, `kemaskiniAkaunGS`, `kemaskiniMaklumatPenggunaGS`,
+`daftarProgramGS`, `hantarPenyertaanGS`/`kemaskiniPenyertaanSekolahGS`, `kemaskiniSekolahGS`,
+`backfillTahunGS`. Hanya 1 akses terus kekal (sengaja): INSERT pendaftaran diri baharu.
+
+### Polisi RLS akhir
+| Jadual | Polisi |
+|---|---|
+| `app_secrets` | TIADA (RPC sahaja) |
+| `pengguna` | INSERT terhad (`status='TUNGGU'` sahaja) — selebihnya RPC sahaja |
+| `programs`/`penyertaan`/`pencapaian` | SELECT terbuka; INSERT/UPDATE/DELETE via RPC sahaja |
+| `sekolah` | **BELUM disentuh** — kekal terbuka (risiko rendah, bukan data peribadi, ditangguh) |
+
+### Diuji (pg_net dari dalam Supabase — bukan hanya baca kod)
+- ✅ Baca terus `pengguna` sebagai anon key → `[]` kosong (RLS block berfungsi)
+- ✅ `pengguna_semak_status` via RPC → data betul dipulangkan (bypass RLS berfungsi utk login)
+- ✅ `program_daftar` — No.KP palsu ditolak; No.KP guru sah ditolak (sekatan peranan berfungsi)
+- ✅ `akaun_list` — data admin sebenar dipulangkan lepas fix jenis lajur
+
+### Belum diuji / boleh disemak nanti
+- [ ] Uji SEMUA flow dalam app sebenar (bukan pg_net): login, daftar akaun, hantar/kemaskini
+      penyertaan, daftar program, urus akaun (admin), kemaskini sekolah, backfill tahun
+- [ ] Pertimbang kunci `sekolah` juga (risiko rendah, ditangguh sengaja sesi ni)
