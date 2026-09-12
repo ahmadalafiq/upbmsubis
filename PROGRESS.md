@@ -388,3 +388,19 @@ Sesi ni (baharu): `program_daftar` (sekat guru daftar program), `penyertaan_hant
 - [ ] Uji SEMUA flow dalam app sebenar (bukan pg_net): login, daftar akaun, hantar/kemaskini
       penyertaan, daftar program, urus akaun (admin), kemaskini sekolah, backfill tahun
 - [ ] Pertimbang kunci `sekolah` juga (risiko rendah, ditangguh sengaja sesi ni)
+
+---
+
+## 🔍 Semakan Sistem Menyeluruh (checkpoint kerja semasa)
+_Mula: sekarang. Kemas kini checkpoint di bawah selepas setiap fasa siap._
+
+### Pelan kerja
+- [ ] Fasa A — Audit semula SEMUA akses Supabase terus dalam index.html (sekali lagi,
+      pastikan tiada tertinggal selepas kerja RLS lepas)
+- [ ] Fasa B — Semak jadual `sekolah` (RLS ditangguh sebelum ini) — putuskan tindakan
+- [ ] Fasa C — Senarai PENUH semua RPC di Supabase, semak konsistensi & bug
+- [ ] Fasa D — Semak Edge Function AI (ai-chat) — kekukuhan, kos, had kadar
+- [ ] Fasa E — Semak kesihatan kod frontend (fungsi mati, ralat berpotensi, dll)
+- [ ] Fasa F — Susun cadangan penambahbaikan (keutamaan tinggi -> rendah)
+
+### Checkpoint semasa: **Fasa A — bermula**
