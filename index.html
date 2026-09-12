@@ -2533,8 +2533,8 @@ async function _supaDispatch(fn, payload){
   if(fn === 'kemaskiniProgramGS'){
     var tar2 = payload.tarikh;
     var thn2 = tar2 ? new Date(tar2).getFullYear() : new Date().getFullYear();
-    var rKp = await sb.rpc('kemaskini_program_cascade', {
-      p_id: payload.id, p_nama: payload.nama, p_pengelola: payload.pengelola,
+    var rKp = await sb.rpc('program_kemaskini', {
+      p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_id: payload.id, p_nama: payload.nama, p_pengelola: payload.pengelola,
       p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
       p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
       p_tarikh: tar2, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn2
@@ -2544,7 +2544,7 @@ async function _supaDispatch(fn, payload){
   }
 
   if(fn === 'padamProgramGS'){
-    var rPd = await sb.rpc('padam_program_cascade', {p_id: payload.id});
+    var rPd = await sb.rpc('program_padam', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_id: payload.id});
     _throwIfErr(rPd.error);
     return {ok:true, msg:'Program dipadam'};
   }
@@ -2583,7 +2583,7 @@ async function _supaDispatch(fn, payload){
         tahun: thnPc
       };
     });
-    var rPc = await sb.rpc('replace_pencapaian', {p_program_id: payload.programId, p_entries: entriesIn});
+    var rPc = await sb.rpc('pencapaian_ganti', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_program_id: payload.programId, p_entries: entriesIn});
     _throwIfErr(rPc.error);
     return {ok:true, msg:'Pencapaian disimpan'};
   }
@@ -2660,7 +2660,7 @@ async function _supaDispatch(fn, payload){
 
   if(fn === 'resetPinGS'){
     var pinBaharu = payload.pin && String(payload.pin).length===6 ? String(payload.pin) : String(Math.floor(100000+Math.random()*900000));
-    var rRp = await sb.rpc('set_pin', {p_no_kp: payload.noKP, p_pin: pinBaharu});
+    var rRp = await sb.rpc('pengguna_reset_pin', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_no_kp_target: payload.noKP, p_pin_baharu: pinBaharu});
     _throwIfErr(rRp.error);
     return {ok:true, pinBaharu:pinBaharu, msg:'PIN berjaya ditetapkan'};
   }
