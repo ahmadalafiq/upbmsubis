@@ -2676,15 +2676,12 @@ async function _supaDispatch(fn, payload){
     var kodBaru = String(payload.kod||'').toUpperCase().trim();
     var namaBaru = String(payload.nama||'').toUpperCase().trim();
     if(!kodBaru||!namaBaru) return {ok:false, msg:'Kod dan nama sekolah wajib diisi.'};
-    var rChkS = await sb.from(TBL_SEKOLAH).select('kod').eq('kod', kodBaru).maybeSingle();
-    _throwIfErr(rChkS.error);
-    if(rChkS.data) return {ok:false, msg:'Kod sekolah ini telah wujud dalam senarai.'};
-    // Elak duplikat nama walaupun kod berlainan (punca biasa: variasi ejaan)
+    // Elak duplikat nama walaupun kod berlainan (punca biasa: variasi ejaan) — semak dulu client-side
     var rChkN = await sb.from(TBL_SEKOLAH).select('kod,nama').ilike('nama', namaBaru).maybeSingle();
     _throwIfErr(rChkN.error);
     if(rChkN.data) return {ok:false, msg:'Nama sekolah yang serupa sudah wujud: '+rChkN.data.nama+' ('+rChkN.data.kod+')'};
-    var iS = await sb.from(TBL_SEKOLAH).insert({kod:kodBaru, nama:namaBaru});
-    _throwIfErr(iS.error);
+    var rTs = await sb.rpc('sekolah_tambah', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_kod: kodBaru, p_nama: namaBaru});
+    _throwIfErr(rTs.error);
     return {ok:true, msg:'Sekolah berjaya ditambah.'};
   }
 
@@ -2699,14 +2696,11 @@ async function _supaDispatch(fn, payload){
 
   if(fn === 'seedSekolahGS'){
     // Isi jadual sekolah kali pertama daripada senarai statik terbina-dalam (guna hanya jika jadual kosong)
-    var rCnt = await sb.from(TBL_SEKOLAH).select('kod',{count:'exact',head:true});
-    _throwIfErr(rCnt.error);
-    if(rCnt.count>0) return {ok:false, msg:'Jadual sekolah sudah ada data — seed dilangkau untuk elak duplikat.'};
     var seedRows = (payload.senarai||[]).map(function(s){return {kod:s.kod, nama:s.nama};});
     if(!seedRows.length) return {ok:false, msg:'Tiada data untuk di-seed.'};
-    var iSeed = await sb.from(TBL_SEKOLAH).insert(seedRows);
-    _throwIfErr(iSeed.error);
-    return {ok:true, msg:seedRows.length+' sekolah berjaya di-seed.'};
+    var rSd = await sb.rpc('sekolah_seed', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_senarai: seedRows});
+    _throwIfErr(rSd.error);
+    return {ok:true, msg:(rSd.data||0)+' sekolah berjaya di-seed.'};
   }
 
   // -------- KEMASKINI MAKLUMAT PENGGUNA (admin) --------
