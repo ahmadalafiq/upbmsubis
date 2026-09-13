@@ -2609,7 +2609,7 @@ async function _supaDispatch(fn, payload){
     }
 
     // Semakan status akaun — RPC (jadual pengguna dikunci sepenuhnya, tiada select terus)
-    var rU = await sb.rpc('pengguna_semak_status', {p_no_kp: payload.noKP});
+    var rU = await sb.rpc('cek_status_akaun', {p_no_kp: payload.noKP});
     _throwIfErr(rU.error);
     var u = (rU.data||[])[0];
     if(!u) return {ok:false, status:'TIADA', msg:'Akaun tidak dijumpai. Sila daftar akaun baharu.'};
