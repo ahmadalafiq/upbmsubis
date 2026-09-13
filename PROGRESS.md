@@ -468,8 +468,9 @@ Baca checkpoint di bawah, sambung dari fasa yang masih [ ], skip yang dah [x]._
 - [x] **Fasa T1** — SIAP (commit `9440698`). `_mulakanSesi()` kini async, panggil
       `_set_session_token()` lepas setiap login/claim/daftar, simpan `_sesi.token` +
       sessionStorage. Tak blok UI (RPC pattern lama masih guna noKP sementara token sampai).
-- [ ] **Fasa T2** — Migrasi RPC akaun/admin (akaun_list→admin_senarai_akaun,
-      akaun_kemaskini→admin_kemaskini_akaun, sekolah_tambah/kemaskini→admin_tambah/kemaskini_sekolah)
+- [x] **Fasa T2** — SIAP (commit `d9cae5d`). 6 handler migrasi: getAkaunListGS, kemaskiniAkaunGS,
+      resetPinGS, tambahSekolahGS, kemaskiniSekolahGS, kemaskiniMaklumatPenggunaGS. Diuji token
+      betul (data dipulangkan) & token palsu (ditolak) — berfungsi tepat.
 - [ ] **Fasa T3** — Migrasi RPC program/penyertaan/pencapaian (program_daftar→daftar_program,
       program_kemaskini/padam→versi token kemaskini/padam_program_cascade,
       penyertaan_hantar→hantar_penyertaan_sekolah, pencapaian_ganti→replace_pencapaian token)
@@ -477,4 +478,4 @@ Baca checkpoint di bawah, sambung dari fasa yang masih [ ], skip yang dah [x]._
 - [ ] **Fasa T5** — Uji SEMUA end-to-end (pg_net), bersihkan RPC lama yg dah tak dipakai
 - [ ] **Fasa T6** — Push akhir + kemas kini PROGRESS.md penuh + ringkasan untuk user
 
-### Checkpoint semasa: **Fasa T1 siap — sambung Fasa T2**
+### Checkpoint semasa: **Fasa T2 siap — sambung Fasa T3**
