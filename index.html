@@ -9117,17 +9117,31 @@ async function lgMasuk(){
 }
 
 // == Mulakan sesi ============================================
-function _mulakanSesi(data){
+async function _mulakanSesi(data){
   _sesi = {
     role:        data.role,
     nama:        data.nama||'',
     kodSekolah:  data.kodSekolah||'',
     namaSekolah: data.namaSekolah||'',
     noKP:        data.noKP||'',
+    token:       '',
     loginTime:   Date.now()
   };
-  // Simpan dalam sessionStorage
+  // Simpan dalam sessionStorage (tanpa token dulu — token diisi lepas RPC berjaya, di bawah)
   try{ sessionStorage.setItem('upbm_sesi', JSON.stringify(_sesi)); }catch(e){}
+
+  // Fasa T1 migrasi sistem token: dapatkan token sesi sebenar (bukan sekadar No.KP)
+  // untuk RPC yang perlukan pengesahan lebih kukuh. Tak blok UI — _sesi.noKP tetap
+  // boleh dipakai serta-merta oleh RPC pattern lama sementara token belum sampai.
+  if(_sesi.noKP){
+    try{
+      var rTok = await sb.rpc('_set_session_token', {p_no_kp: _sesi.noKP});
+      if(!rTok.error && rTok.data){
+        _sesi.token = rTok.data;
+        try{ sessionStorage.setItem('upbm_sesi', JSON.stringify(_sesi)); }catch(e){}
+      }
+    }catch(e){ console.error('Gagal dapatkan token sesi:', e); }
+  }
 
   // Tab ni dibuka via window.open() dari tab/iframe asal (cth: Google Sites, sebab Google
   // OAuth tolak dimuatkan dalam iframe bersarang) — beritahu boleh tutup tab, sesi akan
