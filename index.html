@@ -2520,8 +2520,10 @@ async function _supaDispatch(fn, payload){
   if(fn === 'daftarProgramGS'){
     var tar1 = payload.tarikh;
     var thn1 = tar1 ? new Date(tar1).getFullYear() : new Date().getFullYear();
-    var rInsP = await sb.rpc('program_daftar', {
-      p_no_kp_pemohon: (_sesi&&_sesi.noKP)||'', p_nama: payload.nama, p_pengelola: payload.pengelola,
+    var newProgId = (typeof crypto!=='undefined' && crypto.randomUUID) ? crypto.randomUUID() : (Date.now()+'-'+Math.random().toString(36).slice(2));
+    var rInsP = await sb.rpc('daftar_program', {
+      p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'', p_id: newProgId,
+      p_nama: payload.nama, p_pengelola: payload.pengelola,
       p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
       p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
       p_tarikh: tar1, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn1
@@ -2533,8 +2535,8 @@ async function _supaDispatch(fn, payload){
   if(fn === 'kemaskiniProgramGS'){
     var tar2 = payload.tarikh;
     var thn2 = tar2 ? new Date(tar2).getFullYear() : new Date().getFullYear();
-    var rKp = await sb.rpc('program_kemaskini', {
-      p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_id: payload.id, p_nama: payload.nama, p_pengelola: payload.pengelola,
+    var rKp = await sb.rpc('kemaskini_program_cascade', {
+      p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'', p_id: payload.id, p_nama: payload.nama, p_pengelola: payload.pengelola,
       p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
       p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
       p_tarikh: tar2, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn2
@@ -2544,7 +2546,7 @@ async function _supaDispatch(fn, payload){
   }
 
   if(fn === 'padamProgramGS'){
-    var rPd = await sb.rpc('program_padam', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_id: payload.id});
+    var rPd = await sb.rpc('padam_program_cascade', {p_id: payload.id, p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||''});
     _throwIfErr(rPd.error);
     return {ok:true, msg:'Program dipadam'};
   }
@@ -2552,14 +2554,21 @@ async function _supaDispatch(fn, payload){
   // -------- PENYERTAAN (sheet 'Penyertaan') --------
   if(fn === 'hantarPenyertaanGS' || fn === 'kemaskiniPenyertaanSekolahGS'){
     var thnPy = new Date().getFullYear();
-    var rowsIn = (payload.rows||[]);
-    var rPh = await sb.rpc('penyertaan_hantar', {
-      p_no_kp_pemohon: (_sesi&&_sesi.noKP)||'',
+    // hantar_penyertaan_sekolah perlukan row bentuk OBJEK (bukan array posisi)
+    var rowsObj = (payload.rows||[]).map(function(row){
+      var o = _rowArrToPenyertaanIn(row, thnPy);
+      return {tahun:o.tahun, nama_program:o.nama_program, nama_sekolah:o.nama_sekolah,
+        kategori_penyertaan:o.kategori_penyertaan, nama_guru:o.nama_guru, no_kp_guru:o.no_kp_guru,
+        bangsa_guru:o.bangsa_guru, jantina_guru:o.jantina_guru, no_tel_guru:o.no_tel_guru,
+        nama_peserta:o.nama_peserta, no_kp_peserta:o.no_kp_peserta, jantina_peserta:o.jantina_peserta,
+        bangsa_peserta:o.bangsa_peserta};
+    });
+    var rPh = await sb.rpc('hantar_penyertaan_sekolah', {
       p_program_id: payload.programId,
       p_kod_sekolah: payload.kodSekolah,
-      p_rows: rowsIn,
-      p_mode: fn === 'kemaskiniPenyertaanSekolahGS' ? 'kemaskini' : 'baharu',
-      p_tahun: thnPy
+      p_rows: rowsObj,
+      p_no_kp: (_sesi&&_sesi.noKP)||'',
+      p_token: (_sesi&&_sesi.token)||''
     });
     _throwIfErr(rPh.error);
     return {ok:true, msg: fn==='kemaskiniPenyertaanSekolahGS' ? 'Penyertaan berjaya dikemaskini' : 'Penyertaan berjaya dihantar'};
@@ -2583,7 +2592,7 @@ async function _supaDispatch(fn, payload){
         tahun: thnPc
       };
     });
-    var rPc = await sb.rpc('pencapaian_ganti', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_program_id: payload.programId, p_entries: entriesIn});
+    var rPc = await sb.rpc('replace_pencapaian', {p_program_id: payload.programId, p_entries: entriesIn, p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||''});
     _throwIfErr(rPc.error);
     return {ok:true, msg:'Pencapaian disimpan'};
   }
