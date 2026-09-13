@@ -2638,17 +2638,12 @@ async function _supaDispatch(fn, payload){
   }
 
   if(fn === 'daftarAkaunGS'){
-    var rExistB = await sb.rpc('pengguna_wujud', {p_no_kp: payload.noKP});
-    _throwIfErr(rExistB.error);
-    if(rExistB.data) return {ok:false, msg:'No. KP ini telah didaftarkan.'};
-    var iU = await sb.from(TBL_PENGGUNA).insert({
-      no_kp: payload.noKP, nama: payload.nama, role: payload.role,
-      kod_sekolah: payload.kodSekolah, nama_sekolah: payload.namaSekolah,
-      no_tel: payload.noTel, status: 'TUNGGU'
+    var rDaf = await sb.rpc('daftar_akaun_baru', {
+      p_no_kp: payload.noKP, p_nama: payload.nama, p_role: payload.role,
+      p_kod_sekolah: payload.kodSekolah, p_nama_sekolah: payload.namaSekolah,
+      p_no_tel: payload.noTel, p_pin: payload.pin
     });
-    _throwIfErr(iU.error);
-    var rSp = await sb.rpc('set_pin', {p_no_kp: payload.noKP, p_pin: payload.pin});
-    _throwIfErr(rSp.error);
+    if(rDaf.error) return {ok:false, msg: rDaf.error.message.replace(/^.*: /,'') || 'Gagal mendaftar.'};
     return {ok:true, msg:'Permohonan akaun berjaya dihantar.'};
   }
 
