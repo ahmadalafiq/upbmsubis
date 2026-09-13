@@ -479,3 +479,39 @@ Baca checkpoint di bawah, sambung dari fasa yang masih [ ], skip yang dah [x]._
 - [ ] **Fasa T6** — Push akhir + kemas kini PROGRESS.md penuh + ringkasan untuk user
 
 ### Checkpoint semasa: **Fasa T2 siap — sambung Fasa T3**
+
+---
+
+## ✅ MIGRASI TOKEN SEPENUHNYA SELESAI (Fasa T0-T5, commit `f0b7f43`)
+
+### Ringkasan
+Semua operasi tulis kini guna sistem token sesi sebenar (`_sahkan_token`) — bukan lagi
+sekadar semak No.KP. `pengguna` dikunci **100%** (tiada polisi RLS langsung sama sekali,
+walaupun untuk pendaftaran diri — semua paksa lalu RPC `security definer`).
+
+### 4 bug tambahan dijumpai & dibetulkan semasa migrasi (selain kecemasan lebih awal)
+1. `admin_senarai_akaun` — jenis lajur `id` salah (bigint→uuid), sama corak bug lepas
+2. `kemaskini_program_cascade` (token) — terlalu ketat (admin sahaja), sepatutnya benarkan
+   PKK sekolah pengelola juga (sepadan client `reqEdit()`)
+3. `replace_pencapaian` (token) — sama isu, dibetulkan (admin ATAU PKK sekolah pengelola,
+   disemak terus dari `programs.kod_pengelola`)
+4. `daftar_program` (token) — tiada sekatan peranan langsung (guru pun boleh cipta program!),
+   ditambah semakan `role != 'guru'`
+
+### Susulan akhir
+- `daftarAkaunGS` kini guna `daftar_akaun_baru` (RPC rasmi, 1 langkah insert+hash PIN)
+- `loginGS` kini guna `cek_status_akaun` (RPC rasmi) ganti versi saya
+- 12 RPC lama (draf saya, digantikan sepenuhnya) dibersihkan — baki 35 fungsi di DB, semua
+  aktif dipakai atau sengaja dikekalkan untuk ciri akan datang (`kemaskini_profil_sendiri`)
+
+### Diuji (bukan baca kod sahaja) — kitaran penuh via SQL/pg_net
+- ✅ Login (admin/guru), token dijana & disahkan (token betul → lulus; token palsu → ditolak)
+- ✅ Guru ditolak cipta program; PKK/admin dibenarkan
+- ✅ Kitaran penuh: cipta program → kemaskini → pencapaian → penyertaan → padam (data ujian
+  dibersihkan selepas setiap ujian, tiada kesan pada data sebenar)
+- ✅ `daftar_akaun_baru` — akaun ujian dicipta status TUNGGU, disahkan, dipadam
+
+### Ciri BELUM disambung ke UI (sedia di DB untuk masa depan, bukan skop migrasi ni)
+- `kemaskini_profil_sendiri` — self-service edit profil sendiri (tiada UI lagi)
+
+## Checkpoint semasa: **SEMUA FASA SELESAI — kerja migrasi & semakan sistem tamat**
