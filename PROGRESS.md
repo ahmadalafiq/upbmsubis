@@ -453,7 +453,15 @@ _PENTING UNTUK SESI AKAN DATANG: kalau session tamat di tengah, JANGAN mula semu
 Baca checkpoint di bawah, sambung dari fasa yang masih [ ], skip yang dah [x]._
 
 ### Senarai Fasa
-- [ ] **Fasa T0** — Siasat semua RPC token sedia ada (`daftar_program`, `hantar_penyertaan_sekolah`,
+- [x] **Fasa T0** — Siasat semua RPC token sedia ada — SIAP. Nota penting:
+  - `daftar_program` perlukan `p_id` dihantar client (JS kena jana UUID sendiri via `crypto.randomUUID()`)
+  - `hantar_penyertaan_sekolah` row shape ialah OBJEK (bukan array posisi macam `_rowArrToPenyertaanIn`)
+    — perlu tukar cara `hantarPeny()` bina payload
+  - `admin_kemaskini_akaun` gabung 2 fungsi saya (akaun_kemaskini + pengguna_kemaskini_maklumat) jadi 1
+  - Jumpa & DIBETULKAN 1 lagi bug jenis lajur `id` (bigint→uuid) dalam `admin_senarai_akaun`
+  - `daftar_akaun_baru` lebih baik drpd cara saya (1 langkah insert+hash PIN, bukan 2 panggilan)
+  - `kemaskini_profil_sendiri`/`cek_status_akaun` — ciri baharu, TAK dipakai UI lagi, di luar skop
+    migrasi ni (fungsi sedia wujud kalau nak bina ciri "edit profil sendiri" akan datang) (`daftar_program`, `hantar_penyertaan_sekolah`,
       `admin_senarai_akaun`, `admin_kemaskini_akaun`, `admin_tambah_sekolah`,
       `admin_kemaskini_sekolah`, `daftar_akaun_baru`, `kemaskini_profil_sendiri`,
       `cek_status_akaun`, `keep_alive`) — faham tepat apa setiap satu buat, sebelum wiring
