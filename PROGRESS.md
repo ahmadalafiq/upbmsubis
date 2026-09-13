@@ -444,3 +444,28 @@ pattern semasa buat masa ini (dah cukup selamat berbanding sebelum ni) dan reser
 token utk migrasi besar akan datang. BELUM DIPUTUSKAN — perlu bincang dgn user.
 
 ## Checkpoint semasa: **Fasa C siap (dgn kecemasan dibetulkan) — sambung Fasa D**
+
+---
+
+## 🎯 MIGRASI KE SISTEM TOKEN SESI — Pelan Kerja Penuh
+_Keputusan: migrasi penuh (bukan kekal 2 sistem selari). Kerja besar, dipecah fasa kecil._
+_PENTING UNTUK SESI AKAN DATANG: kalau session tamat di tengah, JANGAN mula semula dari kosong.
+Baca checkpoint di bawah, sambung dari fasa yang masih [ ], skip yang dah [x]._
+
+### Senarai Fasa
+- [ ] **Fasa T0** — Siasat semua RPC token sedia ada (`daftar_program`, `hantar_penyertaan_sekolah`,
+      `admin_senarai_akaun`, `admin_kemaskini_akaun`, `admin_tambah_sekolah`,
+      `admin_kemaskini_sekolah`, `daftar_akaun_baru`, `kemaskini_profil_sendiri`,
+      `cek_status_akaun`, `keep_alive`) — faham tepat apa setiap satu buat, sebelum wiring
+- [ ] **Fasa T1** — Login flow: `_mulakanSesi()` panggil `_set_session_token()`, simpan token
+      dalam `_sesi.token` + sessionStorage. INI ASAS — mesti siap dulu sebelum fasa lain.
+- [ ] **Fasa T2** — Migrasi RPC akaun/admin (akaun_list→admin_senarai_akaun,
+      akaun_kemaskini→admin_kemaskini_akaun, sekolah_tambah/kemaskini→admin_tambah/kemaskini_sekolah)
+- [ ] **Fasa T3** — Migrasi RPC program/penyertaan/pencapaian (program_daftar→daftar_program,
+      program_kemaskini/padam→versi token kemaskini/padam_program_cascade,
+      penyertaan_hantar→hantar_penyertaan_sekolah, pencapaian_ganti→replace_pencapaian token)
+- [ ] **Fasa T4** — Semak reset PIN (guna set_pin versi token), profil sendiri, cek status akaun
+- [ ] **Fasa T5** — Uji SEMUA end-to-end (pg_net), bersihkan RPC lama yg dah tak dipakai
+- [ ] **Fasa T6** — Push akhir + kemas kini PROGRESS.md penuh + ringkasan untuk user
+
+### Checkpoint semasa: **Fasa T0 — bermula**
