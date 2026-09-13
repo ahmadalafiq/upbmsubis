@@ -2644,15 +2644,16 @@ async function _supaDispatch(fn, payload){
   }
 
   if(fn === 'getAkaunListGS'){
-    var rA = await sb.rpc('akaun_list', {p_no_kp_admin: (_sesi&&_sesi.noKP)||''});
+    var rA = await sb.rpc('admin_senarai_akaun', {p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||''});
     _throwIfErr(rA.error);
     return {ok:true, data:(rA.data||[]).map(_mapAkaunOut)};
   }
 
   if(fn === 'kemaskiniAkaunGS'){
-    var rUu = await sb.rpc('akaun_kemaskini', {
-      p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_no_kp_target: payload.noKP,
-      p_status: payload.status, p_role: payload.role||null
+    var rUu = await sb.rpc('admin_kemaskini_akaun', {
+      p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'',
+      p_target_no_kp: payload.noKP, p_status: payload.status||null, p_role: payload.role||null,
+      p_nama: null, p_kod_sekolah: null, p_nama_sekolah: null, p_no_tel: null
     });
     _throwIfErr(rUu.error);
     return {ok:true, msg:'Akaun dikemaskini'};
@@ -2660,7 +2661,10 @@ async function _supaDispatch(fn, payload){
 
   if(fn === 'resetPinGS'){
     var pinBaharu = payload.pin && String(payload.pin).length===6 ? String(payload.pin) : String(Math.floor(100000+Math.random()*900000));
-    var rRp = await sb.rpc('pengguna_reset_pin', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_no_kp_target: payload.noKP, p_pin_baharu: pinBaharu});
+    var rRp = await sb.rpc('set_pin', {
+      p_no_kp_target: payload.noKP, p_pin_baharu: pinBaharu,
+      p_no_kp_caller: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||''
+    });
     _throwIfErr(rRp.error);
     return {ok:true, pinBaharu:pinBaharu, msg:'PIN berjaya ditetapkan'};
   }
@@ -2680,7 +2684,7 @@ async function _supaDispatch(fn, payload){
     var rChkN = await sb.from(TBL_SEKOLAH).select('kod,nama').ilike('nama', namaBaru).maybeSingle();
     _throwIfErr(rChkN.error);
     if(rChkN.data) return {ok:false, msg:'Nama sekolah yang serupa sudah wujud: '+rChkN.data.nama+' ('+rChkN.data.kod+')'};
-    var rTs = await sb.rpc('sekolah_tambah', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_kod: kodBaru, p_nama: namaBaru});
+    var rTs = await sb.rpc('admin_tambah_sekolah', {p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'', p_kod: kodBaru, p_nama: namaBaru});
     _throwIfErr(rTs.error);
     return {ok:true, msg:'Sekolah berjaya ditambah.'};
   }
@@ -2689,7 +2693,7 @@ async function _supaDispatch(fn, payload){
     var kodEdit = String(payload.kod||'').toUpperCase().trim();
     var namaEdit = String(payload.nama||'').toUpperCase().trim();
     if(!kodEdit||!namaEdit) return {ok:false, msg:'Kod dan nama sekolah wajib diisi.'};
-    var rSk = await sb.rpc('sekolah_kemaskini', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_kod: kodEdit, p_nama_baru: namaEdit});
+    var rSk = await sb.rpc('admin_kemaskini_sekolah', {p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'', p_kod: kodEdit, p_nama_baharu: namaEdit});
     _throwIfErr(rSk.error);
     return {ok:true, msg:'Sekolah berjaya dikemaskini.'};
   }
@@ -2708,8 +2712,9 @@ async function _supaDispatch(fn, payload){
     if(payload.nama==null && payload.kodSekolah==null && payload.namaSekolah==null && payload.noTel==null){
       return {ok:false, msg:'Tiada maklumat untuk dikemaskini.'};
     }
-    var rUpM = await sb.rpc('pengguna_kemaskini_maklumat', {
-      p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_no_kp_target: payload.noKP,
+    var rUpM = await sb.rpc('admin_kemaskini_akaun', {
+      p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'',
+      p_target_no_kp: payload.noKP, p_status: null, p_role: null,
       p_nama: payload.nama!=null?String(payload.nama).toUpperCase().trim():null,
       p_kod_sekolah: payload.kodSekolah!=null?String(payload.kodSekolah).toUpperCase().trim():null,
       p_nama_sekolah: payload.namaSekolah!=null?String(payload.namaSekolah).toUpperCase().trim():null,
