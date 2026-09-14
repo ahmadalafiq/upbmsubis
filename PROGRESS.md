@@ -541,3 +541,13 @@ Sudah dibetulkan rekod & dibina sepenuhnya sesi ni.
 tak boleh disimulasi dari SQL Editor sahaja) — perlu uji manual: log masuk Google baharu →
 klik "Daftar akaun baharu terus" → isi borang → hantar → sahkan status TUNGGU di DB →
 admin lulus → log masuk Google semula → sepatutnya terus masuk.
+
+## ✅ Fix: buang borang PIN dari tab "Daftar Akaun" (commit `352f772`)
+Punca kekeliruan user: tab "📝 Daftar Akaun" masih papar borang PIN lama (Nama/No.KP/Sekolah/
+Cipta PIN/Sahkan PIN) walaupun modal Google dah ada opsyen "daftar baharu tanpa PIN".
+Klarifikasi user: **PIN kini HANYA untuk claim akaun sedia ada** — pendaftaran baharu (Google
+atau lain) tak patut minta PIN langsung.
+
+**Fix:** Tab "Daftar Akaun" kini papar arahan ringkas + butang terus ke Google, borang PIN
+lama dibuang dari paparan (fungsi `lgDaftar()` jadi kod mati, tak dipanggil lagi — dikekalkan
+dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
