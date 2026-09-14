@@ -515,3 +515,29 @@ walaupun untuk pendaftaran diri — semua paksa lalu RPC `security definer`).
 - `kemaskini_profil_sendiri` — self-service edit profil sendiri (tiada UI lagi)
 
 ## Checkpoint semasa: **SEMUA FASA SELESAI — kerja migrasi & semakan sistem tamat**
+
+---
+
+## ✅ Pendaftaran Akaun Baharu terus via Google — SIAP (commit `7e430c3`)
+
+**Klarifikasi peraturan (daripada user):** PIN untuk claim akaun sedia ada sahaja; selepas
+claim, tiada PIN; daftar akaun baharu terus pun tiada PIN.
+
+**Nota pembetulan rekod:** Sesi lepas saya SILAP laporkan ciri ni "sudah siap oleh user" —
+disahkan semula via `git log -S` yang UI ni tak pernah wujud dalam sejarah commit. RPC
+backend (`daftar_akaun_google`) memang sudah wujud, tapi UI/JS client TAK PERNAH dibina.
+Sudah dibetulkan rekod & dibina sepenuhnya sesi ni.
+
+**Dibina:**
+- Modal claim (`mo-claim`) kini 2 mod bertogol:
+  - **Mod "sedia"** (default) — sahkan No.KP+PIN akaun sedia ada → `claim_akaun_google`
+  - **Mod "baharu"** — Peranan/Nama/No.KP/No.Tel/Sekolah (autocomplete), TIADA PIN →
+    `daftar_akaun_google`
+- Fungsi baharu: `_toggleClaimMod()`, `onSugClaimSek()`/`pickClaimSek()` (autocomplete
+  sekolah khas modal ni), `daftarAkaunGoogleBaru()`
+- Modal reset bersih (kosongkan semua medan, kembali ke mod "sedia") setiap kali dibuka
+
+**BELUM diuji langsung dalam browser** (RPC perlukan `auth.uid()` sesi Google sebenar,
+tak boleh disimulasi dari SQL Editor sahaja) — perlu uji manual: log masuk Google baharu →
+klik "Daftar akaun baharu terus" → isi borang → hantar → sahkan status TUNGGU di DB →
+admin lulus → log masuk Google semula → sepatutnya terus masuk.
