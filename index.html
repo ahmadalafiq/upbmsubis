@@ -1364,58 +1364,20 @@ body.view-list .pc::after { display: none; }
 
       <!-- == PANEL DAFTAR == -->
       <div class="lg-panel" id="lgp-daftar">
-        <div id="daf-err" class="lg-err"></div>
-        <div id="daf-ok" class="lg-info"></div>
-        <div class="lg-fi">
-          <label>Saya adalah <span class="req">*</span></label>
-          <select id="daf-role">
-            <option value="guru">👨‍🏫 Guru</option>
-            <option value="pkk">📋 Penolong Kanan Kokurikulum</option>
-          </select>
+        <div style="text-align:center;padding:1.2rem .5rem;">
+          <div style="font-size:2.2rem;margin-bottom:.4rem;">🔑</div>
+          <p style="font-size:.8rem;color:var(--g6);margin-bottom:1rem;line-height:1.5;">
+            Pendaftaran akaun baharu kini melalui <b>Google sahaja</b> — tiada PIN diperlukan.
+            Guna emel sekolah anda (<b>@moe-dl.edu.my</b>).
+          </p>
+          <button class="lg-btn" style="background:#fff;color:#3c4043;border:1.5px solid #dadce0;display:flex;align-items:center;justify-content:center;gap:.5rem;margin:0 auto;max-width:280px;" onclick="loginGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="">
+            Daftar dengan Google
+          </button>
+          <p style="font-size:.68rem;color:var(--g5);margin-top:1rem;">
+            Sudah ada akaun No.KP+PIN sedia ada? Log masuk Google akan minta anda sahkan &amp; ikat akaun tu secara automatik.
+          </p>
         </div>
-        <div class="lg-grid2">
-          <div class="lg-fi lg-full">
-            <label>Nama Penuh <span class="req">*</span></label>
-            <input type="text" id="daf-nama" placeholder="Nama seperti dalam MyKad">
-          </div>
-          <div class="lg-fi">
-            <label>No. Kad Pengenalan <span class="req">*</span></label>
-            <input type="text" id="daf-kp" placeholder="000000-00-0000" maxlength="14"
-              inputmode="numeric" oninput="fmtKP(this)">
-          </div>
-          <div class="lg-fi">
-            <label>No. Telefon <span class="req">*</span></label>
-            <div class="lg-tel">
-              <span class="lg-tel-pre">+60</span>
-              <input type="tel" id="daf-tel" placeholder="1X-XXXXXXXX" maxlength="11"
-                inputmode="numeric" oninput="fmtTel(this)">
-            </div>
-          </div>
-          <div class="lg-fi lg-full" style="position:relative;">
-            <!-- Autocomplete ikut corak tab Pengelola -->
-            <label>Sekolah <span class="req">*</span></label>
-            <input type="text" id="daf-kodsek-search" placeholder="Taip nama atau kod sekolah..." autocomplete="off"
-              style="text-transform:none;" oninput="onSugDafSek(this.value)" onfocus="onSugDafSek(this.value)" onblur="hideSug('sug-daf-kodsek')">
-            <div class="sug-drop" id="sug-daf-kodsek"></div>
-            <!-- Nilai sebenar (kod) & nama disimpan dlm medan tersembunyi -->
-            <input type="hidden" id="daf-kodsek" value="">
-            <input type="hidden" id="daf-nmsek" value="">
-          </div>
-          <div class="lg-fi lg-full" style="margin-top:.3rem;">
-            <label>PIN 6 Digit <span class="req">*</span></label>
-            <input type="password" id="daf-pin" placeholder="Cipta PIN 6 digit"
-              maxlength="6" inputmode="numeric"
-              style="letter-spacing:4px;font-size:1rem;text-align:center;">
-            <span class="hint">PIN ini digunakan untuk log masuk. Ingat dan rahsiakan.</span>
-          </div>
-          <div class="lg-fi lg-full">
-            <label>Sahkan PIN <span class="req">*</span></label>
-            <input type="password" id="daf-pin2" placeholder="Ulang PIN 6 digit"
-              maxlength="6" inputmode="numeric"
-              style="letter-spacing:4px;font-size:1rem;text-align:center;">
-          </div>
-        </div>
-        <button class="lg-btn" id="daf-btn" onclick="lgDaftar()">📤 HANTAR PERMOHONAN</button>
         <div class="lg-link">Sudah ada akaun? <a onclick="lgTab('login')">Log masuk di sini</a></div>
       </div>
 
