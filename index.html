@@ -2081,24 +2081,69 @@ body.view-list .pc::after { display: none; }
 
 <!-- MODAL: CLAIM AKAUN GOOGLE -->
 <div class="mo" id="mo-claim">
-  <div class="md" style="max-width:420px;">
-    <div class="mh">🔗 SAHKAN AKAUN SEDIA ADA</div>
-    <div class="pin-wrap">
-      <p>Akaun Google anda (<b id="claim-emel"></b>) belum diikat ke mana-mana akaun UPBM Subis.
-      Sila sahkan No. KP dan PIN akaun sedia ada anda untuk mengikatnya.</p>
+  <div class="md" style="max-width:440px;">
+    <div class="mh">🔗 AKAUN GOOGLE</div>
+    <p style="font-size:.72rem;color:var(--g5);margin:0 0 .6rem;">Akaun Google anda (<b id="claim-emel"></b>) belum diikat ke mana-mana akaun UPBM Subis.</p>
+
+    <!-- MOD SEDIA ADA: sahkan No.KP + PIN akaun sedia ada -->
+    <div id="claim-mod-sedia">
+      <div class="pin-wrap">
+        <p>Sahkan No. KP dan PIN akaun sedia ada anda untuk mengikatnya ke Google.</p>
+        <div class="lg-fi">
+          <label>No. Kad Pengenalan <span class="req">*</span></label>
+          <input type="text" id="claim-nokp" placeholder="000000-00-0000" maxlength="14" inputmode="numeric" oninput="fmtKP(this)">
+        </div>
+        <div class="lg-fi">
+          <label>PIN <span class="req">*</span></label>
+          <input type="password" id="claim-pin" placeholder="PIN sedia ada" maxlength="12" onkeydown="if(event.key==='Enter')claimAkaunGoogle()">
+        </div>
+        <div class="pin-err" id="claim-err"></div>
+      </div>
+      <div class="mt2 fx gu">
+        <button class="btn bp" onclick="claimAkaunGoogle()">✓ SAHKAN &amp; IKAT AKAUN</button>
+        <button class="btn bs" onclick="closeMo('mo-claim');sb.auth.signOut();">BATAL</button>
+      </div>
+      <div class="lg-link" style="margin-top:.6rem;">Belum ada akaun? <a onclick="_toggleClaimMod('baharu')">Daftar akaun baharu terus</a></div>
+    </div>
+
+    <!-- MOD BAHARU: daftar akaun baharu terus via Google, TIADA PIN diperlukan -->
+    <div id="claim-mod-baharu" style="display:none;">
+      <div class="lg-fi">
+        <label>Saya adalah <span class="req">*</span></label>
+        <select id="claim-role">
+          <option value="guru">👨‍🏫 Guru</option>
+          <option value="pkk">📋 Penolong Kanan Kokurikulum</option>
+        </select>
+      </div>
+      <div class="lg-fi">
+        <label>Nama Penuh <span class="req">*</span></label>
+        <input type="text" id="claim-nama" placeholder="Nama seperti dalam MyKad">
+      </div>
       <div class="lg-fi">
         <label>No. Kad Pengenalan <span class="req">*</span></label>
-        <input type="text" id="claim-nokp" placeholder="000000-00-0000" maxlength="14" inputmode="numeric" oninput="fmtKP(this)">
+        <input type="text" id="claim-nokp2" placeholder="000000-00-0000" maxlength="14" inputmode="numeric" oninput="fmtKP(this)">
       </div>
       <div class="lg-fi">
-        <label>PIN <span class="req">*</span></label>
-        <input type="password" id="claim-pin" placeholder="PIN sedia ada" maxlength="12" onkeydown="if(event.key==='Enter')claimAkaunGoogle()">
+        <label>No. Telefon <span class="req">*</span></label>
+        <div class="lg-tel">
+          <span class="lg-tel-pre">+60</span>
+          <input type="tel" id="claim-tel" placeholder="1X-XXXXXXXX" maxlength="11" inputmode="numeric" oninput="fmtTel(this)">
+        </div>
       </div>
-      <div class="pin-err" id="claim-err"></div>
-    </div>
-    <div class="mt2 fx gu">
-      <button class="btn bp" onclick="claimAkaunGoogle()">✓ SAHKAN &amp; IKAT AKAUN</button>
-      <button class="btn bs" onclick="closeMo('mo-claim');sb.auth.signOut();">BATAL</button>
+      <div class="lg-fi" style="position:relative;">
+        <label>Sekolah <span class="req">*</span></label>
+        <input type="text" id="claim-sek-search" placeholder="Taip nama atau kod sekolah..." autocomplete="off"
+          style="text-transform:none;" oninput="onSugClaimSek(this.value)" onfocus="onSugClaimSek(this.value)" onblur="hideSug('sug-claim-sek')">
+        <div class="sug-drop" id="sug-claim-sek"></div>
+        <input type="hidden" id="claim-kodsek" value="">
+        <input type="hidden" id="claim-nmsek" value="">
+      </div>
+      <div class="pin-err" id="claim-err2"></div>
+      <div class="mt2 fx gu">
+        <button class="btn bp" onclick="daftarAkaunGoogleBaru()">📤 HANTAR PERMOHONAN</button>
+        <button class="btn bs" onclick="closeMo('mo-claim');sb.auth.signOut();">BATAL</button>
+      </div>
+      <div class="lg-link" style="margin-top:.6rem;">Ada akaun sedia ada? <a onclick="_toggleClaimMod('sedia')">Sahkan &amp; ikat akaun</a></div>
     </div>
   </div>
 </div>
@@ -10171,6 +10216,15 @@ async function _semakSesiGoogle(session){
       document.getElementById('claim-err').textContent = '';
       document.getElementById('claim-nokp').value = '';
       document.getElementById('claim-pin').value = '';
+      document.getElementById('claim-err2').textContent = '';
+      document.getElementById('claim-role').value = 'guru';
+      document.getElementById('claim-nama').value = '';
+      document.getElementById('claim-nokp2').value = '';
+      document.getElementById('claim-tel').value = '';
+      document.getElementById('claim-sek-search').value = '';
+      document.getElementById('claim-kodsek').value = '';
+      document.getElementById('claim-nmsek').value = '';
+      _toggleClaimMod('sedia');
       openMo('mo-claim');
     }
   }catch(e){ console.error(e); }
@@ -10190,6 +10244,67 @@ async function claimAkaunGoogle(){
     closeMo('mo-claim');
     toast('Akaun berjaya diikat ke Google!','ok');
     _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp});
+  }catch(e){ errEl.textContent = 'Ralat: '+e.message; }
+}
+
+// Togol antara mod "sahkan akaun sedia ada" vs "daftar akaun baharu" dalam modal claim
+function _toggleClaimMod(mod){
+  var elSedia = document.getElementById('claim-mod-sedia');
+  var elBaharu = document.getElementById('claim-mod-baharu');
+  if(mod === 'baharu'){
+    elSedia.style.display = 'none';
+    elBaharu.style.display = '';
+  } else {
+    elBaharu.style.display = 'none';
+    elSedia.style.display = '';
+  }
+}
+
+// Autocomplete sekolah khas untuk borang daftar-baharu-via-Google (guna semula senarai sedia ada)
+function onSugClaimSek(q){
+  var drop=document.getElementById('sug-claim-sek'); if(!drop)return;
+  var v=(q||'').trim();
+  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
+  var lv=v.toLowerCase();
+  var items=_getSekSuggestions().filter(function(s){
+    return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
+  }).sort(function(a,b){return a.nama.localeCompare(b.nama);}).slice(0,8);
+  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g5);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
+  drop.innerHTML=items.map(function(s){
+    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+esc(s.nama)+' ('+esc(s.kod)+')</span></div>';
+  }).join('');
+  drop.querySelectorAll('.sug-item[data-sug-kod]').forEach(function(el){
+    el.addEventListener('mousedown',function(){pickClaimSek(decodeURIComponent(el.dataset.sugKod),decodeURIComponent(el.dataset.sugSek));});
+  });
+  drop.classList.add('on');
+}
+function pickClaimSek(kod,nama){
+  document.getElementById('claim-kodsek').value = kod;
+  document.getElementById('claim-nmsek').value = nama;
+  document.getElementById('claim-sek-search').value = nama+' ('+kod+')';
+  hideSug('sug-claim-sek');
+}
+
+// Daftar akaun BAHARU terus via Google — TIADA PIN diperlukan (Google jadi kaedah log masuk)
+async function daftarAkaunGoogleBaru(){
+  var role = document.getElementById('claim-role').value;
+  var nama = document.getElementById('claim-nama').value.trim();
+  var noKP = document.getElementById('claim-nokp2').value.trim();
+  var tel = document.getElementById('claim-tel').value.trim();
+  var kodSek = document.getElementById('claim-kodsek').value;
+  var nmSek = document.getElementById('claim-nmsek').value;
+  var errEl = document.getElementById('claim-err2');
+  errEl.textContent = '';
+  if(!nama || !noKP || !tel || !kodSek){ errEl.textContent = 'Sila lengkapkan semua ruangan.'; return; }
+  try{
+    var r = await sb.rpc('daftar_akaun_google', {
+      p_no_kp: noKP, p_nama: nama.toUpperCase(), p_role: role,
+      p_kod_sekolah: kodSek, p_nama_sekolah: nmSek, p_no_tel: '+60'+tel
+    });
+    if(r.error){ errEl.textContent = r.error.message.replace(/^.*: /,''); return; }
+    closeMo('mo-claim');
+    toast('Permohonan berjaya dihantar. Kelulusan admin biasanya 1-2 hari bekerja.','ok');
+    try{ await sb.auth.signOut(); }catch(e){}
   }catch(e){ errEl.textContent = 'Ralat: '+e.message; }
 }
 
