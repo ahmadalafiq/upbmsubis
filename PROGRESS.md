@@ -572,7 +572,7 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
 - [ ] F8 — Flow Sekolah (tambah/kemaskini)
 - [ ] F9 — Dashboard & AI chat (semak asas)
 
-### Checkpoint semasa: **F4-F6 — Pengelola/Penyertaan/Pencapaian**
+### Checkpoint semasa: **F7 — Flow Akaun Admin**
 
 ## F4-F6 — Pengelola/Penyertaan/Pencapaian (commit pending)
 - ✅ `daftarProgram()` client vs `daftar_program` RPC — sepadan (guru disekat, sama-sama)
