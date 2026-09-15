@@ -573,3 +573,13 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
 - [ ] F9 — Dashboard & AI chat (semak asas)
 
 ### Checkpoint semasa: **F4-F6 — Pengelola/Penyertaan/Pencapaian**
+
+## F4-F6 — Pengelola/Penyertaan/Pencapaian (commit pending)
+- ✅ `daftarProgram()` client vs `daftar_program` RPC — sepadan (guru disekat, sama-sama)
+- ✅ `reqEdit()` client vs `kemaskini_program_cascade` RPC — sepadan (admin/PKK pengelola)
+- 🔴 **BUG KRITIKAL DIJUMPAI & DIBETULKAN**: `hantar_penyertaan_sekolah` (server) TIADA
+  sebarang semakan pemilikan sekolah — SESIAPA yang log masuk (guru mana-mana sekolah)
+  boleh padam/ubah penyertaan SEKOLAH LAIN terus dari console browser, walaupun client
+  (`canPadamSek()`) sekat UI kepada sekolah sendiri/PKK pengelola/admin sahaja. DIBETULKAN
+  — RPC kini semak `kod_sekolah` caller = `p_kod_sekolah`, ATAU PKK pengelola program.
+  Diuji: guru sekolah A cuba padam sekolah B → ditolak dgn betul.
