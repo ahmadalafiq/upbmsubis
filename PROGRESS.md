@@ -551,3 +551,19 @@ atau lain) tak patut minta PIN langsung.
 **Fix:** Tab "Daftar Akaun" kini papar arahan ringkas + butang terus ke Google, borang PIN
 lama dibuang dari paparan (fungsi `lgDaftar()` jadi kod mati, tak dipanggil lagi — dikekalkan
 dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
+
+---
+
+## 🔍 AUDIT MENYELURUH SETIAP FLOW USER (checkpoint kerja semasa)
+### Pelan
+- [ ] F1 — Cross-check SEMUA panggilan sb.rpc() dlm JS vs signature sebenar DB (elak pecah senyap)
+- [ ] F2 — Flow Log Masuk (No.KP+PIN, admin kod, Google)
+- [ ] F3 — Flow Pendaftaran (Google baharu, claim akaun)
+- [ ] F4 — Flow Pengelola (cipta/edit/padam program) - semak kebenaran client vs server
+- [ ] F5 — Flow Penyertaan (hantar/edit, bulk Excel)
+- [ ] F6 — Flow Pencapaian (simpan markah)
+- [ ] F7 — Flow Akaun Admin (senarai/lulus/tukar peranan/reset PIN)
+- [ ] F8 — Flow Sekolah (tambah/kemaskini)
+- [ ] F9 — Dashboard & AI chat (semak asas)
+
+### Checkpoint semasa: **F1 — bermula**
