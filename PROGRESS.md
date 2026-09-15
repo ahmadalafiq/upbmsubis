@@ -556,7 +556,7 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
 
 ## 🔍 AUDIT MENYELURUH SETIAP FLOW USER (checkpoint kerja semasa)
 ### Pelan
-- [ ] F1 — Cross-check SEMUA panggilan sb.rpc() dlm JS vs signature sebenar DB (elak pecah senyap)
+- [x] F1 — SIAP. Semua 20 panggilan RPC (19 fungsi unik) disahkan sepadan TEPAT dgn DB. Bersih.
 - [ ] F2 — Flow Log Masuk (No.KP+PIN, admin kod, Google)
 - [ ] F3 — Flow Pendaftaran (Google baharu, claim akaun)
 - [ ] F4 — Flow Pengelola (cipta/edit/padam program) - semak kebenaran client vs server
@@ -566,4 +566,4 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
 - [ ] F8 — Flow Sekolah (tambah/kemaskini)
 - [ ] F9 — Dashboard & AI chat (semak asas)
 
-### Checkpoint semasa: **F1 — bermula**
+### Checkpoint semasa: **F2 — Flow Log Masuk**
