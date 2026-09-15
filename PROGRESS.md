@@ -557,7 +557,10 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
 ## 🔍 AUDIT MENYELURUH SETIAP FLOW USER (checkpoint kerja semasa)
 ### Pelan
 - [x] F1 — SIAP. Semua 20 panggilan RPC (19 fungsi unik) disahkan sepadan TEPAT dgn DB. Bersih.
-- [ ] F2 — Flow Log Masuk (No.KP+PIN, admin kod, Google)
+- [x] F2 — SIAP (commit `b68dd9f`). 1 BUG DIJUMPAI & DIBETULKAN: loginGS semak `u.auth_uid`
+      tapi `cek_status_akaun` pulangkan `sudah_ikat_google` (nama medan tak sepadan) — sekatan
+      'akaun Google, guna Google login' tak pernah aktif langsung sebelum ini. verifyPinGS/
+      askPin/doPin disahkan kod mati (selamat, tiada kesan).
 - [ ] F3 — Flow Pendaftaran (Google baharu, claim akaun)
 - [ ] F4 — Flow Pengelola (cipta/edit/padam program) - semak kebenaran client vs server
 - [ ] F5 — Flow Penyertaan (hantar/edit, bulk Excel)
@@ -566,4 +569,4 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
 - [ ] F8 — Flow Sekolah (tambah/kemaskini)
 - [ ] F9 — Dashboard & AI chat (semak asas)
 
-### Checkpoint semasa: **F2 — Flow Log Masuk**
+### Checkpoint semasa: **F3 — Flow Pendaftaran/Claim**
