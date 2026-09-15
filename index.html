@@ -2612,7 +2612,7 @@ async function _supaDispatch(fn, payload){
       _throwIfErr(rA.error);
       var uA = (rA.data||[])[0];
       if(!uA) return {ok:false, msg:'Kod admin tidak sah.'};
-      return {ok:true, skipPin:true, role:uA.role, nama:uA.nama, kodSekolah:uA.kod_sekolah, namaSekolah:uA.nama_sekolah};
+      return {ok:true, skipPin:true, role:uA.role, nama:uA.nama, kodSekolah:uA.kod_sekolah, namaSekolah:uA.nama_sekolah, token:uA.session_token};
     }
 
     // Semakan status akaun — RPC (jadual pengguna dikunci sepenuhnya, tiada select terus)
@@ -2632,7 +2632,7 @@ async function _supaDispatch(fn, payload){
     _throwIfErr(rL.error);
     var uL = (rL.data||[])[0];
     if(!uL) return {ok:false, msg:'PIN salah. Sila cuba semula.'};
-    return {ok:true, role:uL.role, nama:uL.nama, kodSekolah:uL.kod_sekolah, namaSekolah:uL.nama_sekolah};
+    return {ok:true, role:uL.role, nama:uL.nama, kodSekolah:uL.kod_sekolah, namaSekolah:uL.nama_sekolah, token:uL.session_token};
   }
 
   if(fn === 'verifyPinGS'){
@@ -9140,16 +9140,15 @@ async function _mulakanSesi(data){
     kodSekolah:  data.kodSekolah||'',
     namaSekolah: data.namaSekolah||'',
     noKP:        data.noKP||'',
-    token:       '',
+    token:       data.token||'',
     loginTime:   Date.now()
   };
-  // Simpan dalam sessionStorage (tanpa token dulu — token diisi lepas RPC berjaya, di bawah)
+  // Simpan dalam sessionStorage (mungkin belum ada token lagi jika data.token kosong)
   try{ sessionStorage.setItem('upbm_sesi', JSON.stringify(_sesi)); }catch(e){}
 
-  // Fasa T1 migrasi sistem token: dapatkan token sesi sebenar (bukan sekadar No.KP)
-  // untuk RPC yang perlukan pengesahan lebih kukuh. Tak blok UI — _sesi.noKP tetap
-  // boleh dipakai serta-merta oleh RPC pattern lama sementara token belum sampai.
-  if(_sesi.noKP){
+  // Fasa T1 migrasi sistem token: dapatkan token sesi sebenar HANYA jika belum ada
+  // (cth. login_via_google() dah sertakan token terus — elak panggilan berganda/sia-sia)
+  if(_sesi.noKP && !_sesi.token){
     try{
       var rTok = await sb.rpc('_set_session_token', {p_no_kp: _sesi.noKP});
       if(!rTok.error && rTok.data){
@@ -10170,7 +10169,7 @@ async function _semakSesiGoogle(session){
     }
     var u = (r.data||[])[0];
     if(u){
-      _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp});
+      _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp, token:u.session_token});
     } else {
       // Belum pernah diikat — minta sahkan No.KP+PIN sedia ada
       var emel = session.user && session.user.email || '';
@@ -10205,7 +10204,7 @@ async function claimAkaunGoogle(){
     if(!u){ errEl.textContent = 'No.KP atau PIN tidak sepadan.'; return; }
     closeMo('mo-claim');
     toast('Akaun berjaya diikat ke Google!','ok');
-    _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp});
+    _mulakanSesi({role:u.role, nama:u.nama, kodSekolah:u.kod_sekolah, namaSekolah:u.nama_sekolah, noKP:u.no_kp, token:u.session_token});
   }catch(e){ errEl.textContent = 'Ralat: '+e.message; }
 }
 
