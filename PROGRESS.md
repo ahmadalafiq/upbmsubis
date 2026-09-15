@@ -583,3 +583,31 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
   (`canPadamSek()`) sekat UI kepada sekolah sendiri/PKK pengelola/admin sahaja. DIBETULKAN
   — RPC kini semak `kod_sekolah` caller = `p_kod_sekolah`, ATAU PKK pengelola program.
   Diuji: guru sekolah A cuba padam sekolah B → ditolak dgn betul.
+
+## F7-F9 — Akaun Admin / Sekolah / Dashboard / AI — SIAP, bersih
+- ✅ `admin_kemaskini_akaun`/`admin_senarai_akaun` — admin-gated betul di server, sepadan UI
+- ✅ `getSekolahListGS` — SELECT kekal terbuka (perlu utk autocomplete pra-login), tiada gate keliru
+- 🔴 **BUG DIJUMPAI & DIBETULKAN**: mesej amaran AI pra-login (`AI_MESEJ_BELUM_LOGIN`) masih
+  terangkan borang PIN lama tab "Daftar Akaun" yang dah dibuang sesi lepas — dikemas kini
+  ikut flow Google sebenar (commit `e8077c3`)
+
+---
+
+## ✅ AUDIT MENYELURUH SEMUA FLOW — SELESAI (F1-F9)
+
+### Ringkasan keseluruhan (5 isu dijumpai & dibetulkan)
+1. 🔴 **KRITIKAL** — `hantar_penyertaan_sekolah` tiada semakan pemilikan sekolah langsung;
+   sesiapa log masuk boleh padam/ubah penyertaan sekolah LAIN. Dibetulkan & diuji.
+2. 🟠 `loginGS` semak medan `auth_uid` yang tak wujud (patut `sudah_ikat_google`) — sekatan
+   "akaun Google, guna Google" tak pernah aktif. Dibetulkan.
+3. 🟡 4 RPC login (login_admin/login_pengguna/login_via_google/claim_akaun_google) pulangkan
+   `session_token` terus tapi JS abaikan & panggil `_set_session_token()` berganda/sia-sia.
+   Dioptimumkan.
+4. 🟡 Mesej amaran AI pra-login rujuk borang PIN lama yang dah dibuang. Dikemas kini.
+5. ✅ F1 (cross-check 20 panggilan RPC) — bersih sepenuhnya, tiada mismatch.
+
+Semua 9 fasa (F1-F9) selesai. Sistem disahkan konsisten antara client (kebenaran UI) dan
+server (RPC security definer) merentasi SEMUA flow utama: log masuk, pendaftaran/claim,
+Pengelola (program), Penyertaan, Pencapaian, Akaun Admin, Sekolah, Dashboard, AI chat.
+
+## Checkpoint semasa: **AUDIT SELESAI SEPENUHNYA**
