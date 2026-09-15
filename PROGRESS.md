@@ -561,7 +561,10 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
       tapi `cek_status_akaun` pulangkan `sudah_ikat_google` (nama medan tak sepadan) — sekatan
       'akaun Google, guna Google login' tak pernah aktif langsung sebelum ini. verifyPinGS/
       askPin/doPin disahkan kod mati (selamat, tiada kesan).
-- [ ] F3 — Flow Pendaftaran (Google baharu, claim akaun)
+- [x] F3 — SIAP (commit `1e4fcc9`). Semak _semakSesiGoogle bersih. Jumpa OPTIMASI (bukan bug):
+      login_admin/login_pengguna/login_via_google/claim_akaun_google SEMUA sekarang pulangkan
+      session_token terus dlm hasil RPC yg sama, tapi JS buat panggilan _set_session_token()
+      BERGANDA/sia-sia. Dibetulkan - guna token yg dah dipulangkan terus.
 - [ ] F4 — Flow Pengelola (cipta/edit/padam program) - semak kebenaran client vs server
 - [ ] F5 — Flow Penyertaan (hantar/edit, bulk Excel)
 - [ ] F6 — Flow Pencapaian (simpan markah)
@@ -569,4 +572,4 @@ dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
 - [ ] F8 — Flow Sekolah (tambah/kemaskini)
 - [ ] F9 — Dashboard & AI chat (semak asas)
 
-### Checkpoint semasa: **F3 — Flow Pendaftaran/Claim**
+### Checkpoint semasa: **F4-F6 — Pengelola/Penyertaan/Pencapaian**
