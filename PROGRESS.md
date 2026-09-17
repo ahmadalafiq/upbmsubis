@@ -611,3 +611,23 @@ server (RPC security definer) merentasi SEMUA flow utama: log masuk, pendaftaran
 Pengelola (program), Penyertaan, Pencapaian, Akaun Admin, Sekolah, Dashboard, AI chat.
 
 ## Checkpoint semasa: **AUDIT SELESAI SEPENUHNYA**
+
+---
+
+## ✅ Kekangan Unik Pencapaian — SIAP (klarifikasi dasar disahkan user)
+
+**Peraturan disahkan:** 1 kategori = 1 peserta unik bagi pencapaian (bukan 1 program = 1
+peserta unik). Peserta boleh menang beberapa kategori BERBEZA dalam program sama (cth.
+Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kategori SAMA.
+
+**Dilaksanakan:**
+- Dibersihkan 1 lagi pendua sedia ada dijumpai semasa semak (SMK Suai, Tali-Temali KRS,
+  nama peserta beza ejaan sikit, kedudukan/markah sama — pendua sebenar)
+- `unique index uniq_pencapaian_peserta_kategori` pada `(program_id, kategori, no_kp_peserta)`
+  — partial index (abaikan baris tanpa no_kp_peserta, cth data lama tanpa IC)
+- `replace_pencapaian` RPC kini tangkap ralat unique_violation & bagi mesej jelas
+  ("peserta sama direkod dua kali untuk kategori sama") bukan ralat teknikal mentah
+
+**Diuji:**
+- ✅ Cuba masuk peserta sama + kategori sama 2x → DITOLAK dgn mesej jelas
+- ✅ Peserta sama + 3 kategori BERBEZA (Individu/Berkumpulan/Keseluruhan) → SEMUA diterima
