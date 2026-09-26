@@ -631,3 +631,49 @@ Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kate
 **Diuji:**
 - ✅ Cuba masuk peserta sama + kategori sama 2x → DITOLAK dgn mesej jelas
 - ✅ Peserta sama + 3 kategori BERBEZA (Individu/Berkumpulan/Keseluruhan) → SEMUA diterima
+
+---
+
+## 📋 PERANCANGAN — Projek SPBM (Sistem Pengurusan Maklumat) — BELUM DILAKSANAKAN
+
+**Status: RANCANGAN SAHAJA. Tiada perubahan dibuat pada Supabase/GitHub. Rujuk bila sedia.**
+
+### Skop
+Dokumen sumber: struktur SPBM penuh (HEM + PBM) — jauh lebih besar drpd UPBM Subis sekarang.
+UPBM Subis sekarang cuma isi 1 sub-cabang (2.1.2/2.2.2 - kokurikulum acara daerah).
+SPBM penuh: 2 unit (HEM: enrolmen/disiplin/kehadiran/kesihatan/asrama/kantin/RMT/staf;
+PBM: sukan+kokurikulum/PAJSK/SEGAK/kelab-badan beruniform).
+
+### Reka bentuk dipersetujui — "1 Kad, Pilih Perkhidmatan" (konsep ATM)
+1. **1 sistem log masuk dikongsi** (No.KP+PIN/Google/token sedia ada) — tiada perubahan RPC login
+2. Lepas login berjaya → skrin **"Pilih Sistem"** (tambahan kecil dlm index.html):
+   🏆 KK+Sukan (app sedia ada) vs 🎓 HEM (baharu)
+3. `hem.html` — **fail app BAHARU berasingan sepenuhnya**, bukan tab dalam index.html sedia ada
+4. Sesi dikongsi via `sessionStorage` (sama origin) — pilih HEM navigasi ke hem.html dlm tab sama,
+   auto-login (tak perlu PIN/Google 2 kali)
+5. Jadual `pengguna` + `sekolah` **dikongsi terus** (satu sumber kebenaran)
+6. Jadual `programs`/`penyertaan`/`pencapaian` sedia ada **LANGSUNG TAK DISENTUH**
+7. HEM guna jadual & RPC BAHARU sepenuhnya (nama jelas berlainan, cth. `hem_kehadiran`,
+   `hem_disiplin`, `pbm_enrolmen_sukan`, `pbm_pajsk`) — zero overlap dgn backend sedia ada
+
+### Jurang kritikal dikenal pasti
+Tiada jadual induk **murid** (rekod pelajar berkekalan: No.KP, tingkatan/tahun, kelas, jantina,
+kaum, kewarganegaraan, agama) dlm sistem sekarang — UPBM Subis cuma simpan nama peserta ad-hoc
+bila daftar acara. Hampir SEMUA ciri SPBM (enrolmen, disiplin, kehadiran, PAJSK) bergantung pada
+jadual murid ni — jadi ini WAJIB jadi Fasa 0 sebelum modul lain boleh dibina.
+
+### Cadangan susunan fasa
+| Fasa | Skop |
+|---|---|
+| 0 | Jadual induk `murid` (rekod pelajar berkekalan) |
+| 1 | 2.1/2.2 penuh (Sukan+Kokurikulum menyeluruh, bukan cuma acara daerah) — paling dekat dgn kerja sedia ada |
+| 2 | 2.3/2.4 (PAJSK, SEGAK, Kelab/Badan Beruniform) |
+| 3 | 1.1/1.2 (Enrolmen, Kehadiran, Disiplin) — HEM |
+| 4+ | 1.3/1.4 (Asrama, Kantin, RMT, Staf HEM) — paling khusus |
+
+### Soalan belum dijawab user (perlu klarifikasi bila nak mula)
+- Fasa mana paling mendesak dahulu (dicadang: skrin "Pilih Sistem" dahulu — kerja kecil,
+  risiko rendah, boleh uji sebelum mula HEM yang jauh lebih besar)
+- Adakah data murid sedia ada di sistem KPM lain (APDM) boleh diimport, atau bina dari kosong?
+
+## Checkpoint semasa: **SPBM — rancangan disimpan, tunggu arahan mula. Fokus balik ke UPBM Subis sedia ada buat masa ini.**
