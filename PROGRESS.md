@@ -677,3 +677,58 @@ jadual murid ni — jadi ini WAJIB jadi Fasa 0 sebelum modul lain boleh dibina.
 - Adakah data murid sedia ada di sistem KPM lain (APDM) boleh diimport, atau bina dari kosong?
 
 ## Checkpoint semasa: **SPBM — rancangan disimpan, tunggu arahan mula. Fokus balik ke UPBM Subis sedia ada buat masa ini.**
+
+---
+
+## 📋 PERANCANGAN — Pendaftaran Bentuk WIZARD (Program & Penyertaan) — BELUM DILAKSANAKAN
+
+**Status: RANCANGAN SAHAJA. Tiada perubahan dibuat pada index.html / Supabase. Tunggu 4 keputusan user.**
+
+### Keadaan borang sekarang (hasil semakan kod, baca sahaja)
+- **Daftar Program** (`#card-daftar-prog`): 1 kad panjang, 11 medan (p-nama, p-pengelola, p-kod, p-bidang,
+  kategori checkbox `p-kat-wrap`, p-per, p-tarikh, p-tempat, p-status). Fungsi: `daftarProgram()`, `clearPF()`.
+- **Penyertaan** (`#pg-peserta`): sudah separa-langkah — `peny-pilih` (pilih program) -> `sbox-sekolah`
+  (pilih sekolah) -> `peny-form-wrap` (guru `main-guru-list` + peserta `main-pes-list`) -> modal
+  `mo-pengesahan` -> `hantarPeny()`. Kotak muncul progresif tapi bersepah.
+
+### Reka bentuk dicadang
+**Wizard Program (5 langkah):** 1 Asas (Nama/Bidang/Peringkat) -> 2 Penganjur (Unit/Kod Sekolah; auto-isi utk PKK,
+admin pilih) -> 3 Kategori -> 4 Jadual (Tarikh/Tempat/Status) -> 5 Semak & Hantar (ringkasan).
+
+**Wizard Penyertaan (5 langkah):** 1 Pilih Program -> 2 Sahkan Sekolah (auto utk guru/PKK) -> 3 Guru Pengiring
+-> 4 Peserta & Kategori (import Excel di sini) -> 5 Semak & Hantar (modal pengesahan jadi langkah akhir inline).
+
+### Prinsip keselamatan
+1. Wizard = LAPISAN PAPARAN sahaja: kekalkan SEMUA ID elemen & fungsi sedia ada (`daftarProgram`, `hantarPeny`,
+   `semakPeny`, `pilihProg`, `onSekSelect`, `_prefillFromExisting`, semua RPC). Cuma sorok/tunjuk kumpulan medan
+   + semakan per langkah.
+2. TIADA perubahan backend (Supabase tak disentuh).
+3. Pautan "Guna borang biasa" sebagai jalan balik/sandaran.
+
+### Perkara mesti dijaga (titik risiko)
+- Autosave draf 30s (`_penyAutoSave`/`_restorePenyDraft`) mesti simpan & pulih LANGKAH terakhir
+- Mod kemaskini (admin klik EDIT via `reqEditSek`/`_openPenyertaanEdit`) perlu terus ke langkah betul dgn data pra-isi
+- Realtime sync (`_flushRealtimeQueueSilently`) tak boleh refresh borang aktif — semak masih berfungsi
+- `semakPeny()` perlu dipecah per langkah (semak Guru di langkah 3, Peserta di langkah 4, dll) tanpa ubah logik asal
+- Import Excel (`_prosesBulkXlsx`) tolak ke state sama (`_penyData.pesList/guruList`) — mesti kekal berfungsi
+- Peraturan sedia ada dikekalkan: guru tak boleh daftar program; PKK edit program sekolah sendiri sahaja
+
+### Fasa
+| Fasa | Kerja | Risiko |
+|---|---|---|
+| W1 | Wizard Program | Rendah |
+| W2 | Kerangka wizard Penyertaan + semakan per langkah | Sederhana |
+| W3 | Mod kemaskini, draf, realtime, integrasi admin | Tinggi |
+| W4 | Kemasan mobile + uji semua peranan | Rendah |
+
+### 4 keputusan BELUM dijawab user
+1. Mula dgn Program dahulu (cadangan) atau kedua-dua serentak?
+2. Kekalkan pautan "borang biasa" sbg sandaran?
+3. Mod kemaskini juga wizard, atau kekal borang ringkas 1 halaman?
+4. Langkah Guru Pengiring wajib atau boleh langkau?
+
+### Nota sampingan (belum disemak)
+Halaman Akaun masih ada butang "MIGRATE (Kemaskini header sheet PIN)" — nampak sisa zaman Google Sheets,
+kemungkinan kod mati. Perlu disemak sebelum dibuang.
+
+## Checkpoint semasa: **Wizard — rancangan disimpan, tunggu 4 keputusan user. SPBM juga masih tergantung (rujuk bahagian atas).**
