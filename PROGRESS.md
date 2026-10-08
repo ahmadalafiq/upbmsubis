@@ -732,3 +732,18 @@ Halaman Akaun masih ada butang "MIGRATE (Kemaskini header sheet PIN)" — nampak
 kemungkinan kod mati. Perlu disemak sebelum dibuang.
 
 ## Checkpoint semasa: **Wizard — rancangan disimpan, tunggu 4 keputusan user. SPBM juga masih tergantung (rujuk bahagian atas).**
+
+---
+
+## ✅ Kemas kini UI (7 Okt 2026)
+
+1. **Butang "✕ BATAL KEMASKINI"** (tab Penyertaan) — muncul HANYA semasa mod kemaskini
+   (`isEdit===true`), di sebelah "SEMAK & HANTAR". Klik → pengesahan "perubahan belum hantar
+   akan hilang" → `resetPeny()` + kembali ke pilihan sekolah bagi program yang sama (`pilihProg`).
+   Fungsi baharu: `batalKemaskiniPeny()`, `_syncBatalBtn()` (dipanggil di 7 tempat isEdit berubah
+   + dlm `resetPeny()`).
+2. **Banner hijau "Log masuk berjaya... boleh tutup tab ini"** — sebelum ni kekal selama-lamanya
+   (position:fixed, tiada cara tutup) & menutup butang header. Dibetulkan: ada butang × untuk
+   tutup + hilang automatik selepas 8 saat + elak banner berganda (semak id sedia ada).
+3. Pengesahan dari tangkapan skrin user: app dihoskan di `upbmsubis.vercel.app` (Vercel) —
+   sebelum ni tak diketahui. Dicatat untuk rujukan.

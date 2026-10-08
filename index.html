@@ -1628,6 +1628,7 @@ body.view-list .pc::after { display: none; }
 
     <div class="fx gu" style="flex-wrap:wrap;">
       <button class="btn bp" id="btn-semak" onclick="semakPeny()">👁 SEMAK &amp; HANTAR</button>
+      <button class="btn bs" id="btn-batal-kemaskini" style="display:none;background:#fdecea;color:#c0392b;" onclick="batalKemaskiniPeny()">✕ BATAL KEMASKINI</button>
       <button class="btn bs" onclick="resetPeny()">KOSONGKAN</button>
     </div>
   </div>
@@ -5660,6 +5661,7 @@ function _draftBuang(){
 }
 function _restorePenyDraft(draft){
   selId=draft.selId; selNm=draft.selNm; isEdit=false; editKod='';
+  _syncBatalBtn();
   _selKatList=draft.selKatList||[];
   _penyData=draft.penyData||{guruList:[],pesList:[]};
   _pGCnt=draft.pGCnt||0; _pPCnt=draft.pPCnt||0;
@@ -5814,6 +5816,7 @@ function renderPenyList(list){
 
 function pilihProg(id,nm,cardEl){
   selId=id; selNm=nm; isEdit=false; editKod='';
+  _syncBatalBtn();
   document.querySelectorAll('.psc').forEach(function(c){c.classList.remove('on');});
   if(cardEl) cardEl.classList.add('on');
   document.getElementById('sel-name').textContent=nm;
@@ -7076,8 +7079,26 @@ function muatTurunSalinan(){
 }
 // =======================================================
 
+// Tunjuk/sorok butang "Batal Kemaskini" ikut status isEdit semasa
+function _syncBatalBtn(){
+  var b = document.getElementById('btn-batal-kemaskini');
+  if(b) b.style.display = isEdit ? 'inline-block' : 'none';
+}
+
+// Batal kemaskini — kembali ke keadaan asal (pilih sekolah semula), buang draf berubah
+function batalKemaskiniPeny(){
+  askConfirm('✕ BATAL KEMASKINI','Apa-apa perubahan yang belum dihantar akan hilang. Teruskan batal?',function(){
+    var simpanSelId=selId, simpanSelNm=selNm;
+    resetPeny();
+    toast('Kemaskini dibatalkan.','in');
+    // Kembali ke senarai pilih sekolah bagi program yang sama (bukan terus ke senarai program)
+    if(simpanSelId){ pilihProg(simpanSelId, simpanSelNm); }
+  });
+}
+
 function resetPeny(){
   selId='';selNm='';isEdit=false;editKod='';
+  _syncBatalBtn();
   _penyData={guruList:[],pesList:[]};_pGCnt=0;_pPCnt=0;_selKatList=[];
   _stopPenyAutoSave();
   ['daf-sek','daf-kod'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
@@ -7127,12 +7148,14 @@ function onKodIn(){
       document.getElementById('daf-sek').value=sk;
       document.getElementById('sel-edit-info').style.display='flex';
       isEdit=true; editKod=kod.toUpperCase();
+      _syncBatalBtn();
       _checkKatMismatch(selId, ex);
       _prefillFromExisting(ex);
       _prefillCalled=true;
     } else {
       el.innerHTML='<div class="iok">\u2705 Kod sah \u2014 pendaftaran baharu. Borang dibuka.</div>';
       isEdit=false; editKod='';
+      _syncBatalBtn();
       document.getElementById('sel-edit-info').style.display='none';
     }
   } else if(selId&&!_aP.length){
@@ -8546,6 +8569,7 @@ function onSekSelect(kod){
     if(ex.length){
       // MOD KEMASKINI
       isEdit=true; editKod=kod.toUpperCase();
+      _syncBatalBtn();
       document.getElementById('sel-edit-info').style.display='flex';
       var eksKat=_uniq(ex.map(function(r){return r['Kategori Penyertaan']||'';})).filter(Boolean);
       if(ks) ks.innerHTML='<div class="iwarn">✏️ <strong>Mod Kemaskini Aktif</strong> — '+esc(nama)+' sudah ada rekod untuk program ini (<strong>'+eksKat.join(', ')+'</strong>). Data guru dan peserta diisi semula.</div>';
@@ -8554,6 +8578,7 @@ function onSekSelect(kod){
     } else {
       // PENDAFTARAN BAHARU
       isEdit=false; editKod='';
+      _syncBatalBtn();
       document.getElementById('sel-edit-info').style.display='none';
       if(ks) ks.innerHTML='<div class="iok">✅ <strong>Pendaftaran Baharu</strong> — '+esc(nama)+'. Tiada rekod untuk program ini. Isi maklumat guru dan peserta.</div>';
       _penyData={guruList:[],pesList:[]}; _pGCnt=0; _pPCnt=0;
@@ -8561,6 +8586,7 @@ function onSekSelect(kod){
     }
   } else {
     isEdit=false; editKod='';
+    _syncBatalBtn();
     document.getElementById('sel-edit-info').style.display='none';
     if(ks) ks.innerHTML='<div class="iok">✅ Sekolah dipilih: <strong>'+esc(nama)+'</strong>. Isi maklumat guru dan peserta.</div>';
     _penyData={guruList:[],pesList:[]}; _pGCnt=0; _pPCnt=0;
@@ -9163,9 +9189,15 @@ async function _mulakanSesi(data){
   // disegerakkan automatik ke tab asal (localStorage sama origin dikongsi Supabase JS).
   if(window.opener){
     try{
-      document.body.insertAdjacentHTML('afterbegin',
-        '<div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#27ae60;color:#fff;text-align:center;padding:.6rem;font-size:.8rem;font-weight:700;">'
-        +'✓ Log masuk berjaya! Anda boleh tutup tab ini dan kembali ke tab/laman asal.</div>');
+      var _bnrId = 'bnr-opener-ok';
+      if(!document.getElementById(_bnrId)){
+        document.body.insertAdjacentHTML('afterbegin',
+          '<div id="'+_bnrId+'" style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#27ae60;color:#fff;text-align:center;padding:.5rem 2.2rem;font-size:.75rem;font-weight:700;">'
+          +'✓ Log masuk berjaya! Anda boleh tutup tab ini dan kembali ke tab/laman asal.'
+          +'<button onclick="document.getElementById(\''+_bnrId+'\').remove()" style="position:absolute;right:.5rem;top:50%;transform:translateY(-50%);background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;line-height:1;padding:.2rem .4rem;">×</button>'
+          +'</div>');
+        setTimeout(function(){ var b=document.getElementById(_bnrId); if(b) b.remove(); }, 8000);
+      }
     }catch(e){}
   }
 
