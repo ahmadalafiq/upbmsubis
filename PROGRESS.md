@@ -747,3 +747,81 @@ kemungkinan kod mati. Perlu disemak sebelum dibuang.
    tutup + hilang automatik selepas 8 saat + elak banner berganda (semak id sedia ada).
 3. Pengesahan dari tangkapan skrin user: app dihoskan di `upbmsubis.vercel.app` (Vercel) —
    sebelum ni tak diketahui. Dicatat untuk rujukan.
+
+---
+
+## 📋 PELAN BARU (8 Okt 2026) — SEMUA BELUM DILAKSANAKAN (index.html & Supabase TIDAK disentuh)
+
+### A. Edit penyertaan dalam MODAL (arahan user)
+**Hajat:** klik EDIT penyertaan → borang keluar sebagai modal (bukan lompat ke tab Penyertaan). Selesai
+atau batal → modal tutup, user kekal di kedudukan asal (tempat dia tekan EDIT).
+
+**Keadaan sekarang (disemak):** `_openPenyertaanEdit()` (baris ~3660) panggil `_doShowPage('peserta')` → lompat
+tab; borang hidup dlm `#pg-peserta` (`#sel-edit-info` + `#peny-form-wrap`). Dua pintu masuk: `reqEditSek()`
+(butang EDIT dlm modal `mo-lihat`, Pengelola) dan `_editSekolahDariBullet()` (modal `mo-srch`, admin tab
+Penyertaan) — kedua-duanya `closeMo` modal asal dulu.
+
+**Reka bentuk:**
+1. Modal baharu `mo-edit-peny`. Bila edit bermula, PINDAH (appendChild) `#sel-edit-info` + `#peny-form-wrap`
+   ke dalam modal; bila tutup, pulangkan ke `#pg-peserta` (ingat parent + nextSibling). ID elemen TAK berubah →
+   `hantarPeny`, `semakPeny`, `_prefillPenyertaanEdit`, `renderMain*List`, `_penyAutoSave`, import Excel kekal jalan.
+2. `_openPenyertaanEdit`: buang `_doShowPage('peserta')`; simpan `_editOrigin` = {halaman aktif, scrollY, id modal asal};
+   masih panggil `loadProgsForPeny(false, cb)` utk isi `_aP`.
+3. Modal asal (`mo-lihat`/`mo-srch`) KEKAL terbuka di bawah — jangan `closeMo` dlm kedua-dua pintu masuk.
+   Modal bertindan sudah disokong (`openMo` guna `++_zTop`); `mo-pengesahan` pun bertindan di atas.
+4. Tutup (batal/berjaya): pulangkan node → `closeMo('mo-edit-peny')` → pulih scrollY → muat semula kandungan
+   modal asal secara senyap (param sama) supaya data terkini. Butang "BATAL KEMASKINI" (baru) jadi tutup modal.
+**Titik risiko:** (a) realtime flush (baris ~2803-2805) cuma kenal `mo-edit` Pengelola — mesti tambah
+`mo-edit-peny` sbg "borang aktif" supaya tak refresh semasa user mengisi; (b) fungsi ~3017 yg semak `#pg-peserta`
+aktif; (c) autosave draf tak boleh tawar pulih draf pendaftaran baharu semasa mod edit (kunci ikut `isEdit`);
+(d) selepas hantar berjaya: tutup modal + `mo-salinan`/toast + segar semula `_aP`; (e) scroll-lock body & mobile.
+**Fasa:** M1 kerangka modal + pindah DOM → M2 pulih kedudukan + segar modal asal → M3 realtime/draf →
+M4 uji 3 peranan (admin, PKK pengelola, guru sekolah sendiri) dari 2 pintu masuk. Tiada perubahan backend.
+
+### B. Buang butang MIGRATE (+ BACKFILL TAHUN) — selamat dibuang
+**Bukti:** handler `migrateSheetGS` (baris ~2740) cuma pulang "Tiada migrasi diperlukan (Supabase)" — sisa zaman
+Google Sheets. `BACKFILL TAHUN`: Supabase semak → 0 daripada 114 program ber-`tahun` NULL, dan `daftar_program`
+sentiasa set tahun → utiliti ini pun tak berguna lagi.
+**Lokasi buang (index.html):** butang MIGRATE (baris ~1661) + butang BACKFILL TAHUN sebelahnya; handler
+`migrateSheetGS` & `backfillTahunGS` dlm `_supaDispatch`; entri `migrateSheetGS:1, backfillTahunGS:1` dlm `_WRITE_FNS`
+(~2950); fungsi `akMigrateSheet()` (~9922) & `akBackfillTahun()`. **DB (kemudian, perlu kelulusan berasingan):**
+drop RPC `program_backfill_tahun`. Risiko rendah, 1 commit. Kekalkan butang "SENARAI SEKOLAH" (panel urus sekolah).
+
+### C. Wizard pendaftaran — 4 keputusan dibuat (ikut objektif: guru sekolah pelbagai kemahiran digital, data tepat)
+1. **Mula dgn Program (W1), kemudian Penyertaan (W2)** — Program: 1 pengguna (PKK/admin), medan sedikit, risiko rendah,
+   jadi corak wizard diuji dulu sebelum ke borang Penyertaan yang jauh lebih rumit.
+2. **Pautan "Guna borang biasa" KEKAL semasa pelancaran** sahaja; buang selepas stabil (~2-4 minggu). Sebab: wizard
+   cuma lapisan paparan, jadi sandaran murah & elak guru terkandas.
+3. **Wizard untuk pendaftaran BAHARU sahaja; mod KEMASKINI kekal 1 halaman (dlm modal, bahagian A)** — orang yang edit
+   tahu apa nak ubah & perlu nampak semua sekali; wizard memanjangkan kerja mereka.
+4. **Langkah Guru Pengiring WAJIB (min. 1 guru)** — sudah dikuatkuasakan `semakPeny()` ("Langkah 3: sekurang-kurangnya
+   1 guru") & `hantarPeny()` melampirkan guru pada setiap baris peserta. Langkah wizard = penomboran sedia ada:
+   1 Program → 2 Sekolah → 3 Guru → 4 Peserta & Kategori (import Excel di sini) → 5 Semak & Hantar.
+**Urutan kerja keseluruhan (cadangan):** B (buang MIGRATE, kecil) → A (modal edit) → W1 (wizard Program) → W2 → W3 → W4.
+Sebab A sebelum W2: borang edit & borang baharu berkongsi elemen sama; stabilkan edit-dalam-modal dahulu supaya wizard
+Penyertaan dibina atas asas yg tak akan berubah lagi.
+
+### D. Kenapa token cepat habis selepas "Continue" (analisis jujur; angka sebenar token tak dapat diukur dari sini)
+1. **Sejarah perbualan terlalu panjang** (ratusan panggilan alat). Setiap langkah/alat memproses semula keseluruhan
+   sejarah — kos naik bersama panjang sembang × bilangan panggilan, bukan saiz kerja semasa.
+2. **"Continue" memaksa saya orientasi semula**: keputusan alat lama dah "dikosongkan untuk jimat konteks", jadi saya
+   baca semula benda sama (grep/sed/view) sebelum boleh sambung. Kontena juga kerap reset (repo hilang → klon semula
+   + set identiti git + sync fail) = beberapa panggilan membazir setiap kali.
+3. **Cara kerja saya boros**: papar petikan fail besar (index.html 585 KB; PROGRESS.md 46 KB ≈ puluhan ribu token jika
+   dibaca penuh); hantar semula kandungan penuh Edge Function (~11 KB) berkali-kali semasa deploy; ulang semakan sintaks +
+   baki tag + salin + commit selepas setiap suntingan kecil; terlalu banyak panggilan kecil dan bukan satu skrip.
+4. **Giliran saya sering berhenti separuh jalan** → anda tekan "Continue" berulang; setiap tekanan = satu lagi laluan
+   penuh atas sejarah panjang.
+**Peraturan kerja hemat token (WAJIB untuk sesi akan datang):**
+- Mula sesi: baca HANYA bahagian "Checkpoint semasa" (`tail -40 PROGRESS.md`), jangan baca keseluruhan fail.
+- Output alat: sentiasa `grep -n ... | cut -c1-150 | head`; `sed` maksimum ~25 baris; jangan `cat` fail besar.
+- Satu skrip = suntingan + semakan sintaks + commit + push (bukan 4 panggilan).
+- Jangan semak semula perkara yg tak berubah; satu penghantaran per giliran, lapor ringkas, berhenti.
+- Jangan hantar semula kandungan penuh Edge Function melainkan fail itu berubah.
+- Sembang baharu untuk setiap milestone besar (A, W1, W2...) bermula dgn: "Baca bahagian Checkpoint dlm PROGRESS.md
+  repo ahmadalafiq/upbmsubis, sambung dari <fasa>". (PAT GitHub diberi semula oleh user; JANGAN simpan PAT dlm fail.)
+**Cadangan pengurusan fail:** (i) ringkaskan `PROGRESS.md` → fail pendek (status + langkah seterusnya, ≤5 KB) dan
+pindahkan sejarah ke `docs/SEJARAH.md` (arkib, tak dibaca rutin); (ii) kod BARU (wizard, modal edit, SPBM/HEM) dalam
+fail JS/HTML berasingan, bukan menambah index.html yg sudah 585 KB — setiap tugasan akan perlu baca bahagian kecil sahaja.
+
+## Checkpoint semasa (8 Okt 2026): **PELAN A (modal edit), B (buang MIGRATE), C (wizard) & D (hemat token) SIAP DIRANCANG. Tunggu arahan mula. Cadangan pertama: B, kemudian A. Pelan SPBM juga masih tergantung.**
