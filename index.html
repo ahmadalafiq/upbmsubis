@@ -1692,6 +1692,7 @@ body.view-list .pc::after { display: none; }
     <div><div class="bc">UPBM SUBIS <b>›</b> DASHBOARD</div><h1>Analisis &amp; Laporan</h1><p>Statistik program, penyertaan dan pencapaian</p></div>
     <div style="display:flex;gap:.45rem;align-items:center;flex-wrap:wrap;">
       <span id="dash-ts" style="font-size:.62rem;color:var(--g5);font-weight:600;"></span>
+      <button class="btn bp bsm" onclick="openLaporanSekolah()" title="Laporan penyertaan & pencapaian sekolah (PDF)">📄 LAPORAN SEKOLAH</button>
       <button class="btn bs bsm" onclick="printDashRingkasan()" title="Cetak ringkasan dashboard">🖨 CETAK RINGKASAN</button>
       <!-- P3: Butang fullscreen page-level dibuang — fullscreen hanya pada widget -->
     </div>
@@ -2396,6 +2397,7 @@ function _mapPencapaianOut(r){
     'Nama Program': nm || 'PROGRAM TANPA NAMA',
     'Kategori': r.kategori || r['Kategori'] || '',
     'Nama Sekolah': r.nama_sekolah || r['Nama Sekolah'] || '',
+    'Kod Sekolah': r.kod_sekolah || r['Kod Sekolah'] || '',
     'Nama Peserta': r.nama_peserta || r['Nama Peserta'] || '',
     'No KP Peserta': r.no_kp_peserta || r['No KP Peserta'] || '',
     'Nama Guru': r.nama_guru || r['Nama Guru'] || '',
@@ -11308,5 +11310,6 @@ document.addEventListener('click', function(e){
 
 
 </script>
+<script src="laporan-sekolah.js"></script>
 </body>
 </html>
