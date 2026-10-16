@@ -1,0 +1,662 @@
+# UPBM Subis — ARKIB Kerja Siap
+
+---
+
+_Diarkibkan 16 Okt 2026 daripada `PROGRESS.md`. Semua bahagian di sini sudah SIAP atau sudah digantikan oleh kerja kemudian. Teks asal dikekalkan, kecuali kod admin yang dipadam (ditanda di bawah). Bukan untuk dibaca rutin — rujuk hanya bila perlu sejarah/keputusan lama._
+
+---
+
+_Item yang masih terbuka dalam bahagian ini telah dibawa ke `PROGRESS.md` (bahagian "Item terbuka dibawa dari arkib")._
+
+---
+
+_Nota: bahagian lama yang bertanda ⛔/BELUM/MENUNGGU (RLS ditangguh, Google Sign-In tunggu setup, Isu 403 menunggu maklumat) sudah digantikan oleh bahagian kemudian dalam fail ini._
+
+---
+
+## 🟢 STATUS RINGKAS
+| Kerja | Status |
+|---|---|
+| Kerja 1 — Fix ringan (6 bug kod) | ✅ SIAP, live |
+| Kerja 1 — Backend (hash PIN, RPC atomic, admin secret) | ✅ SIAP, live di Supabase |
+| Kerja 1 — RLS (kunci akses data) | ⛔ BELUM — sengaja ditangguh, baca sebab di bawah |
+| Kerja 1 — Google Sign-In & claim akaun | ⛔ BELUM — draf sedia, belum dijalankan |
+| Kerja 2 — Pembantu AI (chat) | ✅ SIAP & BERFUNGSI, 2 bug dijumpai+dibetulkan |
+| Bulk daftar peserta via Excel | ✅ SIAP — templat + muat naik + validasi |
+| Google Sign-In & Claim Akaun | 🟡 KOD SIAP — perlu 2 langkah manual anda dahulu (baca bawah) |
+| GitHub ↔ Supabase sync | ✅ Segerak (push terakhir: `96db63b`) |
+
+---
+
+## KERJA 1 — Fix ringan + Backend
+### Fix ringan (dalam index.html) — ✅ SEMUA SIAP
+1. KESELURUHAN hilang dalam hantarPeny — dibetulkan
+2. esc() bertindih (3 definisi → 1) — dibetulkan
+3. Nama pembolehubah `sb` tertindih (5 tempat) — dibetulkan
+4. Mesej ralat lapuk "Apps Script/DriveApp" — dikemaskini
+5. Komen mengelirukan "PEMBETULAN KRITIKAL #4" — dikemaskini
+6. setInterval tanpa clearInterval — dibetulkan
+- Sah: `node --check` lulus, tag HTML seimbang
+
+### Backend (Supabase) — ✅ SUDAH LIVE (bukan draf)
+Dijalankan terus di projek `UPBMSUBIS` (`pztuvriqjgfwczkuguky`) via Supabase MCP:
+- pgcrypto diaktifkan; semua 83 PIN pengguna di-hash (bcrypt)
+- Jadual `app_secrets` dicipta — kod admin dipindah ke sini (bukan lagi dalam JS)
+  - Kod admin semasa: **`[DIPADAM — kod admin; jangan simpan dalam repo]`** (dah ditukar dari default lama)
+- RPC dicipta: `login_admin`, `login_pengguna`, `set_pin`, `padam_program_cascade`,
+  `kemaskini_program_cascade`, `replace_pencapaian`
+- `index.html` dikemaskini guna RPC ni (loginGS, verifyPinGS, daftarAkaunGS, resetPinGS,
+  kemaskiniProgramGS, padamProgramGS, simpanPencapaianGS); `ADMIN_MASTER_KOD` dibuang dari JS
+- **Disahkan berfungsi** oleh user: login, edit/padam program, simpan pencapaian — semua OK
+
+**Penemuan sampingan:**
+- `askPin()`/`doPin()` dalam index.html — kod mati, tak dipanggil, selamat diabaikan
+- Lajur `emel_aktif` & `session_token` wujud dalam jadual `pengguna` tapi tak digunakan —
+  calon sedia untuk Google Sign-In (guna semula `emel_aktif`, tak perlu lajur `email` baharu)
+
+### RLS (Bahagian D) — ⛔ BELUM, SENGAJA DITANGGUH
+**Status semasa:** SEMUA jadual (`programs`, `penyertaan`, `pencapaian`, `pengguna`, `sekolah`)
+ada polisi `qual: true` untuk anon pada SELECT/INSERT/UPDATE/DELETE — akses terbuka penuh.
+
+**Kenapa belum dikunci:** Sistem ni tiada auth sebenar (Supabase Auth) — semua guna SATU anon
+key sama. RLS row-level tak boleh bezakan "admin" vs "guru" tanpa `auth.uid()`/JWT. RPC
+(security definer) selamat dan bypass isu ni, tapi fungsi client lain (`getAkaunListGS`,
+akaun approval, dashboard, senarai program) masih `sb.from(...).select/update()` terus dari
+browser — perlukan RLS terbuka untuk berfungsi buat masa ini.
+
+**2 jalan penyelesaian (pilih satu sebelum kunci RLS):**
+- **(a)** Siapkan Google Sign-In dulu → `auth.uid()` sebenar wujud → RLS ikut peranan jadi
+  bermakna. Lebih elegan jangka panjang, tapi lebih lambat siap.
+- **(b)** Tukar semua fungsi admin (`getAkaunListGS`, akLulus, dll — anggar 5-6 fungsi) jadi
+  RPC `security definer` macam login. Lebih cepat, boleh kunci `pengguna` terus tanpa tunggu Auth.
+
+⚠️ **Jangan tampal polisi RLS ketat tanpa (a) atau (b) siap dulu — admin panel/dashboard akan rosak.**
+
+### Google Sign-In & Claim Akaun (Bahagian E) — 🟡 KOD SIAP, TUNGGU SETUP MANUAL
+Sudah siap & live (commit `96db63b`):
+- Lajur `auth_uid` ditambah pada `pengguna`; guna semula `emel_aktif` sedia ada
+- RPC `claim_akaun_google(no_kp, pin)` — sahkan No.KP+PIN sedia ada, ikat ke akaun Google
+- RPC `login_via_google()` — log masuk automatik untuk akaun yang dah diikat
+- Butang "Log Masuk dengan Google" di skrin log masuk
+- Modal "Sahkan Akaun Sedia Ada" — muncul automatik lepas Google sign-in kalau akaun belum diikat
+- `sb.auth.signOut()` ditambah pada fungsi logout sedia ada
+- No.KP+PIN LAMA dikekalkan sepenuhnya sebagai cara log masuk — tiada apa yang dibuang
+
+**⚠️ BELUM BOLEH DIGUNAKAN — 2 langkah manual WAJIB dibuat dahulu (di luar akses Claude):**
+
+1. **Google Cloud Console** — https://console.cloud.google.com
+   - Cipta projek baharu (atau guna sedia ada) → APIs & Services → Credentials
+   - Create Credentials → OAuth Client ID → Application type: **Web application**
+   - Authorized redirect URI: `https://pztuvriqjgfwczkuguky.supabase.co/auth/v1/callback`
+   - Salin **Client ID** dan **Client Secret**
+
+2. **Supabase Dashboard** — https://supabase.com/dashboard/project/pztuvriqjgfwczkuguky/auth/providers
+   - Cari **Google** dalam senarai provider → Enable
+   - Tampal Client ID + Client Secret dari langkah 1 → Save
+   - Di **Auth → URL Configuration**, pastikan domain tempat app di-hosting disenaraikan
+     dalam "Redirect URLs" (cth. URL GitHub Pages/hosting sebenar anda)
+
+**Lepas 2 langkah ni siap**, butang "Log Masuk dengan Google" di app akan terus berfungsi —
+tiada kod tambahan diperlukan. Uji dengan: (a) akaun Google + No.KP yang belum pernah
+diikat (patut papar modal claim), (b) log masuk kali kedua dengan akaun Google yang sama
+(patut terus masuk tanpa modal claim).
+
+---
+
+## KERJA 2 — Pembantu AI (chat widget) — ✅ SIAP & BERFUNGSI
+Edge Function `ai-chat` + GitHub Actions CI/CD **sudah wujud** dalam repo ni sejak awal
+(bukan dibina oleh Claude). Semasa disemak, 2 bug dijumpai & dibetulkan:
+
+1. **Model `gemini-2.0-flash` deprecated** (404 dari Google) → ditukar ke `gemini-3.6-flash`
+   (commit `156f6bb`)
+2. **Respons AI terputus tengah ayat** → punca: `maxOutputTokens: 500` terlalu rendah untuk
+   model `gemini-3.6-flash` (guna sebahagian kuota untuk "thinking" dalaman sebelum jana teks).
+   Cuba `thinkingConfig:{thinkingBudget:0}` DITOLAK API (400 invalid argument — bukan format
+   yang disokong). Fix akhir: naikkan `maxOutputTokens` ke 4096 (commit `b99b861`).
+
+Disahkan berfungsi end-to-end (respons penuh diterima, status 200). GitHub ↔ Supabase segerak
+via CI/CD (`deploy-edge-functions.yml`).
+
+---
+
+## Bulk Daftar Peserta/Guru via Excel — ✅ SIAP (baharu)
+Ciri baharu dalam tab Penyertaan (`index.html`, commit `a413b24`):
+- **📥 TEMPLAT EXCEL** — muat turun fail `.xlsx` kosong (sheet PESERTA + GURU + PANDUAN),
+  senarai kategori sah untuk program yang dipilih terus disertakan dalam sheet PANDUAN
+- **📤 MUAT NAIK EXCEL** — baca fail `.xlsx` yang diisi, validasi setiap baris (No.KP format,
+  jantina LELAKI/PEREMPUAN, kategori sepadan senarai program), amaran dipapar kalau ada ralat
+- Data yang lulus/separuh lulus terus diisi ke senarai peserta/guru **sedia ada** dalam borang
+  (guna struktur `_penyData.pesList`/`guruList` yang sama dgn "+ TAMBAH PESERTA" manual) —
+  jadi terus guna semula flow `semakPeny`/`hantarPeny` sedia ada, tiada perubahan backend perlu
+- Perlu program dipilih dahulu (untuk tahu senarai kategori sah) sebelum boleh muat turun/naik
+
+**Belum dibuat (peningkatan akan datang, tak wajib sekarang):**
+- Validasi bantuan AI (auto-mapping lajur kalau format Excel pengguna sedikit berbeza)
+- Semakan pendua (peserta sama dimuat naik dua kali)
+
+**Diuji (7 Sept 2026):** Kod sebenar `_prosesBulkXlsx()` di-extract terus dari index.html dan
+dijalankan (Node.js + SheetJS) terhadap fail Excel ujian dengan 6 jenis ralat sengaja
+(No.KP tanpa sengkang, kategori berganda, No.KP tak sah, jantina tak sah, kategori tak wujud,
+kategori kosong, baris CONTOH/kosong). Semua kes dikendali dengan betul. Disahkan juga:
+fungsi `semakPeny()` sedia ada (tak diubah) sudah jadi lapisan pemeriksaan kedua yang blok
+penghantaran untuk sebarang data tak lengkap (termasuk kategori kosong) — tiada risiko data
+bulk-import hilang senyap ke pangkalan data.
+
+**Soalan: bila banyak user submit serentak, semua orang dapat "global refresh"?**
+Jawapan: **TIDAK, ini sudah direka dengan betul.** `_initRealtimeSync()` guna Supabase Realtime
+dengan debounce 2 saat, tangguh kemaskini jika user ada borang/modal aktif, refresh silent
+(tiada overlay) terhad kepada tab semasa sahaja, kedudukan scroll dikekalkan. Tiada
+`location.reload()` di mana-mana dalam seluruh fail.
+
+---
+
+## Sesi Penyelarasan & Siasat Data (7 Sept, lanjutan) — Fasa 0-3
+
+### Fasa 0 — Penyelarasan
+Ditemui 6 commit yang user buat sendiri (`91f8029`...`fab3606`) membetulkan bug Google
+Sign-In (z-index modal tersembunyi di belakang skrin login, URL fragment `##access_token`,
+auth_uid check, error handling). Semua disahkan & diselaraskan ke kerja Claude.
+
+### Fasa 1 — Bug sistemik "data hilang" (kes: program tunjuk 19 tapi Excel/kad kosong)
+**Punca akar:** `getAllDataGS` guna `select('*')` TANPA `.range()`/paginasi pada jadual
+`penyertaan` (2,123 baris) & `pencapaian` — PostgREST hadkan diam-diam kepada 1000 baris
+lalai. Program yang jatuh selepas had 1000 "hilang" dari kad Pengelola/Dashboard walaupun
+wujud di DB. `expXlsx` turut guna cache `_aP` stale (sama corak bug macam `lihatPeny` lama).
+
+**Dibetulkan (commit `94b960f`):**
+- Fungsi baharu `_fetchAllPaged()` — baca semua baris secara bersegmen 1000/segmen,
+  order by `id` untuk paginasi stabil
+- `getAllDataGS` guna fungsi ni untuk penyertaan & pencapaian
+- `expXlsx` tak lagi guna `_aP` — fetch fresh via `getEditDataGS` (sama pendekatan `lihatPeny`)
+
+### Fasa 1b — Bug pemarkahan `getSkor`
+Kod sengaja susun ikut kedudukan terbaik dahulu (komen "ISU 4"), tapi kunci dedup masih
+sertakan `tempat` — niat asal (kekal terbaik sahaja) gagal dilaksanakan. Peserta dgn >1
+kedudukan (cth. 1st DAN 2nd direkod utk acara sama) markah dikira DUA-DUA (inflated).
+**Dibetulkan (commit `94b960f`):** buang `tempat` dari kunci dedup (peserta/guru/sekolah) —
+kedudukan terbaik sahaja dikira, selari dgn susunan `_tempatRank` yang sedia ada.
+
+### Fasa 2 — Audit pendua (penyertaan & pencapaian)
+Semak seluruh jadual, jumpa 3 KATEGORI berbeza pendua — **bukan semua selamat dipadam**:
+
+1. **9 baris — pendua "double-click" sah** (SK Rumah Barat, jurang 12.3 saat, kelompok
+   sama) — **DIPADAM** (commit tindakan DB terus, bukan commit kod).
+2. **3 baris — Bridge Building** (kod sekolah "YBB 4403" tertulis dlm medan nama, patut
+   "SK KAMPUNG IRAN"; guru & peserta sama) — **DIPADAM**, kekal entri dgn nama sekolah penuh.
+3. **17 kes — No.KP sama, SEKOLAH BERBEZA, ejaan nama sedikit berbeza** (cth. "LOVELIA USUN
+   LUCAS" vs "LOVELA USUN LUCAS", guru & sekolah berlainan sama sekali) — **TIDAK DIPADAM**.
+   Analisis kuat menunjukkan ini kemungkinan 2 PELAJAR SEBENAR BERBEZA yang bertindih No.KP
+   (kesilapan taip IC), BUKAN satu pelajar didaftar dua kali. Padam salah satu berisiko
+   hapuskan pendaftaran sah pelajar sekolah lain. **PERLU disahkan oleh sekolah berkenaan.**
+4. **1 kes — JUSCHENA ROVESHA** (SK Kampung Iran, jurang 64 hari) — diasingkan dari
+   kelompok "double-click", TIDAK dipadam (jurang terlalu jauh utk anggap tak sengaja).
+5. **Pencapaian Drone Challenge** (4 peserta SMK Bekenu, TERBUKA BERKUMPULAN DAERAH) —
+   setiap peserta ada 2 rekod (TEMPAT PERTAMA markah 11 DAN TEMPAT KEDUA markah 10,
+   timestamp SAMA ke milisaat). **TIDAK DIPADAM** — perlu pengesahan kedudukan sebenar
+   pasukan (1st atau 2nd) daripada rekod rasmi pertandingan sebelum boleh betulkan.
+
+### ⏳ Belum selesai — menunggu keputusan/input
+- [ ] Kedudukan sebenar pasukan Drone Challenge SMK Bekenu (1st/2nd) — untuk betulkan
+  jadual `pencapaian` terus (2 baris x 4 peserta = 8 baris perlu disemak)
+- [ ] 17 kes No.KP bertindih sekolah-berbeza — perlu proses sahkan dgn sekolah berkenaan
+  (senarai penuh sudah dijana, boleh diminta semula bila perlu)
+
+### ✅ Ditutup (7 Sept) — kedua-dua item tergantung dipadam atas arahan user
+Keputusan: padam terus data yang tak boleh disahkan mana satu betul, sekolah akan
+kemaskini semula pendaftaran/pencapaian secara berasingan bila perlu.
+- **Drone Challenge** (8 baris pencapaian, 4 peserta x 2 kedudukan bertindih) — DIPADAM
+- **17 kes No.KP bertindih sekolah-berbeza** (28 baris penyertaan tersisa selepas 3 kes
+  Bridge Building diselesaikan awal) — DIPADAM
+- Jumlah akhir: `penyertaan` 2,123 → **2,083** baris | `pencapaian` 266 → **258** baris
+- Tiada tindakan lanjut diperlukan dari Claude — sekolah akan daftar semula bila bersedia
+
+---
+
+## STATUS AKHIR SESI (7 Sept, ~18:xx)
+Semua kerja aktif ditutup. Tiada item terbuka yang perlu tindakan segera. Sesi akan
+datang boleh mula dari: (a) sahkan Google Sign-In berfungsi penuh di app sebenar,
+(b) RLS (masih ditangguh, rujuk bahagian awal), (c) apa-apa isu baharu yang timbul.
+
+### ✅ Fasa 3 — Kedua-dua item tergantung DISELESAIKAN (arahan user: padam sahaja)
+- **Drone Challenge**: 8 baris "TEMPAT KEDUA" dipadam, kekal "TEMPAT PERTAMA" sahaja
+  (266→258 baris pencapaian) — konsisten dgn dasar getSkor (kedudukan terbaik menang)
+- **17 kes No.KP bertindih sekolah-berbeza**: KEDUA-DUA entri konflik dipadam (28 baris,
+  2111→2083 baris penyertaan) — sekolah akan daftar semula pendaftaran yang terjejas
+
+**STATUS: Semua kerja siasat data untuk sesi ini SELESAI.**
+
+---
+
+## Ciri baharu + fix (7 Sept, sesi lanjutan)
+1. **Auto-clear ruang carian bila tukar tab** — `_resetTabFilters()` kini clear `peny-srch`
+   (tab Penyertaan) dan `ak-cari` (tab Akaun) setiap kali user tukar tab. (commit `7cb459a`)
+2. **Khas ADMIN — senarai sekolah menyertai program**: bila admin klik kad program di tab
+   Penyertaan, bullet senarai sekolah yang menyertai (dgn bilangan peserta) dipaparkan bawah
+   notis pengesahan. Klik bullet → modal papar guru pengiring + senarai peserta sekolah tu
+   untuk program tersebut. Fungsi: `_lihatSekolahDlmProgram()`. (commit `7cb459a`)
+3. **Khas ADMIN — bilangan penyertaan pada kad/baris program**: badge "👥 N" dipaparkan
+   terus pada kad (mod kad) & baris (mod senarai) tab Penyertaan, khas untuk admin sahaja.
+   (commit `7cb459a`)
+4. **Fix format AI**: system prompt `ai-chat` dikemaskini — arah Gemini elak simbol markdown
+   (**tebal**, # tajuk, - bullet) sebab UI papar plain text (`textContent`), bukan render
+   markdown. (commit `c16b930`)
+
+**Nota:** Ciri #2/#3 guna data dari `_aP` (cache client, sudah dibetulkan paginasi penuh
+sesi lepas) — tak perlu panggilan server tambahan, terus guna data yang sedia dimuat.
+
+**Kemas kini kecil (commit `53360d8`):** bilangan penyertaan pada kad program kini di baris
+baharu (bukan sebaris dgn nama); modal lihat sekolah (dari bullet, khas admin) kini ada
+butang EDIT — guna semula flow `_openPenyertaanEdit` sama seperti di Pengelola.
+
+---
+
+## Sesi malam (8-9 Sept) — Google-first registration + AI Analitik
+
+### Google Sign-In pendaftaran terus (No.KP+PIN tak lagi wajib untuk pengguna baharu)
+**STATUS: SUDAH SIAP SEPENUHNYA** — dibina oleh USER SENDIRI (bukan Claude) melalui commit
+terdahulu ("Enhance Google sign-in options") + RPC terus di Supabase SQL Editor semasa Claude
+sedang menunggu arahan. Disahkan oleh Claude (semakan konsistensi, bukan pembinaan):
+- Modal claim ada 2 mod bertogol: "Sahkan akaun sedia ada" (No.KP+PIN) vs "Daftar akaun
+  baharu terus" (Nama/No.KP/No.Tel/Sekolah, TANPA PIN — Google jadi kaedah log masuk)
+- RPC `daftar_akaun_google()`, `claim_akaun_google()`, `login_via_google()` — SEMUA konsisten
+  guna `_domain_dibenarkan()` (hadkan ke emel `@moe-dl.edu.my` sahaja)
+- Akaun baharu tetap status TUNGGU — kelulusan admin masih wajib sebelum log masuk berjaya
+- Claude cuma bersihkan 1 RPC draf sendiri (`semak_nokp_google`) yang jadi berlebihan/tak dipakai
+- **BELUM diuji end-to-end oleh manusia sebenar dalam browser** — kod & RPC disahkan konsisten
+  dari sudut Claude sahaja, disyorkan uji manual: Google baharu → daftar → admin lulus → login
+
+### AI Analitik — akses data sistem sebenar (BAHARU, dibina & DIUJI malam ni)
+**STATUS: SIAP & DIUJI BERJAYA.**
+
+RPC (7 fungsi, dijumpai SUDAH wujud di Supabase — turut dibina user sendiri semasa Claude
+menunggu, nama hampir sama dgn draf Claude yg dibuang):
+`analitik_ringkasan`, `analitik_sekolah_penyertaan`, `analitik_sekolah_pencapaian`,
+`analitik_guru_terbaik`, `analitik_murid_terbaik`, `analitik_program_popular`,
+`analitik_carian_sekolah`.
+
+**Kerja Claude malam ni**: sambungkan Edge Function `ai-chat` ke 7 RPC ni melalui Gemini
+**function-calling** (bukan hantar semua data dlm prompt — Gemini pilih fungsi berkaitan
+ikut soalan, panggil RPC, baca hasil, jana jawapan berdasarkan data sebenar).
+
+**2 bug dijumpai & dibetulkan semasa uji:**
+1. Role `'function'` ditolak Gemini (API versi ni guna role `'user'` untuk functionResponse)
+2. Model `gemini-3.6-flash` (generasi baharu) WAJIB `thoughtSignature` dikembalikan verbatim
+   bersama `functionCall` dlm sejarah perbualan — kod asal bina semula objek baharu (buang
+   medan tu) → Gemini tolak 400 INVALID_ARGUMENT. Dibetulkan: hantar balik part asal
+   sepenuhnya, bukan reconstruct.
+
+**Diuji langsung (pg_net dari dalam Supabase, bukan hanya baca kod):**
+- ✅ "Sekolah mana paling tinggi penyertaan?" → jawapan tepat + top-5, data sebenar
+  (SK KAMPUNG ANGUS, 191 penyertaan)
+- ✅ Soalan majmuk "Siapa guru terbaik DAN murid terbaik?" → 2 panggilan fungsi berasingan
+  dilayan betul dlm 1 respons, data tepat, tiada simbol markdown
+- ✅ CI/CD disahkan segerak (push → GitHub Actions success → Supabase versi 15)
+
+**Soalan yang disokong sekarang**: sekolah tertinggi penyertaan, sekolah banyak pencapaian,
+guru terbaik, murid terbaik, program paling popular, ringkasan statistik keseluruhan, carian
+statistik sekolah tertentu — dan gabungan/susulan drpd ni (Gemini function-calling generalize
+melangkaui contoh tetap).
+
+### Belum diuji / boleh disemak esok
+- [ ] Uji ciri AI Analitik dalam APP SEBENAR (bukan pg_net) — buka panel AI, cuba tanya soalan
+- [ ] Uji flow Google-first registration end-to-end dgn akaun sebenar
+- [ ] Pertimbang tambah lebih banyak RPC analitik jika ada soalan lain yang AI tak dapat jawab
+
+---
+
+## AI gating - hanya aktif selepas login (commit `0fb6382`)
+- `aiTogglePanel()` & `aiSend()` kini semak `_sesi` dahulu. Belum log masuk → papar amaran
+  statik (TIADA panggilan ke Edge Function ai-chat dibuat langsung) yang cuma jelaskan
+  2 perkara: cara daftar akaun pertama kali, cara claim akaun sedia ada dengan Google.
+- `_mulakanSesi()` reset `_aiOpened` + kosongkan `ai-body` supaya lepas login, buka panel AI
+  papar ucapan penuh (bukan amaran lama).
+
+---
+
+## Isu 403 embed Google Sites - MENUNGGU MAKLUMAT
+Tiada X-Frame-Options/CSP dalam index.html sendiri. Kemungkinan besar dari hosting platform
+tempat fail dihoskan (bukan repo ni - tiada workflow GitHub Pages). PERLU pautan sebenar
+hosting + pautan Google Sites daripada user untuk web_fetch & diagnosis tepat.
+
+---
+
+## Isu 403 Google Sites — DISELESAIKAN (commit `c9f765a`)
+**Punca sebenar** (bukan hosting/CSP index.html): `accounts.google.com` MEMANG tolak dimuatkan
+dalam iframe bersarang (403) — langkah keselamatan Google sendiri, elak clickjacking kata
+laluan. Bila app dibuka dlm iframe Google Sites dan `loginGoogle()` redirect terus dalam
+iframe tu, Google terus block. Disahkan dari mesej ralat browser sebenar yang user hantar
+(CSP frame-ancestors violation + 403 pada request ke accounts.google.com).
+
+**Fix:** `loginGoogle()` kini kesan `window.self !== window.top` (dalam iframe ke tidak).
+Kalau dalam iframe → guna `skipBrowserRedirect:true`, buka URL OAuth dalam **tab baharu**
+(`window.open`) — bukan redirect dalam iframe. Lepas log masuk berjaya (mana-mana flow:
+login_via_google/claim/daftar baharu — dicover terus dalam `_mulakanSesi()`), kalau tab
+tu dibuka via `window.opener`, papar notis hijau "boleh tutup tab ini". Sesi disegerakkan
+automatik ke tab/iframe asal via localStorage sama origin (mekanisme built-in Supabase JS).
+
+**Belum diuji langsung dalam Google Sites sebenar** — disyorkan uji: buka Google Sites →
+klik Log Masuk Google → sepatutnya buka tab baharu (bukan 403) → log masuk → notis hijau →
+tutup tab → kembali ke Google Sites → sepatutnya dah log masuk.
+
+---
+
+## 🔒 RLS dikunci sepenuhnya (commit `a6902f9`) — SELESAI
+
+### Kritikal dijumpai & dibetulkan serta-merta
+`app_secrets` (simpan kod admin) — RLS DIMATIKAN, anon ada akses SELECT/INSERT/UPDATE/DELETE
+penuh. Kod admin boleh dibaca terus dari browser console. **DIBETULKAN SERTA-MERTA**: RLS
+diaktifkan, semua grant anon/authenticated ditarik balik. Kod admin ditukar sebagai langkah
+berjaga-jaga: **`[DIPADAM — kod admin; jangan simpan dalam repo]`** (simpan tempat selamat).
+
+### Had seni bina penting (nota untuk rujukan akan datang)
+Sesi No.KP+PIN BUKAN sesi Supabase Auth sebenar — `auth.uid()` cuma wujud untuk pengguna
+yang dah link Google. RLS ikut `auth.uid()` semata tak boleh dipakai universal. Penyelesaian:
+SEMUA operasi tulis dipindah ke RPC `security definer` yang semak peranan di SERVER (guna
+No.KP yang caller hantar sebagai bukti identiti ringan) — SELECT kekal terbuka untuk
+programs/penyertaan/pencapaian (memang reka bentuk app, bukan kelemahan).
+
+### 8 RPC (5 dari sesi lepas + 3 baharu sesi ni)
+Sesi lepas: `pengguna_semak_status`, `pengguna_wujud`, `akaun_list`, `akaun_kemaskini`,
+`pengguna_kemaskini_maklumat` — semua guna helper `_adalah_admin_aktif()`.
+Sesi ni (baharu): `program_daftar` (sekat guru daftar program), `penyertaan_hantar`
+(ganti hantar/kemaskini penyertaan), `sekolah_kemaskini` (segerak nama sekolah merentasi
+3 jadual), `program_backfill_tahun` (utiliti admin).
+
+**2 bug dijumpai & dibetulkan semasa audit/ujian:**
+1. `akaun_list` — jenis lajur `id` salah (`bigint` patut `uuid`) — akan gagal runtime
+2. `kemaskiniSekolahGS` & `backfillTahunGS` — 2 laluan tulis terus ke `pengguna`/`programs`
+   yang terlepas pandang semasa audit pertama, dijumpai semasa "semak kali terakhir"
+
+### index.html dikemas kini — 8 handler `_supaDispatch` ganti akses terus dgn RPC:
+`loginGS`, `daftarAkaunGS`, `getAkaunListGS`, `kemaskiniAkaunGS`, `kemaskiniMaklumatPenggunaGS`,
+`daftarProgramGS`, `hantarPenyertaanGS`/`kemaskiniPenyertaanSekolahGS`, `kemaskiniSekolahGS`,
+`backfillTahunGS`. Hanya 1 akses terus kekal (sengaja): INSERT pendaftaran diri baharu.
+
+### Polisi RLS akhir
+| Jadual | Polisi |
+|---|---|
+| `app_secrets` | TIADA (RPC sahaja) |
+| `pengguna` | INSERT terhad (`status='TUNGGU'` sahaja) — selebihnya RPC sahaja |
+| `programs`/`penyertaan`/`pencapaian` | SELECT terbuka; INSERT/UPDATE/DELETE via RPC sahaja |
+| `sekolah` | **BELUM disentuh** — kekal terbuka (risiko rendah, bukan data peribadi, ditangguh) |
+
+### Diuji (pg_net dari dalam Supabase — bukan hanya baca kod)
+- ✅ Baca terus `pengguna` sebagai anon key → `[]` kosong (RLS block berfungsi)
+- ✅ `pengguna_semak_status` via RPC → data betul dipulangkan (bypass RLS berfungsi utk login)
+- ✅ `program_daftar` — No.KP palsu ditolak; No.KP guru sah ditolak (sekatan peranan berfungsi)
+- ✅ `akaun_list` — data admin sebenar dipulangkan lepas fix jenis lajur
+
+### Belum diuji / boleh disemak nanti
+- [ ] Uji SEMUA flow dalam app sebenar (bukan pg_net): login, daftar akaun, hantar/kemaskini
+      penyertaan, daftar program, urus akaun (admin), kemaskini sekolah, backfill tahun
+- [ ] Pertimbang kunci `sekolah` juga (risiko rendah, ditangguh sengaja sesi ni)
+
+---
+
+## 🔍 Semakan Sistem Menyeluruh (checkpoint kerja semasa)
+_Mula: sekarang. Kemas kini checkpoint di bawah selepas setiap fasa siap._
+
+### Pelan kerja
+- [ ] Fasa A — Audit semula SEMUA akses Supabase terus dalam index.html (sekali lagi,
+      pastikan tiada tertinggal selepas kerja RLS lepas)
+- [ ] Fasa B — Semak jadual `sekolah` (RLS ditangguh sebelum ini) — putuskan tindakan
+- [ ] Fasa C — Senarai PENUH semua RPC di Supabase, semak konsistensi & bug
+- [ ] Fasa D — Semak Edge Function AI (ai-chat) — kekukuhan, kos, had kadar
+- [ ] Fasa E — Semak kesihatan kod frontend (fungsi mati, ralat berpotensi, dll)
+- [ ] Fasa F — Susun cadangan penambahbaikan (keutamaan tinggi -> rendah)
+
+### Checkpoint semasa: **Fasa A — bermula**
+
+---
+
+## 🔴 KECEMASAN — dijumpai & dibetulkan semasa Fasa C (commit `08ec298`)
+
+Semasa senarai penuh semua RPC, jumpa **sistem token sesi selari** yang anda bina sendiri
+(`_sahkan_token`, `_set_session_token`, siri `admin_*`, `daftar_program`,
+`hantar_penyertaan_sekolah`, dll) — jauh LEBIH SELAMAT drpd pendekatan "semak No.KP sahaja"
+yang saya guna (token sesi sebenar tak boleh diteka, No.KP/IC berpotensi diketahui). TAPI:
+
+**Client JS (index.html) masih guna 0% daripada sistem token ni** — dan lebih teruk,
+beberapa RPC yang saya bina awal (`set_pin`, `replace_pencapaian`, `kemaskini_program_cascade`,
+`padam_program_cascade`) **signature ditukar/dibuang** oleh kerja token tu, tanpa saya sedar.
+Disahkan **PECAH LIVE**: pendaftaran akaun baharu, reset PIN, simpan pencapaian, edit program,
+padam program — SEMUA gagal (RLS dah kunci, tiada fallback terus jadual).
+
+**Dibetulkan serta-merta:**
+- `set_pin` — dicipta semula (2 param, terhad status='TUNGGU' sahaja — utk pendaftaran diri)
+- `pengguna_reset_pin` (BAHARU) — admin reset PIN pengguna lain
+- `pencapaian_ganti` (BAHARU) — ganti `replace_pencapaian`, admin/pkk-gated
+- `program_kemaskini` (BAHARU) — ganti `kemaskini_program_cascade` versi lama yg TIADA
+  sebarang semakan peranan (lubang keselamatan aktif, sesiapa boleh edit program)
+- `program_padam` (BAHARU) — ganti `padam_program_cascade` yg perlukan token (belum integrasi)
+- Disahkan: SEMUA 19 RPC yang dipanggil client JS kini sepadan TEPAT dgn signature DB sebenar
+
+### ⚠️ Keputusan senibina perlu dibuat — sistem token vs pattern semasa
+Ada **2 sistem authorization berselang wujud serentak sekarang**:
+1. Pattern saya (`p_no_kp_admin` sahaja) — ringkas, LEMAH (No.KP boleh diteka/diketahui
+   dlm komuniti sekolah), tapi INI yang client JS guna SEKARANG (berfungsi).
+2. Sistem token anda (`_sahkan_token`) — kukuh (token rawak sebenar), tapi client JS
+   TAK PERNAH panggil `_set_session_token()` selepas login utk dapatkan token, jadi
+   RPC yg perlukan token (`daftar_program`, `hantar_penyertaan_sekolah`, dll) **tak boleh
+   dipanggil client sekarang** — akan gagal sama macam yg baru dibetulkan tadi.
+
+**Cadangan:** migrasi PENUH ke sistem token (lebih selamat, tapi kerja besar — perlu ubah
+`_mulakanSesi()` simpan token, hantar token pada SETIAP panggilan admin/tulis) — atau kekal
+pattern semasa buat masa ini (dah cukup selamat berbanding sebelum ni) dan reserve sistem
+token utk migrasi besar akan datang. BELUM DIPUTUSKAN — perlu bincang dgn user.
+
+---
+
+## Checkpoint semasa: **Fasa C siap (dgn kecemasan dibetulkan) — sambung Fasa D**
+
+---
+
+## 🎯 MIGRASI KE SISTEM TOKEN SESI — Pelan Kerja Penuh
+_Keputusan: migrasi penuh (bukan kekal 2 sistem selari). Kerja besar, dipecah fasa kecil._
+_PENTING UNTUK SESI AKAN DATANG: kalau session tamat di tengah, JANGAN mula semula dari kosong.
+Baca checkpoint di bawah, sambung dari fasa yang masih [ ], skip yang dah [x]._
+
+### Senarai Fasa
+- [x] **Fasa T0** — Siasat semua RPC token sedia ada — SIAP. Nota penting:
+  - `daftar_program` perlukan `p_id` dihantar client (JS kena jana UUID sendiri via `crypto.randomUUID()`)
+  - `hantar_penyertaan_sekolah` row shape ialah OBJEK (bukan array posisi macam `_rowArrToPenyertaanIn`)
+    — perlu tukar cara `hantarPeny()` bina payload
+  - `admin_kemaskini_akaun` gabung 2 fungsi saya (akaun_kemaskini + pengguna_kemaskini_maklumat) jadi 1
+  - Jumpa & DIBETULKAN 1 lagi bug jenis lajur `id` (bigint→uuid) dalam `admin_senarai_akaun`
+  - `daftar_akaun_baru` lebih baik drpd cara saya (1 langkah insert+hash PIN, bukan 2 panggilan)
+  - `kemaskini_profil_sendiri`/`cek_status_akaun` — ciri baharu, TAK dipakai UI lagi, di luar skop
+    migrasi ni (fungsi sedia wujud kalau nak bina ciri "edit profil sendiri" akan datang) (`daftar_program`, `hantar_penyertaan_sekolah`,
+      `admin_senarai_akaun`, `admin_kemaskini_akaun`, `admin_tambah_sekolah`,
+      `admin_kemaskini_sekolah`, `daftar_akaun_baru`, `kemaskini_profil_sendiri`,
+      `cek_status_akaun`, `keep_alive`) — faham tepat apa setiap satu buat, sebelum wiring
+- [x] **Fasa T1** — SIAP (commit `9440698`). `_mulakanSesi()` kini async, panggil
+      `_set_session_token()` lepas setiap login/claim/daftar, simpan `_sesi.token` +
+      sessionStorage. Tak blok UI (RPC pattern lama masih guna noKP sementara token sampai).
+- [x] **Fasa T2** — SIAP (commit `d9cae5d`). 6 handler migrasi: getAkaunListGS, kemaskiniAkaunGS,
+      resetPinGS, tambahSekolahGS, kemaskiniSekolahGS, kemaskiniMaklumatPenggunaGS. Diuji token
+      betul (data dipulangkan) & token palsu (ditolak) — berfungsi tepat.
+- [ ] **Fasa T3** — Migrasi RPC program/penyertaan/pencapaian (program_daftar→daftar_program,
+      program_kemaskini/padam→versi token kemaskini/padam_program_cascade,
+      penyertaan_hantar→hantar_penyertaan_sekolah, pencapaian_ganti→replace_pencapaian token)
+- [ ] **Fasa T4** — Semak reset PIN (guna set_pin versi token), profil sendiri, cek status akaun
+- [ ] **Fasa T5** — Uji SEMUA end-to-end (pg_net), bersihkan RPC lama yg dah tak dipakai
+- [ ] **Fasa T6** — Push akhir + kemas kini PROGRESS.md penuh + ringkasan untuk user
+
+### Checkpoint semasa: **Fasa T2 siap — sambung Fasa T3**
+
+---
+
+## ✅ MIGRASI TOKEN SEPENUHNYA SELESAI (Fasa T0-T5, commit `f0b7f43`)
+
+### Ringkasan
+Semua operasi tulis kini guna sistem token sesi sebenar (`_sahkan_token`) — bukan lagi
+sekadar semak No.KP. `pengguna` dikunci **100%** (tiada polisi RLS langsung sama sekali,
+walaupun untuk pendaftaran diri — semua paksa lalu RPC `security definer`).
+
+### 4 bug tambahan dijumpai & dibetulkan semasa migrasi (selain kecemasan lebih awal)
+1. `admin_senarai_akaun` — jenis lajur `id` salah (bigint→uuid), sama corak bug lepas
+2. `kemaskini_program_cascade` (token) — terlalu ketat (admin sahaja), sepatutnya benarkan
+   PKK sekolah pengelola juga (sepadan client `reqEdit()`)
+3. `replace_pencapaian` (token) — sama isu, dibetulkan (admin ATAU PKK sekolah pengelola,
+   disemak terus dari `programs.kod_pengelola`)
+4. `daftar_program` (token) — tiada sekatan peranan langsung (guru pun boleh cipta program!),
+   ditambah semakan `role != 'guru'`
+
+### Susulan akhir
+- `daftarAkaunGS` kini guna `daftar_akaun_baru` (RPC rasmi, 1 langkah insert+hash PIN)
+- `loginGS` kini guna `cek_status_akaun` (RPC rasmi) ganti versi saya
+- 12 RPC lama (draf saya, digantikan sepenuhnya) dibersihkan — baki 35 fungsi di DB, semua
+  aktif dipakai atau sengaja dikekalkan untuk ciri akan datang (`kemaskini_profil_sendiri`)
+
+### Diuji (bukan baca kod sahaja) — kitaran penuh via SQL/pg_net
+- ✅ Login (admin/guru), token dijana & disahkan (token betul → lulus; token palsu → ditolak)
+- ✅ Guru ditolak cipta program; PKK/admin dibenarkan
+- ✅ Kitaran penuh: cipta program → kemaskini → pencapaian → penyertaan → padam (data ujian
+  dibersihkan selepas setiap ujian, tiada kesan pada data sebenar)
+- ✅ `daftar_akaun_baru` — akaun ujian dicipta status TUNGGU, disahkan, dipadam
+
+### Ciri BELUM disambung ke UI (sedia di DB untuk masa depan, bukan skop migrasi ni)
+- `kemaskini_profil_sendiri` — self-service edit profil sendiri (tiada UI lagi)
+
+---
+
+## Checkpoint semasa: **SEMUA FASA SELESAI — kerja migrasi & semakan sistem tamat**
+
+---
+
+## ✅ Pendaftaran Akaun Baharu terus via Google — SIAP (commit `7e430c3`)
+
+**Klarifikasi peraturan (daripada user):** PIN untuk claim akaun sedia ada sahaja; selepas
+claim, tiada PIN; daftar akaun baharu terus pun tiada PIN.
+
+**Nota pembetulan rekod:** Sesi lepas saya SILAP laporkan ciri ni "sudah siap oleh user" —
+disahkan semula via `git log -S` yang UI ni tak pernah wujud dalam sejarah commit. RPC
+backend (`daftar_akaun_google`) memang sudah wujud, tapi UI/JS client TAK PERNAH dibina.
+Sudah dibetulkan rekod & dibina sepenuhnya sesi ni.
+
+**Dibina:**
+- Modal claim (`mo-claim`) kini 2 mod bertogol:
+  - **Mod "sedia"** (default) — sahkan No.KP+PIN akaun sedia ada → `claim_akaun_google`
+  - **Mod "baharu"** — Peranan/Nama/No.KP/No.Tel/Sekolah (autocomplete), TIADA PIN →
+    `daftar_akaun_google`
+- Fungsi baharu: `_toggleClaimMod()`, `onSugClaimSek()`/`pickClaimSek()` (autocomplete
+  sekolah khas modal ni), `daftarAkaunGoogleBaru()`
+- Modal reset bersih (kosongkan semua medan, kembali ke mod "sedia") setiap kali dibuka
+
+**BELUM diuji langsung dalam browser** (RPC perlukan `auth.uid()` sesi Google sebenar,
+tak boleh disimulasi dari SQL Editor sahaja) — perlu uji manual: log masuk Google baharu →
+klik "Daftar akaun baharu terus" → isi borang → hantar → sahkan status TUNGGU di DB →
+admin lulus → log masuk Google semula → sepatutnya terus masuk.
+
+---
+
+## ✅ Fix: buang borang PIN dari tab "Daftar Akaun" (commit `352f772`)
+Punca kekeliruan user: tab "📝 Daftar Akaun" masih papar borang PIN lama (Nama/No.KP/Sekolah/
+Cipta PIN/Sahkan PIN) walaupun modal Google dah ada opsyen "daftar baharu tanpa PIN".
+Klarifikasi user: **PIN kini HANYA untuk claim akaun sedia ada** — pendaftaran baharu (Google
+atau lain) tak patut minta PIN langsung.
+
+**Fix:** Tab "Daftar Akaun" kini papar arahan ringkas + butang terus ke Google, borang PIN
+lama dibuang dari paparan (fungsi `lgDaftar()` jadi kod mati, tak dipanggil lagi — dikekalkan
+dlm kod tapi tak boleh dicapai, boleh dibuang terus kalau nak bersihkan lagi).
+
+---
+
+## 🔍 AUDIT MENYELURUH SETIAP FLOW USER (checkpoint kerja semasa)
+### Pelan
+- [x] F1 — SIAP. Semua 20 panggilan RPC (19 fungsi unik) disahkan sepadan TEPAT dgn DB. Bersih.
+- [x] F2 — SIAP (commit `b68dd9f`). 1 BUG DIJUMPAI & DIBETULKAN: loginGS semak `u.auth_uid`
+      tapi `cek_status_akaun` pulangkan `sudah_ikat_google` (nama medan tak sepadan) — sekatan
+      'akaun Google, guna Google login' tak pernah aktif langsung sebelum ini. verifyPinGS/
+      askPin/doPin disahkan kod mati (selamat, tiada kesan).
+- [x] F3 — SIAP (commit `1e4fcc9`). Semak _semakSesiGoogle bersih. Jumpa OPTIMASI (bukan bug):
+      login_admin/login_pengguna/login_via_google/claim_akaun_google SEMUA sekarang pulangkan
+      session_token terus dlm hasil RPC yg sama, tapi JS buat panggilan _set_session_token()
+      BERGANDA/sia-sia. Dibetulkan - guna token yg dah dipulangkan terus.
+- [ ] F4 — Flow Pengelola (cipta/edit/padam program) - semak kebenaran client vs server
+- [ ] F5 — Flow Penyertaan (hantar/edit, bulk Excel)
+- [ ] F6 — Flow Pencapaian (simpan markah)
+- [ ] F7 — Flow Akaun Admin (senarai/lulus/tukar peranan/reset PIN)
+- [ ] F8 — Flow Sekolah (tambah/kemaskini)
+- [ ] F9 — Dashboard & AI chat (semak asas)
+
+### Checkpoint semasa: **F7 — Flow Akaun Admin**
+
+---
+
+## F4-F6 — Pengelola/Penyertaan/Pencapaian (commit pending)
+- ✅ `daftarProgram()` client vs `daftar_program` RPC — sepadan (guru disekat, sama-sama)
+- ✅ `reqEdit()` client vs `kemaskini_program_cascade` RPC — sepadan (admin/PKK pengelola)
+- 🔴 **BUG KRITIKAL DIJUMPAI & DIBETULKAN**: `hantar_penyertaan_sekolah` (server) TIADA
+  sebarang semakan pemilikan sekolah — SESIAPA yang log masuk (guru mana-mana sekolah)
+  boleh padam/ubah penyertaan SEKOLAH LAIN terus dari console browser, walaupun client
+  (`canPadamSek()`) sekat UI kepada sekolah sendiri/PKK pengelola/admin sahaja. DIBETULKAN
+  — RPC kini semak `kod_sekolah` caller = `p_kod_sekolah`, ATAU PKK pengelola program.
+  Diuji: guru sekolah A cuba padam sekolah B → ditolak dgn betul.
+
+---
+
+## F7-F9 — Akaun Admin / Sekolah / Dashboard / AI — SIAP, bersih
+- ✅ `admin_kemaskini_akaun`/`admin_senarai_akaun` — admin-gated betul di server, sepadan UI
+- ✅ `getSekolahListGS` — SELECT kekal terbuka (perlu utk autocomplete pra-login), tiada gate keliru
+- 🔴 **BUG DIJUMPAI & DIBETULKAN**: mesej amaran AI pra-login (`AI_MESEJ_BELUM_LOGIN`) masih
+  terangkan borang PIN lama tab "Daftar Akaun" yang dah dibuang sesi lepas — dikemas kini
+  ikut flow Google sebenar (commit `e8077c3`)
+
+---
+
+## ✅ AUDIT MENYELURUH SEMUA FLOW — SELESAI (F1-F9)
+
+### Ringkasan keseluruhan (5 isu dijumpai & dibetulkan)
+1. 🔴 **KRITIKAL** — `hantar_penyertaan_sekolah` tiada semakan pemilikan sekolah langsung;
+   sesiapa log masuk boleh padam/ubah penyertaan sekolah LAIN. Dibetulkan & diuji.
+2. 🟠 `loginGS` semak medan `auth_uid` yang tak wujud (patut `sudah_ikat_google`) — sekatan
+   "akaun Google, guna Google" tak pernah aktif. Dibetulkan.
+3. 🟡 4 RPC login (login_admin/login_pengguna/login_via_google/claim_akaun_google) pulangkan
+   `session_token` terus tapi JS abaikan & panggil `_set_session_token()` berganda/sia-sia.
+   Dioptimumkan.
+4. 🟡 Mesej amaran AI pra-login rujuk borang PIN lama yang dah dibuang. Dikemas kini.
+5. ✅ F1 (cross-check 20 panggilan RPC) — bersih sepenuhnya, tiada mismatch.
+
+Semua 9 fasa (F1-F9) selesai. Sistem disahkan konsisten antara client (kebenaran UI) dan
+server (RPC security definer) merentasi SEMUA flow utama: log masuk, pendaftaran/claim,
+Pengelola (program), Penyertaan, Pencapaian, Akaun Admin, Sekolah, Dashboard, AI chat.
+
+---
+
+## Checkpoint semasa: **AUDIT SELESAI SEPENUHNYA**
+
+---
+
+## ✅ Kekangan Unik Pencapaian — SIAP (klarifikasi dasar disahkan user)
+
+**Peraturan disahkan:** 1 kategori = 1 peserta unik bagi pencapaian (bukan 1 program = 1
+peserta unik). Peserta boleh menang beberapa kategori BERBEZA dalam program sama (cth.
+Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kategori SAMA.
+
+**Dilaksanakan:**
+- Dibersihkan 1 lagi pendua sedia ada dijumpai semasa semak (SMK Suai, Tali-Temali KRS,
+  nama peserta beza ejaan sikit, kedudukan/markah sama — pendua sebenar)
+- `unique index uniq_pencapaian_peserta_kategori` pada `(program_id, kategori, no_kp_peserta)`
+  — partial index (abaikan baris tanpa no_kp_peserta, cth data lama tanpa IC)
+- `replace_pencapaian` RPC kini tangkap ralat unique_violation & bagi mesej jelas
+  ("peserta sama direkod dua kali untuk kategori sama") bukan ralat teknikal mentah
+
+**Diuji:**
+- ✅ Cuba masuk peserta sama + kategori sama 2x → DITOLAK dgn mesej jelas
+- ✅ Peserta sama + 3 kategori BERBEZA (Individu/Berkumpulan/Keseluruhan) → SEMUA diterima
+
+---
+
+## ✅ Kemas kini UI (7 Okt 2026)
+
+1. **Butang "✕ BATAL KEMASKINI"** (tab Penyertaan) — muncul HANYA semasa mod kemaskini
+   (`isEdit===true`), di sebelah "SEMAK & HANTAR". Klik → pengesahan "perubahan belum hantar
+   akan hilang" → `resetPeny()` + kembali ke pilihan sekolah bagi program yang sama (`pilihProg`).
+   Fungsi baharu: `batalKemaskiniPeny()`, `_syncBatalBtn()` (dipanggil di 7 tempat isEdit berubah
+   + dlm `resetPeny()`).
+2. **Banner hijau "Log masuk berjaya... boleh tutup tab ini"** — sebelum ni kekal selama-lamanya
+   (position:fixed, tiada cara tutup) & menutup butang header. Dibetulkan: ada butang × untuk
+   tutup + hilang automatik selepas 8 saat + elak banner berganda (semak id sedia ada).
+3. Pengesahan dari tangkapan skrin user: app dihoskan di `upbmsubis.vercel.app` (Vercel) —
+   sebelum ni tak diketahui. Dicatat untuk rujukan.
