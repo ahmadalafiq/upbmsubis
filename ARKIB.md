@@ -683,3 +683,12 @@ Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kate
 **Pembetulan:** migrasi `betulkan_claim_akaun_google_no_kp_ambiguous` — alias jadual (`pgn.no_kp`, `pgn.kod`, ...) dalam `UPDATE`. Logik dan mesej ralat tak berubah. Diuji dalam transaksi dibatalkan: PIN salah → mesej perniagaan biasa; PIN betul → baris dipulangkan, token 48 aksara dijana, `auth_uid` terikat. Fungsi `analitik_*` diimbas: semuanya `LANGUAGE sql` (tiada risiko serupa); `daftar_akaun_google`/`login_via_google` selamat.
 **Nota:** hanya 1 daripada 83 akaun sudah diikat ke Google (81 akaun AKTIF belum) — pengguna yang gagal claim sebelum ini perlu mencuba semula.
 
+---
+
+## KRITIKAL: akses awam kepada `_set_session_token` (ambil alih akaun) ditutup (19 Okt 2026) — SIAP
+**Penemuan:** `_set_session_token(p_no_kp)` (security definer) menjana dan MEMULANGKAN token sesi baharu untuk mana-mana No.KP tanpa sebarang semakan, dan boleh dipanggil oleh peranan `anon` (kunci awam dalam `index.html`). Disahkan dalam transaksi dibatalkan dengan akaun admin sementara: `anon` memperoleh token yang sah sebagai `admin` tanpa PIN. Sesiapa yang tahu/meneka No.KP seorang admin boleh mengambil alih akaun itu.
+**Pembetulan (migrasi `tutup_akses_awam_fungsi_berbahaya`):** `REVOKE EXECUTE ... FROM public, anon, authenticated` pada `_set_session_token(text)`, `_adalah_admin_aktif(text)` (oracle admin), `program_daftar(...)` dan `program_kemaskini(...)` (warisan; kuasa hanya dengan No.KP; tidak digunakan klien) serta `set_pin(text,text)` (versi lama: sesiapa boleh tetapkan PIN akaun TUNGGU; klien guna versi 4 argumen bertoken). Fungsi dalaman (login_*, claim_*, login_via_google, program_backfill_tahun) terus berfungsi kerana berjalan sebagai pemilik.
+**Diuji (transaksi dibatalkan, sebagai `anon`):** kelima-lima ditolak (`insufficient_privilege`); `login_pengguna` dengan PIN betul masih memulangkan token 48 aksara yang sah sebagai admin.
+**Pulih jika perlu:** `GRANT EXECUTE ON FUNCTION public.<nama>(<jenis>) TO anon, authenticated;`
+**Nota:** laluan simpanan `_mulakanSesi` (panggil `_set_session_token` jika tiada token) kini gagal senyap; semua laluan log masuk semasa sudah memulangkan token sendiri.
+

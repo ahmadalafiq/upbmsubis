@@ -1517,6 +1517,10 @@ body.view-list .pc::after { display: none; }
       <div class="fi"><label>Tarikh</label><input type="date" id="p-tarikh"></div>
       <div class="fi"><label>Tempat</label><input type="text" id="p-tempat" placeholder="Lokasi program..."></div>
       <div class="fi"><label>Status</label><select id="p-status"><option value="DRAFT">DRAFT</option><option value="AKTIF">AKTIF</option><option value="TUTUP">TUTUP</option></select></div>
+      <div class="fi full"><label>Jenis Aktiviti</label>
+        <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="p-luar"> 🌐 Aktiviti Luar</label></div>
+        <div style="font-size:.66rem;color:var(--g5);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
+      </div>
     </div>
     <div class="mt2 fx gu"><button class="btn bp" id="btn-daftar" onclick="daftarProgram()">+ DAFTAR PROGRAM</button><button class="btn bs" onclick="clearPF()">KOSONGKAN</button></div>
   </div>
@@ -2138,6 +2142,10 @@ body.view-list .pc::after { display: none; }
       <div class="fi"><label>Tarikh</label><input type="date" id="e-tarikh" onchange="_onEditChange();"></div>
       <div class="fi"><label>Tempat</label><input type="text" id="e-tempat" onchange="_onEditChange();"></div>
       <div class="fi"><label>Status</label><select id="e-status" onchange="_onEditChange();"><option>AKTIF</option><option>DRAFT</option><option>TUTUP</option></select></div>
+      <div class="fi full"><label>Jenis Aktiviti</label>
+        <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="e-luar" onchange="_onEditChange();"> 🌐 Aktiviti Luar</label></div>
+        <div style="font-size:.66rem;color:var(--g5);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
+      </div>
     </div>
     <div class="div"></div>
     <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:.78rem;color:var(--red);margin-bottom:.65rem;">🏆 PENCAPAIAN</div>
@@ -2360,7 +2368,8 @@ function _mapProgramOut(r){
     'Tarikh': r.tarikh || r['Tarikh'] || '',
     'Tempat': r.tempat || r['Tempat'] || '',
     'Status': r.status || r['Status'] || '',
-    'Tahun': r.tahun || r['Tahun'] || ''
+    'Tahun': r.tahun || r['Tahun'] || '',
+    'Aktiviti Luar': (r.aktiviti_luar === true || r.aktiviti_luar === 'true' || r['Aktiviti Luar'] === true)
   };
 }
 function _mapPenyertaanOut(r){
@@ -2536,7 +2545,8 @@ async function _supaDispatch(fn, payload){
       p_nama: payload.nama, p_pengelola: payload.pengelola,
       p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
       p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
-      p_tarikh: tar1, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn1
+      p_tarikh: tar1, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn1,
+      p_aktiviti_luar: !!payload.aktivitiLuar
     });
     _throwIfErr(rInsP.error);
     return {ok:true, msg:'Program berjaya didaftarkan'};
@@ -2549,7 +2559,8 @@ async function _supaDispatch(fn, payload){
       p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'', p_id: payload.id, p_nama: payload.nama, p_pengelola: payload.pengelola,
       p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
       p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
-      p_tarikh: tar2, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn2
+      p_tarikh: tar2, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn2,
+      p_aktiviti_luar: (typeof payload.aktivitiLuar === 'boolean') ? payload.aktivitiLuar : null   // null = jangan ubah
     });
     _throwIfErr(rKp.error);
     return {ok:true, msg:'Program berjaya dikemaskini'};
@@ -3190,12 +3201,13 @@ async function daftarProgram(){
   var n=gv('p-nama'),pen=gv('p-pengelola'),kod=gv('p-kod'),bid=gv('p-bidang'),
       per=gv('p-per'),tar=gv('p-tarikh'),tem=gv('p-tempat'),sta=gv('p-status');
   var katList=getKatChecked('p-kat-wrap');
+  var luar=!!(document.getElementById('p-luar')||{}).checked;
   if(!n||!pen||!bid||!per||!tar||!tem){toast('Sila lengkapkan semua medan','er');return;}
   if(!kod){toast('Sila masukkan Kod Sekolah Penganjur','er');return;}
   if(!katList.length){toast('Sila pilih sekurang-kurangnya 1 kategori','er');return;}
   showOv('MENDAFTAR PROGRAM...'); setBtn('btn-daftar',true);
   try{
-    var r=await run('daftarProgramGS',{nama:n,pengelola:pen,kodPengelola:kod,bidang:bid,kategori:katList,peringkat:per,tarikh:tar,tempat:tem,status:sta});
+    var r=await run('daftarProgramGS',{nama:n,pengelola:pen,kodPengelola:kod,bidang:bid,kategori:katList,peringkat:per,tarikh:tar,tempat:tem,status:sta,aktivitiLuar:luar});
     if(r&&r.ok){toast('Program berjaya didaftarkan','ok');clearPF();await loadProgs(true);}
     else toast((r&&r.msg)||'Ralat','er');
   }catch(e){toast('Ralat: '+e.message,'er');}
@@ -3204,6 +3216,7 @@ async function daftarProgram(){
 function clearPF(){
   ['p-nama','p-pengelola','p-kod','p-bidang','p-per','p-tarikh','p-tempat'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('p-status').value='AKTIF';
+  var _pl=document.getElementById('p-luar'); if(_pl) _pl.checked=false;
   // Reset kategori checkboxes to default (Individu L + P)
   document.querySelectorAll('#p-kat-wrap input[type=checkbox]').forEach(function(cb){
     cb.checked=(cb.value==='INDIVIDU LELAKI'||cb.value==='INDIVIDU PEREMPUAN');
@@ -3783,6 +3796,7 @@ async function openEdit(p){
   document.getElementById('e-tarikh').value=p['Tarikh']?String(p['Tarikh']).split('T')[0]:'';
   document.getElementById('e-tempat').value=p['Tempat'];
   document.getElementById('e-status').value=p['Status'];
+  var _el=document.getElementById('e-luar'); if(_el) _el.checked=(p['Aktiviti Luar']===true);
   document.getElementById('pc-ld').style.display='flex';
   document.getElementById('pc-form').style.display='none';
   openMo('mo-edit');
@@ -3825,6 +3839,7 @@ async function saveEdit(){
   var tar  = document.getElementById('e-tarikh').value;
   var tem  = document.getElementById('e-tempat').value.trim();
   var sta  = document.getElementById('e-status').value;
+  var luar = !!(document.getElementById('e-luar')||{}).checked;
 
   if(!nama){ toast('Nama program tidak boleh kosong','er'); return; }
   if(!pen){  toast('Nama pengelola tidak boleh kosong','er'); return; }
@@ -3849,6 +3864,7 @@ async function saveEdit(){
       tarikh:       tar,
       tempat:       tem,
       status:       sta,
+      aktivitiLuar: luar,
     });
     if(r&&r.ok){
       toast('Program berjaya dikemaskini ✓','ok');

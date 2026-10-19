@@ -12,6 +12,7 @@ _Kemas kini terakhir: 16 Okt 2026 — projek 6 (Laporan Sekolah) ditambah. Hanya
 | 4 | SPBM (HEM + PBM) | Rancangan sahaja | Fasa 0 jadual `murid`; tunggu arahan mula |
 | 5 | Semakan sistem & ujian tertunggak | Terbuka | Ujian dalam app sebenar; putar semula kod admin |
 | 6 | Laporan Sekolah (penyertaan & pencapaian + perbandingan sesi) | Dibina & dipush (`88333f6` + pembetulan admin/semua sekolah), **belum diuji dalam pelayar** | Uji dalam app sebenar selepas deploy |
+| 7 | Aktiviti Luar (penanda program + Dashboard + penilaian) | Fasa 1 siap & dipush; Dashboard/markah = CADANGAN | Putuskan dasar markah (lihat projek 7) |
 
 **Urutan kerja cadangan:** uji projek 6 dahulu → 1 → 2 → 3 (W1→W4) → 4. Projek 5 boleh dibuat selari. Kerja yang sudah siap: lihat `ARKIB.md`.
 
@@ -192,6 +193,10 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 - [ ] Tambah RPC analitik jika ada soalan yang AI tak dapat jawab
 - [ ] UI untuk `kemaskini_profil_sendiri` (RPC sedia, tiada UI)
 
+**Fungsi pangkalan data yang masih tiada token (dikenal pasti 19 Okt; fungsi berbahaya sudah ditutup — lihat ARKIB):**
+- [ ] `sekolah_seed` dan `program_backfill_tahun` masih dipanggil klien dengan No.KP admin sahaja (tiada token) — tukar ke `_sahkan_token`. `program_backfill_tahun` juga ada pepijat jenis data (`coalesce` teks/masa) dan akan dibuang bersama butang BACKFILL TAHUN (projek 1).
+- [ ] `cek_status_akaun(p_no_kp)` boleh dipanggil tanpa log masuk (oracle status akaun mengikut No.KP) — diperlukan sebelum log masuk; pertimbangkan had kadar.
+
 **Had reka bentuk sesi (dikenal pasti 19 Okt):**
 - [ ] Hanya SATU token sah bagi setiap pengguna (`pengguna.session_token`). Log masuk di tab/peranti lain (atau tab Google yang dibuka melalui Google Sites) memutar token dan membatalkan sesi sebelumnya → "Akses ditolak - sesi tidak sah". Pilihan: auto-pulih (sekali: panggil `login_via_google` dan cuba semula) atau token berbilang. Belum diputuskan.
 
@@ -234,6 +239,28 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 
 ---
 
+## 7. Aktiviti Luar (penanda program + integrasi Dashboard & penilaian komprehensif)
+**Status:** Fasa 1 SIAP (penanda + checkbox, dipush). Fasa 2 (Dashboard) dan Fasa 3 (markah komprehensif) = CADANGAN, menunggu keputusan dasar.
+
+### Fasa 1 — siap (19 Okt 2026)
+- DB: `programs.aktiviti_luar boolean not null default false` (114 program sedia ada = false). `daftar_program` (+`p_aktiviti_luar` lalai false) dan `kemaskini_program_cascade` (+`p_aktiviti_luar` lalai **null = jangan ubah**, supaya halaman lama dalam cache tak menimpa penanda). Diuji hujung-ke-hujung dengan token sebenar dalam transaksi dibatalkan.
+- Klien: checkbox "🌐 Aktiviti Luar" pada borang cipta (`p-luar`) dan modal ✏️ KEMASKINI (`e-luar`); `_mapProgramOut` memetakan `'Aktiviti Luar'`; `daftarProgram`/`saveEdit` menghantar `aktivitiLuar`. Program sedia ada ditanda melalui KEMASKINI (admin, atau PKK sekolah pengelola).
+
+### Cadangan Dashboard & penilaian (BELUM dibina)
+**Fakta penting:** markah sekolah = `getSkor` = markah pencapaian (Jadual MARKAH ikut peringkat) + **Pelibatan** (kredit hanya kerana berdaftar; Pelibatan I = 11 DAERAH, 12 BAHAGIAN, 14 NEGERI, 17 KEBANGSAAN, 20 ANTARABANGSA; SEKOLAH = 0). Satu penyertaan aktiviti luar peringkat kebangsaan = 17 mata hanya kerana hadir (lebih daripada johan peringkat daerah = 11). Jika aktiviti luar dicampur tanpa kawalan, sekolah yang menyertai lebih banyak (lebih sumber/dekat) menang kerana kuantiti, bukan kualiti.
+- **Prinsip:** (1) tidak menghukum sekolah yang tidak menyertai (papar "—", bukan 0; jangan guna sebagai penyebut kadar tanpa data "sekolah dijemput"); (2) ranking rasmi sedia ada tidak berubah secara senyap; (3) dasar markah dalam satu pemalar (corak `PELIBATAN_DEDUP_SCOPE`).
+- **Fasa 2 (paparan sahaja, tiada perubahan markah):** togol Dashboard "Teras | Aktiviti Luar | Semua" (tapis `_aPg` mengikut penanda; semua widget kira semula); lalai = Teras. Panel "Aktiviti Luar": bil. aktiviti, bil. sekolah menyertai (cth 12/47), bil. pencapaian, markah luar, jadual sekolah yang menyertai sahaja. Lencana "🌐 LUAR" pada kad/senarai program.
+- **Fasa 3 (markah komprehensif):** lajur "Skor Komprehensif" = Teras + Bonus Luar, di sebelah ranking Teras (tidak menggantikan). Polisi dalam satu pemalar `LUAR_POLISI = {pelibatan:'TIADA'|'SETENGAH'|'PENUH', had:null|N}`. Pilihan: **A** pencapaian sahaja (pelibatan 0; disyorkan), **B** pelibatan 50%, **C** semua + had (maks N mata atau N aktiviti/sekolah), **D** indeks kualiti = markah luar ÷ aktiviti luar disertai.
+- **Fasa 4 (pilihan):** jadual "sekolah dijemput" bagi setiap aktiviti luar untuk kadar penyertaan yang adil.
+- Laporan Sekolah: tambah lajur/seksyen "Aktiviti Luar" dipisahkan daripada aktiviti teras.
+
+### Belum selesai
+- [ ] Keputusan dasar: adakah aktiviti luar dikira dalam markah rasmi? Jika ya: pilihan A/B/C/D untuk Pelibatan.
+- [ ] Bina Fasa 2 (togol + panel + lencana) selepas keputusan; Fasa 3 selepas dasar diputuskan.
+- [ ] Uji checkbox dalam pelayar sebenar (ujian jsdom lulus).
+
+---
+
 ## Nota Kerja (rujukan tetap)
 
 ### 🔑 Nota kredensial (JANGAN letak nilai sebenar dalam fail ini)
@@ -273,4 +300,4 @@ fail JS/HTML berasingan, bukan menambah index.html yg sudah 585 KB — setiap tu
 
 ---
 
-## Checkpoint semasa (16 Okt 2026): **PROJEK 6 (LAPORAN SEKOLAH) DIBINA & DIPUSH (`88333f6`) — TUNGGU UJIAN PELAYAR. Projek 1 (buang MIGRATE), 2 (modal edit), 3 (wizard) SIAP DIRANCANG; 4 (SPBM) tergantung. Seterusnya: uji projek 6, kemudian 1 → 2 → 3. Item terbuka: revoke PAT, putar kod admin.**
+## Checkpoint semasa (19 Okt 2026): **PROJEK 7 (AKTIVITI LUAR) FASA 1 SIAP; DASHBOARD/MARKAH MENUNGGU KEPUTUSAN DASAR. PROJEK 6 (LAPORAN SEKOLAH) DIBINA & DIPUSH (`88333f6`) — TUNGGU UJIAN PELAYAR. Projek 1 (buang MIGRATE), 2 (modal edit), 3 (wizard) SIAP DIRANCANG; 4 (SPBM) tergantung. Seterusnya: uji projek 6, kemudian 1 → 2 → 3. Item terbuka: revoke PAT, putar kod admin.**
