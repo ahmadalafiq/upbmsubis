@@ -18,7 +18,8 @@
 (function (G) {
   'use strict';
 
-  var LS = { cache: {}, mode: 'tunggal', models: [], kod: '', nama: '', spec: null, fileName: '', years: [], sekList: [] };
+  var SEMUA = '__SEMUA__';
+  var LS = { cache: {}, mode: 'tunggal', models: [], kod: '', nama: '', spec: null, fileName: '', years: [], sekList: [], batch: null };
 
   /* ───────────── utiliti kecil ───────────── */
   function U(s) { return String(s == null ? '' : s).toUpperCase().trim(); }
@@ -481,13 +482,71 @@
     return await doc.save();
   }
 
-  function muatTurunBytes(bytes, name) {   // Blob + <a download> — sama dgn janaPdfSalinanPenyertaan
-    var blob = new Blob([bytes], { type: 'application/pdf' });
+  function muatTurunBytes(bytes, name, mime) {   // Blob + <a download> — sama dgn janaPdfSalinanPenyertaan
+    var blob = new Blob([bytes], { type: mime || 'application/pdf' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = name;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  /* ───────────── KELOMPOK: semua sekolah, SATU fail PDF setiap sekolah (jangan gabung) ───────────── */
+  function buildBatch(datas, years, mode, sekList) {   // datas sejajar dgn years (tahun terkini dahulu)
+    var nm = {};
+    (sekList || []).forEach(function (x) { nm[U(x.kod)] = x.nama; });
+    var kodSet = {};
+    datas.forEach(function (d) {
+      ['penyertaan', 'pencapaian'].forEach(function (t) {
+        (d[t] || []).forEach(function (r) { var k = U(r['Kod Sekolah']); if (k) kodSet[k] = 1; });
+      });
+    });
+    var items = [];
+    Object.keys(kodSet).forEach(function (k) {
+      var nama = nm[k];
+      for (var i = 0; i < datas.length && !nama; i++) {
+        var r = (datas[i].penyertaan || []).filter(function (x) { return U(x['Kod Sekolah']) === k; })[0];
+        if (r) nama = r['Nama Sekolah'];
+      }
+      nama = nama || k;
+      var models = years.map(function (y, i) { return buildModel(k, nama, y, datas[i]); });
+      if (!models.some(function (m) { return m.ringkas.nProgram > 0; })) return;   // tiada penyertaan langsung: langkau
+      var slug = U(nama).replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+      items.push({
+        kod: k, nama: nama, models: models,
+        spec: mode === 'tunggal' ? specTunggal(models[0]) : specBanding(models),
+        fileName: mode === 'tunggal'
+          ? k + '_' + slug + '_LAPORAN_' + years[0] + '.pdf'
+          : k + '_' + slug + '_PERBANDINGAN_' + years[years.length - 1] + '-' + years[0] + '.pdf'
+      });
+    });
+    items.sort(function (a, b) { return String(a.nama).localeCompare(String(b.nama)); });
+    return items;
+  }
+
+  function specSenaraiBatch(items, years, mode) {
+    var S = [{ t: 'title', title: mode === 'tunggal' ? 'LAPORAN SEMUA SEKOLAH' : 'PERBANDINGAN SEMUA SEKOLAH',
+      sub: [items.length + ' sekolah  —  satu fail PDF bagi setiap sekolah (dalam satu ZIP)', (mode === 'tunggal' ? 'Tahun: ' : 'Sesi: ') + years.join(' vs ')] }];
+    S.push({
+      t: 'table',
+      cols: [{ h: 'Bil', w: .7, a: 'c' }, { h: 'Kod', w: 1.3, a: 'c' }, { h: 'Sekolah', w: 6 }, { h: 'Program', w: 1.2, a: 'c' },
+        { h: 'Peserta', w: 1.2, a: 'c' }, { h: 'Pencapaian', w: 1.4, a: 'c' }, { h: 'Markah', w: 1.2, a: 'c' }],
+      rows: items.map(function (it, i) { var r = it.models[0].ringkas; return [i + 1, it.kod, it.nama, r.nProgram, r.nPeserta, r.nPenc, r.skor]; })
+    });
+    S.push({ t: 'note', text: 'Lajur Program/Peserta/Pencapaian/Markah ialah untuk ' + years[0] + '. Tekan MUAT TURUN SEMUA (ZIP) untuk menjana fail PDF setiap sekolah.' });
+    return S;
+  }
+
+  async function zipItems(items, Z, onProgress) {
+    var zip = new Z(), gagal = [];
+    for (var i = 0; i < items.length; i++) {
+      if (onProgress) onProgress(i + 1, items.length);
+      try { zip.file(items[i].fileName, await renderPdf(items[i].spec)); }
+      catch (e) { gagal.push(items[i].nama + ': ' + (e && e.message ? e.message : e)); }
+      await new Promise(function (r) { setTimeout(r, 0); });   // beri ruang UI bernafas
+    }
+    var bytes = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
+    return { bytes: bytes, gagal: gagal };
   }
 
   /* ───────────── ANTARAMUKA (modal) ───────────── */
@@ -547,14 +606,16 @@
   async function openLaporanSekolah() {
     ensureModal();
     var s = G._sesi || {};
-    var admin = s.role === 'admin' && !s.kodSekolah;
+    var admin = s.role === 'admin';   // admin boleh pilih mana-mana sekolah (walaupun akaunnya dikaitkan dgn satu sekolah)
     var wrap = $('ls-sek-wrap');
     if (admin) {
       wrap.innerHTML = '<div style="font-size:.6rem;font-weight:800;color:var(--g5);margin-bottom:2px;">SEKOLAH</div><select id="ls-sek" class="dash-filter-sel" style="width:100%;"><option value="">Memuatkan...</option></select>';
       try {
         var r = await G._supaDispatch('getSekolahListGS', {});
         LS.sekList = (r && r.data) || [];
-        $('ls-sek').innerHTML = '<option value="">— PILIH SEKOLAH —</option>' + LS.sekList.map(function (x) { return '<option value="' + E(x.kod) + '">' + E(x.nama) + ' (' + E(x.kod) + ')</option>'; }).join('');
+        $('ls-sek').innerHTML = '<option value="">— PILIH SEKOLAH —</option>'
+          + '<option value="' + SEMUA + '">★ SEMUA SEKOLAH (satu fail setiap sekolah, ZIP)</option>'
+          + LS.sekList.map(function (x) { return '<option value="' + E(x.kod) + '">' + E(x.nama) + ' (' + E(x.kod) + ')</option>'; }).join('');
       } catch (e) { $('ls-sek').innerHTML = '<option value="">Gagal memuatkan senarai sekolah</option>'; }
     } else {
       wrap.innerHTML = '<div style="font-size:.6rem;font-weight:800;color:var(--g5);margin-bottom:2px;">SEKOLAH</div><div style="font-weight:800;font-size:.8rem;">' + E(s.namaSekolah || '—') + ' <span style="color:var(--g5);font-weight:600;">(' + E(s.kodSekolah || '') + ')</span></div>';
@@ -562,7 +623,9 @@
     await ladSenaraiTahun();
     $('ls-jenis').value = 'tunggal';
     lsOnJenis();
+    LS.batch = null; LS.spec = null;
     $('ls-btn-pdf').disabled = true; $('ls-btn-cetak').disabled = true;
+    $('ls-btn-pdf').textContent = '⬇ MUAT TURUN PDF';
     $('ls-body').innerHTML = '<div style="font-size:.75rem;color:var(--g5);">Pilih jenis laporan dan tahun, kemudian tekan <b>JANA LAPORAN</b>.</div>';
     G.openMo('mo-lapsek');
   }
@@ -575,12 +638,15 @@
   }
 
   async function lsJana() {
-    var s = G._sesi || {}, kod, nama;
-    if (s.role === 'admin' && !s.kodSekolah) {
+    var s = G._sesi || {}, kod, nama, semua = false;
+    if (s.role === 'admin') {
       kod = ($('ls-sek') || {}).value || '';
-      if (!kod) { msg('Sila pilih sekolah dahulu.', 'er'); return; }
-      var f = LS.sekList.filter(function (x) { return x.kod === kod; })[0];
-      nama = f ? f.nama : kod;
+      if (!kod) { msg('Sila pilih sekolah, atau "SEMUA SEKOLAH".', 'er'); return; }
+      if (kod === SEMUA) { semua = true; nama = 'SEMUA SEKOLAH'; }
+      else {
+        var f = LS.sekList.filter(function (x) { return x.kod === kod; })[0];
+        nama = f ? f.nama : kod;
+      }
     } else { kod = s.kodSekolah; nama = s.namaSekolah || kod; }
     if (!kod) { msg('Kod sekolah tidak ditemui untuk akaun ini.', 'er'); return; }
 
@@ -596,6 +662,20 @@
     body.innerHTML = '<div class="ld"><div class="sp"></div>Menjana laporan...</div>';
     $('ls-btn-pdf').disabled = true; $('ls-btn-cetak').disabled = true;
     try {
+      if (semua) {
+        var datas = [];
+        for (var j = 0; j < years.length; j++) datas.push(await ambilData(years[j]));
+        var items = buildBatch(datas, years, LS.mode, LS.sekList);
+        if (!items.length) { body.innerHTML = '<div style="font-size:.78rem;color:var(--g5);">Tiada sekolah yang mempunyai penyertaan bagi tahun/sesi dipilih.</div>'; return; }
+        LS.batch = { items: items, years: years };
+        LS.spec = null;
+        body.innerHTML = renderHtml(specSenaraiBatch(items, years, LS.mode));
+        $('ls-btn-pdf').textContent = '⬇ MUAT TURUN SEMUA (ZIP)';
+        $('ls-btn-pdf').disabled = false; $('ls-btn-cetak').disabled = true;
+        return;
+      }
+      LS.batch = null;
+      $('ls-btn-pdf').textContent = '⬇ MUAT TURUN PDF';
       var models = [];
       for (var i = 0; i < years.length; i++) {
         var d = await ambilData(years[i]);
@@ -618,6 +698,23 @@
   }
 
   async function lsPdf() {
+    if (LS.batch) {
+      if (typeof G.JSZip === 'undefined') { msg('Pustaka ZIP tidak dimuatkan. Sila muat semula halaman.', 'er'); return; }
+      var btn = $('ls-btn-pdf'), asal = btn.textContent;
+      btn.disabled = true;
+      try {
+        var r = await zipItems(LS.batch.items, G.JSZip, function (i, n) { btn.textContent = 'Menjana ' + i + ' / ' + n + '...'; });
+        var ys = LS.batch.years;
+        muatTurunBytes(r.bytes, (LS.mode === 'tunggal' ? 'LAPORAN_SEMUA_SEKOLAH_' + ys[0] : 'PERBANDINGAN_SEMUA_SEKOLAH_' + ys[ys.length - 1] + '-' + ys[0]) + '.zip', 'application/zip');
+        if (r.gagal.length) { console.warn('Sekolah gagal dijana:', r.gagal); msg((LS.batch.items.length - r.gagal.length) + ' fail dimuat turun; ' + r.gagal.length + ' sekolah gagal (lihat console).', 'er'); }
+        else msg(LS.batch.items.length + ' fail PDF (satu setiap sekolah) dimuat turun dalam ZIP.', 'ok');
+      } catch (e) {
+        console.warn('ZIP gagal:', e);
+        msg('Gagal menjana ZIP: ' + (e && e.message ? e.message : e), 'er');
+      }
+      btn.textContent = asal; btn.disabled = false;
+      return;
+    }
     if (!LS.spec) { msg('Sila jana laporan dahulu.', 'er'); return; }
     try {
       var bytes = await renderPdf(LS.spec);
@@ -630,6 +727,7 @@
   }
 
   function lsCetak() {
+    if (LS.batch) { msg('Cetak hanya untuk satu sekolah. Untuk semua sekolah, guna MUAT TURUN SEMUA (ZIP).', 'er'); return; }
     if (!LS.spec) { msg('Sila jana laporan dahulu.', 'er'); return; }
     var p = $('sdet-print-portal');
     if (!p) { msg('Cetak tidak tersedia. Sila guna MUAT TURUN PDF.', 'er'); return; }
@@ -643,5 +741,5 @@
   /* ───────────── eksport ───────────── */
   G.openLaporanSekolah = openLaporanSekolah;
   G.lsJana = lsJana; G.lsPdf = lsPdf; G.lsCetak = lsCetak; G.lsOnJenis = lsOnJenis;
-  G.__LS = { buildModel: buildModel, specTunggal: specTunggal, specBanding: specBanding, renderHtml: renderHtml, renderPdf: renderPdf, safe: safe };
+  G.__LS = { buildBatch: buildBatch, specSenaraiBatch: specSenaraiBatch, zipItems: zipItems, buildModel: buildModel, specTunggal: specTunggal, specBanding: specBanding, renderHtml: renderHtml, renderPdf: renderPdf, safe: safe };
 })(typeof window !== 'undefined' ? window : globalThis);

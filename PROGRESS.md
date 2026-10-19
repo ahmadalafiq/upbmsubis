@@ -11,7 +11,7 @@ _Kemas kini terakhir: 16 Okt 2026 — projek 6 (Laporan Sekolah) ditambah. Hanya
 | 3 | Wizard pendaftaran (Program & Penyertaan) | Dirancang, 4 keputusan dibuat | W1 Program dahulu, kemudian W2–W4 |
 | 4 | SPBM (HEM + PBM) | Rancangan sahaja | Fasa 0 jadual `murid`; tunggu arahan mula |
 | 5 | Semakan sistem & ujian tertunggak | Terbuka | Ujian dalam app sebenar; putar semula kod admin |
-| 6 | Laporan Sekolah (penyertaan & pencapaian + perbandingan sesi) | Dibina & dipush (`88333f6`), **belum diuji dalam pelayar** | Uji dalam app sebenar selepas deploy |
+| 6 | Laporan Sekolah (penyertaan & pencapaian + perbandingan sesi) | Dibina & dipush (`88333f6` + pembetulan admin/semua sekolah), **belum diuji dalam pelayar** | Uji dalam app sebenar selepas deploy |
 
 **Urutan kerja cadangan:** uji projek 6 dahulu → 1 → 2 → 3 (W1→W4) → 4. Projek 5 boleh dibuat selari. Kerja yang sudah siap: lihat `ARKIB.md`.
 
@@ -204,7 +204,9 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 **Tujuan:** sekolah dapat laporan komprehensif penyertaan & pencapaian bagi tahun semasa; pada tahun berikutnya, laporan perbandingan mengikut sesi (tahun). Eksport PDF untuk simpanan sekolah. Mesti guna cara PDF sedia ada — tiada enjin PDF baharu.
 
 ### Yang dibina
-- Butang **📄 LAPORAN SEKOLAH** di tajuk halaman Dashboard → modal `mo-lapsek` (dibina oleh JS). Guru/PKK terkunci pada sekolah sendiri (`_sesi.kodSekolah`); admin pilih sekolah. Jenis: Laporan Tahun, atau Perbandingan Sesi (pilih 2 sesi atau lebih).
+- Butang **📄 LAPORAN SEKOLAH** di tajuk halaman Dashboard → modal `mo-lapsek` (dibina oleh JS). Guru/PKK terkunci pada sekolah sendiri (`_sesi.kodSekolah`). **Admin** (`role==='admin'`, walaupun akaunnya dikaitkan dengan satu sekolah) boleh pilih mana-mana sekolah ATAU **★ SEMUA SEKOLAH**. Jenis: Laporan Tahun, atau Perbandingan Sesi (pilih 2 sesi atau lebih).
+- **Semua sekolah:** satu fail PDF SETIAP sekolah (tidak digabung), dibungkus dalam satu ZIP (JSZip yang sedia ada dalam app) — nama fail `KOD_NAMA_LAPORAN_TAHUN.pdf` / `KOD_NAMA_PERBANDINGAN_A-B.pdf`; sekolah tanpa penyertaan dilangkau; jika satu sekolah gagal, yang lain tetap dimasukkan. CETAK hanya untuk satu sekolah.
+- **Pembetulan (16 Okt):** versi pertama hanya membenarkan admin memilih sekolah jika `kodSekolah` kosong, sedangkan kedua-dua akaun admin ada `kod_sekolah` → admin sentiasa terkunci pada sekolahnya. Kini admin ditentukan oleh `role` sahaja.
 - Fail: `laporan-sekolah.js` (logik, fail baharu di root repo, ~35 KB) + `index.html` (+3 baris: butang, tag skrip, lajur `Kod Sekolah` dalam `_mapPencapaianOut`).
 - PDF: pdf-lib (cara sama `janaPdfSalinanPenyertaan`, Blob + `<a download>`, berfungsi dalam Google Sites). CETAK guna portal `#sdet-print-portal` seperti `printSdet`. Pratonton, cetak dan PDF dijana daripada satu "spesifikasi dokumen" supaya isi sentiasa sama.
 - **Laporan Tahun:** 1 Ringkasan, 2 Pecahan bidang & peringkat, 3 Senarai program, 4 Pencapaian (SEMUA kedudukan), 5 Senarai nama mengikut program (1 baris 1 nama; GURU dahulu kemudian PESERTA; A–Z; Bil berturutan), 6 Demografi. **Tiada No.KP.**
@@ -219,6 +221,7 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 - Nama sekolah varian TIDAK diubah (sengaja): SJKC CHUNG HUA SUNGAI LUMUT → YCC4404, SJKC CHIN NAM → YCC4403, SK KPG BULAU → YBB4418. Varian sama wujud dalam `penyertaan` (48 baris beza daripada jadual `sekolah`) dan `getSkor` kira ikut nama — ubah satu jadual sahaja akan pecahkan markah sekolah.
 
 ### Belum selesai
+- [ ] Uji ZIP "SEMUA SEKOLAH" dalam pelayar sebenar (~47 sekolah; sahih masa jana & saiz ZIP; juga dalam Google Sites). Ujian aliran UI dalam jsdom (admin ada kod sekolah, satu sekolah, semua sekolah, perbandingan, guru) telah lulus.
 - [ ] Uji dalam pelayar sebenar selepas deploy: buka Dashboard → LAPORAN SEKOLAH → jana laporan tahun & perbandingan → MUAT TURUN PDF & CETAK (juga dalam Google Sites). Bandingkan "Jumlah Markah" satu sekolah dengan ranking Dashboard.
 - [ ] Uji simpan pencapaian dari UI (`replace_pencapaian` tak dapat diuji hujung-ke-hujung dengan token sebenar; hanya pernyataan insert diuji dalam transaksi dibatalkan). Selepas simpan, semak `select count(*) from pencapaian where kod_sekolah is null` = 0.
 - [ ] Keputusan: seragamkan nama sekolah varian pada KEDUA-DUA jadual serentak (58 baris: 48 penyertaan + 10 pencapaian) — pilihan, tak wajib sebab laporan padan ikut kod.
