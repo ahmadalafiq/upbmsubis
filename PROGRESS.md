@@ -192,6 +192,9 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 - [ ] Tambah RPC analitik jika ada soalan yang AI tak dapat jawab
 - [ ] UI untuk `kemaskini_profil_sendiri` (RPC sedia, tiada UI)
 
+**Had reka bentuk sesi (dikenal pasti 19 Okt):**
+- [ ] Hanya SATU token sah bagi setiap pengguna (`pengguna.session_token`). Log masuk di tab/peranti lain (atau tab Google yang dibuka melalui Google Sites) memutar token dan membatalkan sesi sebelumnya → "Akses ditolak - sesi tidak sah". Pilihan: auto-pulih (sekali: panggil `login_via_google` dan cuba semula) atau token berbilang. Belum diputuskan.
+
 **Keselamatan (ditambah semasa pengarkiban):**
 - [ ] GitHub PAT pernah dikongsi dalam sembang (kini ada kebenaran tulis ke repo) — REVOKE di GitHub → Settings → Developer settings → Personal access tokens; guna token baharu berskop kecil jika perlu.
 - [ ] Kod admin pernah tertulis terang dalam repo awam (termasuk sejarah git). Putar semula kod admin dalam `app_secrets` dan jangan tulis nilainya dalam mana-mana fail. Nilai lama telah dipadam daripada `ARKIB.md`.

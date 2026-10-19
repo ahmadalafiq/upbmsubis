@@ -660,3 +660,11 @@ Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kate
    tutup + hilang automatik selepas 8 saat + elak banner berganda (semak id sedia ada).
 3. Pengesahan dari tangkapan skrin user: app dihoskan di `upbmsubis.vercel.app` (Vercel) —
    sebelum ni tak diketahui. Dicatat untuk rujukan.
+
+---
+
+## Pembetulan ralat log masuk berselang-seli: "Akses ditolak - bukan admin atau sesi tidak sah" (19 Okt 2026) — SIAP
+**Gejala:** setiap kali admin log masuk (Google), halaman Akaun kadang-kadang papar "Gagal memuatkan: Akses ditolak - bukan admin atau sesi tidak sah", kemudian OK.
+**Punca (disahkan):** `_initGoogleAuth` memanggil `_semakSesiGoogle` dua kali serentak (`onAuthStateChange` SIGNED_IN + `getSession()`). Pengawal `if(_sesi) return` tidak melindungi kerana `_sesi` hanya diset selepas RPC selesai. Setiap panggilan `login_via_google` memutar token sesi (`_set_session_token`; hanya satu hash token disimpan bagi setiap pengguna), jadi token panggilan pertama terbatal serta-merta. Log API: dua `login_via_google` berselang 2 ms, kemudian `admin_senarai_akaun` 400 dan 200 hampir serentak.
+**Pembetulan:** `index.html` — `_semakSesiGoogle` dijadikan single-flight (`_gSemakBusy` + `finally`). Diuji unit: kod baharu 1 panggilan serentak (kod lama 2), penanda dilepaskan selepas ralat/pengecualian.
+

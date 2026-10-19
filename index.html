@@ -10189,8 +10189,13 @@ function _initGoogleAuth(){
   });
 }
 
+var _gSemakBusy = false; // single-flight: onAuthStateChange(SIGNED_IN) DAN getSession() memanggil fungsi ini serentak
 async function _semakSesiGoogle(session){
-  if(_sesi) return; // sudah log masuk (No.KP/PIN atau Google sedia ada) — elak konflik
+  // sudah log masuk (No.KP/PIN atau Google sedia ada) ATAU semakan lain sedang berjalan — elak konflik.
+  // Tanpa _gSemakBusy, login_via_google dipanggil 2x serentak; setiap panggilan MEMUTAR token sesi
+  // (hanya 1 token sah bagi setiap pengguna), jadi token yg diterima dahulu terbatal → "Akses ditolak - sesi tidak sah".
+  if(_sesi || _gSemakBusy) return;
+  _gSemakBusy = true;
   try{
     var r = await sb.rpc('login_via_google');
     if(r.error){
@@ -10223,6 +10228,7 @@ async function _semakSesiGoogle(session){
       openMo('mo-claim');
     }
   }catch(e){ console.error(e); }
+  finally{ _gSemakBusy = false; }
 }
 
 async function claimAkaunGoogle(){
