@@ -675,3 +675,11 @@ Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kate
 **Punca (disahkan):** jadual `sekolah` hanya ada polisi `SELECT TO anon` (`sekolah_select_anon`), manakala `penyertaan`/`pencapaian`/`programs` TO public. Pengguna log masuk Google berperanan `authenticated` → RLS memulangkan senarai KOSONG tanpa ralat (disahkan: `authenticated` nampak 0, `anon` nampak 50). `getSekolahListGS` (dan `loadSekolahMaster`, yang senyap kembali ke `_SEKOLAH_STATIK`) terjejas untuk semua sesi Google.
 **Pembetulan:** migrasi `sekolah_select_authenticated` — polisi `SELECT TO authenticated USING (true)` (data sama yang anon sudah boleh baca; tiada kebenaran tulis). Selepas itu `authenticated` nampak 50 sekolah. Kod `laporan-sekolah.js`: jika senarai kosong guna `_SEKOLAH_STATIK`, jika masih kosong papar amaran jelas.
 
+---
+
+## Claim akaun Google gagal: "column reference "no_kp" is ambiguous" (19 Okt 2026) — SIAP
+**Gejala:** pengguna yang menekan sahkan/claim akaun (No.KP + PIN) selepas log masuk Google menerima ralat "no_kp is ambiguous".
+**Punca (disahkan, ditiru):** `claim_akaun_google` (PL/pgSQL) mengembalikan `TABLE(role, nama, kod_sekolah, nama_sekolah, no_kp, session_token)`; nama lajur output menjadi pemboleh ubah, lalu `where no_kp = p_no_kp` dalam `UPDATE pengguna` bertindih dengan lajur `pengguna.no_kp` → ralat 42702 pada setiap panggilan (jadi SEMUA percubaan claim gagal). Tidak diketahui bila bermula (kemungkinan selepas fungsi ditulis semula semasa migrasi token).
+**Pembetulan:** migrasi `betulkan_claim_akaun_google_no_kp_ambiguous` — alias jadual (`pgn.no_kp`, `pgn.kod`, ...) dalam `UPDATE`. Logik dan mesej ralat tak berubah. Diuji dalam transaksi dibatalkan: PIN salah → mesej perniagaan biasa; PIN betul → baris dipulangkan, token 48 aksara dijana, `auth_uid` terikat. Fungsi `analitik_*` diimbas: semuanya `LANGUAGE sql` (tiada risiko serupa); `daftar_akaun_google`/`login_via_google` selamat.
+**Nota:** hanya 1 daripada 83 akaun sudah diikat ke Google (81 akaun AKTIF belum) — pengguna yang gagal claim sebelum ini perlu mencuba semula.
+
