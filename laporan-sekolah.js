@@ -613,6 +613,9 @@
       try {
         var r = await G._supaDispatch('getSekolahListGS', {});
         LS.sekList = (r && r.data) || [];
+        // RLS boleh memulangkan senarai KOSONG tanpa ralat — guna senarai statik app sebagai ganti
+        if (!LS.sekList.length && G._SEKOLAH_STATIK && G._SEKOLAH_STATIK.length) LS.sekList = G._SEKOLAH_STATIK.slice();
+        if (!LS.sekList.length) msg('Senarai sekolah kosong — semak akses jadual sekolah di pangkalan data.', 'er');
         $('ls-sek').innerHTML = '<option value="">— PILIH SEKOLAH —</option>'
           + '<option value="' + SEMUA + '">★ SEMUA SEKOLAH (satu fail setiap sekolah, ZIP)</option>'
           + LS.sekList.map(function (x) { return '<option value="' + E(x.kod) + '">' + E(x.nama) + ' (' + E(x.kod) + ')</option>'; }).join('');

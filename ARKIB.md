@@ -668,3 +668,10 @@ Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kate
 **Punca (disahkan):** `_initGoogleAuth` memanggil `_semakSesiGoogle` dua kali serentak (`onAuthStateChange` SIGNED_IN + `getSession()`). Pengawal `if(_sesi) return` tidak melindungi kerana `_sesi` hanya diset selepas RPC selesai. Setiap panggilan `login_via_google` memutar token sesi (`_set_session_token`; hanya satu hash token disimpan bagi setiap pengguna), jadi token panggilan pertama terbatal serta-merta. Log API: dua `login_via_google` berselang 2 ms, kemudian `admin_senarai_akaun` 400 dan 200 hampir serentak.
 **Pembetulan:** `index.html` — `_semakSesiGoogle` dijadikan single-flight (`_gSemakBusy` + `finally`). Diuji unit: kod baharu 1 panggilan serentak (kod lama 2), penanda dilepaskan selepas ralat/pengecualian.
 
+---
+
+## Laporan Sekolah: admin hanya nampak "SEMUA SEKOLAH", senarai sekolah kosong (19 Okt 2026) — SIAP
+**Gejala:** dalam modal Laporan Sekolah, admin (log masuk Google) hanya nampak "SEMUA SEKOLAH"; tiada sekolah satu-satu.
+**Punca (disahkan):** jadual `sekolah` hanya ada polisi `SELECT TO anon` (`sekolah_select_anon`), manakala `penyertaan`/`pencapaian`/`programs` TO public. Pengguna log masuk Google berperanan `authenticated` → RLS memulangkan senarai KOSONG tanpa ralat (disahkan: `authenticated` nampak 0, `anon` nampak 50). `getSekolahListGS` (dan `loadSekolahMaster`, yang senyap kembali ke `_SEKOLAH_STATIK`) terjejas untuk semua sesi Google.
+**Pembetulan:** migrasi `sekolah_select_authenticated` — polisi `SELECT TO authenticated USING (true)` (data sama yang anon sudah boleh baca; tiada kebenaran tulis). Selepas itu `authenticated` nampak 50 sekolah. Kod `laporan-sekolah.js`: jika senarai kosong guna `_SEKOLAH_STATIK`, jika masih kosong papar amaran jelas.
+
