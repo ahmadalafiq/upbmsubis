@@ -692,3 +692,10 @@ Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kate
 **Pulih jika perlu:** `GRANT EXECUTE ON FUNCTION public.<nama>(<jenis>) TO anon, authenticated;`
 **Nota:** laluan simpanan `_mulakanSesi` (panggil `_set_session_token` jika tiada token) kini gagal senyap; semua laluan log masuk semasa sudah memulangkan token sendiri.
 
+---
+
+## Eksport Excel/CSV: No.KP, No.Tel dan nombor panjang tidak lagi bertukar (20 Okt 2026) — SIAP
+**Masalah (ditiru dalam LibreOffice):** CSV lama menulis nilai dalam petikan sahaja; Excel membuangnya dan menukar teks berangka kepada nombor: `010101130001`→`10101130001`, `0191234567`→`191234567`, `000229120003`→`229120003`, `00123`→`123`, nombor 15 digit→`1.23E+14`. Sel Excel (.xlsx) bertaip teks tetapi tanpa format `@`, jadi bertukar jadi nombor sebaik disunting. Pepijat sedia ada: Excel senarai guru menulis `0191234567` sebagai `+600191234567` (pemformat sebaris hanya membuang awalan `60`, bukan `0`).
+**Pembetulan (`index.html`):** `_numTeks()` mengesan nilai berangka yang bukan kuantiti (≥7 digit, atau 0 pendahulu, atau bermula `+`; tarikh ISO dikecualikan). CSV: `_csvCell()` menulis `="..."` bagi nilai sedemikian (Excel kekalkan teks); nilai bermula `=`/`@`/`+`/`-` (bukan nombor) diawali `'` untuk menghalang CSV injection. Excel: `_xlTeksSheets()` menetapkan format `@` pada sel teks berangka dalam workbook program. Telefon Excel guna `_fmtTel60` (sama dgn CSV). Templat: lajur NO. KP (PESERTA & GURU) dan NO. TEL (GURU) berformat teks pada baris 2–302 + baris panduan 6. Import: sel NOMBOR No.KP (Excel buang 0 pendahulu) dipulihkan ke 12 digit (`_kpSel`).
+**Disahkan dengan program hamparan sebenar:** CSV baharu dibuka dalam LibreOffice — semua nilai kekal teks & tepat (termasuk 15 digit); sel Excel No.KP/No.Tel bertipe `s` format `@`; templat berformat `@`; import sel nombor → `010101-13-0001`, `000229-12-0003`. Nota: `="..."` dipaparkan literal oleh alat bukan-hamparan (cth skrip Python/pandas) — pilihan ini untuk Excel.
+

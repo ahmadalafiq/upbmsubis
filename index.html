@@ -5402,6 +5402,49 @@ function printRum(){
   window.print();
   p.style.display='none';
 }
+// == EKSPORT SELAMAT NOMBOR (CSV & Excel) =======================
+// Nilai berangka yang BUKAN kuantiti (No.KP, No.Tel, kod...) mesti kekal TEKS. Excel menukar "010101130001"
+// kepada 10101130001 (0 hilang) dan nombor panjang kepada 1.23E+14 apabila CSV dibuka / sel disunting.
+function _numTeks(v){
+  if(v===null||v===undefined) return false;
+  var s=String(v).trim(); if(!s) return false;
+  if(/^\d{4}-\d{2}-\d{2}([T ].*)?$/.test(s)) return false;   // tarikh ISO: biar Excel urus
+  if(!/^\+?\d[\d\s\-().]*$/.test(s)) return false;            // bukan sekadar digit/pemisah
+  return s.replace(/\D/g,'').length>=7 || /^0\d/.test(s) || s.charAt(0)==='+';  // panjang / 0 pendahulu / '+'
+}
+// Sel CSV: nombor-sebagai-teks ditulis ="..." (Excel kekalkan teks); selain itu dipetik biasa.
+// Juga halang formula berniat jahat (CSV injection) — nilai bermula = @ (atau +/- bukan nombor) diawali '
+function _csvCell(v){
+  var s=(v===null||v===undefined)?'':String(v);
+  if(_numTeks(s)) return '="'+s.replace(/"/g,'""')+'"';
+  if(/^[=@]/.test(s) || /^[+\-]/.test(s)) s="'"+s;
+  return '"'+s.replace(/"/g,'""')+'"';
+}
+// Excel: tandakan sel teks berangka dgn format '@' supaya kekal teks walaupun disunting
+function _xlTeksSheets(wb){
+  Object.keys(wb.Sheets).forEach(function(n){
+    var ws=wb.Sheets[n];
+    Object.keys(ws).forEach(function(k){
+      if(k.charAt(0)==='!') return;
+      var c=ws[k]; if(c && c.t==='s' && _numTeks(c.v)) c.z='@';
+    });
+  });
+}
+// Templat: prasetkan lajur (baris r1..r2) sebagai teks supaya apa yang pengguna taip tak ditukar jadi nombor
+function _xlTeksLajur(ws,col,r1,r2){
+  for(var r=r1;r<=r2;r++){
+    var k=col+r;
+    if(!ws[k]) ws[k]={t:'s',v:'',z:'@'}; else if(ws[k].t==='s') ws[k].z='@';
+  }
+  var rg=XLSX.utils.decode_range(ws['!ref']||'A1:A1');
+  rg.e.r=Math.max(rg.e.r,r2-1); rg.e.c=Math.max(rg.e.c,XLSX.utils.decode_col(col));
+  ws['!ref']=XLSX.utils.encode_range(rg);
+}
+// Sel import: nombor tulen (Excel buang 0 pendahulu) -> pulihkan No.KP 12 digit; selain itu teks biasa
+function _kpSel(v){
+  if(typeof v==='number' && isFinite(v) && Math.floor(v)===v && v>0 && String(v).length<12) return String(v).padStart(12,'0');
+  return String(v==null?'':v).trim();
+}
 function expCSV(){
   var pny=window._rumPny||[];if(!pny.length){toast('Tiada data','er');return;}
   var nm=(window._rumProg&&window._rumProg['Nama Program']||'data').replace(/[\/*?:\[\]]/g,'_');
@@ -5412,7 +5455,7 @@ function expCSV(){
     var v=p[h]||'';
     if(h==='No Tel Guru') v=_fmtTel60(v)==='—'?'':
 _fmtTel60(v);
-    return '"'+String(v).replace(/"/g,'""')+'"';
+    return _csvCell(v);
   }).join(',');})).join('\n');
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
   a.download='penyertaan_'+nm+'.csv';
@@ -5424,7 +5467,7 @@ _fmtTel60(v);
   if(pnc.length){
     var hdrPnc=['ID','Program ID','Nama Program','Peringkat','Kategori','Tempat','Nama Sekolah','Nama Peserta','No KP Peserta','Nama Guru'];
     var csvPnc=['\uFEFF'+hdrPnc.join(',')].concat(pnc.map(function(p){return hdrPnc.map(function(h){
-      return '"'+String(p[h]||''). replace(/"/g,'""')+'"';
+      return _csvCell(p[h]);
     }).join(',');})).join('\n');
     var b2=document.createElement('a');b2.href=URL.createObjectURL(new Blob([csvPnc],{type:'text/csv;charset=utf-8;'}));
     b2.download='pencapaian_'+nm+'.csv';
@@ -5511,7 +5554,7 @@ function _buildXlsxWorkbook(prog, pny, pnc){
     merges.push({s:{r:r,c:0},e:{r:r,c:8}});r++;
     ['BIL','NAMA GURU','NO KP','JANTINA','BANGSA','NO TEL'].forEach(function(h,ci){var col=String.fromCharCode(65+ci);ws[col+(r+1)]={v:h,t:'s',s:{font:{bold:true,sz:9,name:'Arial',color:{rgb:WHITE}},fill:{fgColor:{rgb:'1F618D'}},alignment:{horizontal:'center',vertical:'center'},border:{top:{style:'medium',color:{rgb:'154360'}},bottom:{style:'medium',color:{rgb:'154360'}},left:{style:'thin',color:{rgb:'AED6F1'}},right:{style:'thin',color:{rgb:'AED6F1'}}}}};});
     merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;
-    guruList.forEach(function(g,i){var bg=i%2===0?'EBF5FB':'D6EAF8';var telVal=(function(t){if(!t||t==='—')return '—';t=String(t).trim();if(!t.startsWith('+'))t='+60'+t.replace(/^60/,'');return t;})(g['No Tel Guru']);[i+1,g['Nama Guru']||'—',g['No KP Guru']||'—',g['Jantina Guru']||'—',g['Bangsa Guru']||'—',telVal].forEach(function(v,ci){var col=String.fromCharCode(65+ci);var st=bdr(bg,false,'000000',9);if(ci===0)st=ctr(st);var cellType=(ci===5||ci===1||ci===2)?'s':(typeof v==='number'?'n':'s');ws[col+(r+1)]={v:v,t:cellType,s:st};});merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;});
+    guruList.forEach(function(g,i){var bg=i%2===0?'EBF5FB':'D6EAF8';var telVal=_fmtTel60(g['No Tel Guru']);/* pemformat sama dgn CSV: 0191234567 -> +60191234567 (dulu +600191234567) */[i+1,g['Nama Guru']||'—',g['No KP Guru']||'—',g['Jantina Guru']||'—',g['Bangsa Guru']||'—',telVal].forEach(function(v,ci){var col=String.fromCharCode(65+ci);var st=bdr(bg,false,'000000',9);if(ci===0)st=ctr(st);var cellType=(ci===5||ci===1||ci===2)?'s':(typeof v==='number'?'n':'s');ws[col+(r+1)]={v:v,t:cellType,s:st};});merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;});
     if(!guruList.length){ws['A'+(r+1)]={v:'— Tiada guru —',t:'s',s:{font:{italic:true,sz:9,name:'Arial',color:{rgb:DARKGREY}},alignment:{horizontal:'center'}}};merges.push({s:{r:r,c:0},e:{r:r,c:8}});r++;}
     r++;
     var katMap={},katOrder=[];
@@ -5598,6 +5641,7 @@ function _buildXlsxWorkbook(prog, pny, pnc){
     XLSX.utils.book_append_sheet(wb,wsPnc,'PENCAPAIAN');
   }
   XLSX.utils.book_append_sheet(wb,wsRmk,'RINGKASAN');
+  _xlTeksSheets(wb);   // No.KP / No.Tel kekal teks (format '@')
   return wb;
 }
 
@@ -6190,12 +6234,15 @@ function muatTurunTemplatXlsx(){
   pesRows.push(['CONTOH: AHMAD BIN ALI','010101-13-0001','LELAKI','BUMIPUTERA', _selKatList[0]||'']);
   var wsPes=XLSX.utils.aoa_to_sheet(pesRows);
   wsPes['!cols']=[{wch:28},{wch:16},{wch:12},{wch:14},{wch:28}];
+  _xlTeksLajur(wsPes,'B',2,302);   // NO. KP: teks (0 pendahulu tak hilang bila ditaip)
   XLSX.utils.book_append_sheet(wb,wsPes,'PESERTA');
 
   var guruRows=[['NAMA GURU','NO. KP','JANTINA','BANGSA','NO. TEL']];
   guruRows.push(['CONTOH: SITI BINTI HASSAN','850101-13-5678','PEREMPUAN','MELAYU','0191234567']);
   var wsGuru=XLSX.utils.aoa_to_sheet(guruRows);
   wsGuru['!cols']=[{wch:28},{wch:16},{wch:12},{wch:14},{wch:16}];
+  _xlTeksLajur(wsGuru,'B',2,302);  // NO. KP
+  _xlTeksLajur(wsGuru,'E',2,302);  // NO. TEL
   XLSX.utils.book_append_sheet(wb,wsGuru,'GURU');
 
   var panduanRows=[
@@ -6205,6 +6252,7 @@ function muatTurunTemplatXlsx(){
     ['3. JANTINA: LELAKI atau PEREMPUAN sahaja.'],
     ['4. KATEGORI mesti sama ejaan dengan senarai di bawah (jika lebih dari satu, asingkan dengan koma).'],
     ['5. No. KP boleh isi dengan/tanpa sengkang (-), sistem akan format automatik.'],
+    ['6. Lajur NO. KP dan NO. TEL telah ditetapkan sebagai TEKS — taip seperti biasa; angka 0 di hadapan tidak akan hilang.'],
     [''],['KATEGORI SAH UNTUK PROGRAM INI:'],
   ];
   _selKatList.forEach(function(k){panduanRows.push([k]);});
@@ -6246,7 +6294,7 @@ function _prosesBulkXlsx(wb){
       var r=rowsPes[i]; if(!r||!r.length) continue;
       var nama=String(r[0]||'').trim();
       if(!nama || nama.toUpperCase().indexOf('CONTOH')===0) continue;
-      var kpRaw=String(r[1]||'').trim();
+      var kpRaw=_kpSel(r[1]);
       var jantina=String(r[2]||'').trim().toUpperCase();
       var bangsa=String(r[3]||'').trim().toUpperCase();
       var katRaw=String(r[4]||'').trim();
@@ -6282,7 +6330,7 @@ function _prosesBulkXlsx(wb){
       var rg=rowsGuru[j]; if(!rg||!rg.length) continue;
       var namaG=String(rg[0]||'').trim();
       if(!namaG || namaG.toUpperCase().indexOf('CONTOH')===0) continue;
-      var kpG=normKP(String(rg[1]||'').trim());
+      var kpG=normKP(_kpSel(rg[1]));
       var jantinaG=String(rg[2]||'').trim().toUpperCase();
       var bangsaG=String(rg[3]||'').trim().toUpperCase();
       var telRaw=String(rg[4]||'').replace(/\D/g,'');
