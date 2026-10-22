@@ -92,6 +92,7 @@ input:focus,select:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--rt);
 .pmeta{display:grid;grid-template-columns:1fr 1fr;gap:.16rem .5rem;margin-bottom:.52rem;}
 .pmi{font-size:.67rem;color:var(--g5);display:flex;align-items:center;gap:.26rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pmi-full{grid-column:1/-1;}
+.luar-tag{display:inline-flex;align-items:center;gap:.2rem;padding:.1rem .42rem;border-radius:20px;font-size:.55rem;font-weight:800;color:#0e6655;background:rgba(22,160,133,.14);border:1px solid rgba(22,160,133,.32);white-space:nowrap;vertical-align:middle;}
 .stag{display:inline-flex;align-items:center;gap:.23rem;padding:.12rem .5rem;border-radius:20px;font-size:.57rem;font-weight:800;text-transform:uppercase;letter-spacing:.3px;}
 .sA{background:rgba(39,174,96,.09);color:#27ae60;border:1px solid rgba(39,174,96,.22);}
 .sA::before{content:'●';font-size:.38rem;animation:blink 1.5s infinite;}
@@ -1756,6 +1757,11 @@ body.view-list .pc::after { display: none; }
       <select class="dash-filter-sel" id="df-sekolah" onchange="applyDashFilters()">
         <option value="">— SEMUA SEKOLAH —</option>
       </select>
+      <select class="dash-filter-sel" id="df-jenis" onchange="applyDashFilters()" title="Jenis aktiviti: Teras (ranking rasmi), Aktiviti Luar, atau komprehensif">
+        <option value="">JENIS: TERAS SAHAJA</option>
+        <option value="LUAR">🌐 AKTIVITI LUAR SAHAJA</option>
+        <option value="SEMUA">TERAS + LUAR (KOMPREHENSIF)</option>
+      </select>
     </div>
     <!-- Status pills -->
     <div class="status-pills">
@@ -1766,6 +1772,9 @@ body.view-list .pc::after { display: none; }
       <span class="status-pill sp-tutup" id="spill-tutup" onclick="setStatusPill('tutup')"><span class="status-pill-dot"></span>TUTUP</span>
     </div>
   </div>
+
+  <!-- ── AKTIVITI LUAR & SKOR KOMPREHENSIF (Projek 7) ──────── -->
+  <div id="dash-luar"></div>
 
   <!-- ── COLLAPSIBLE MARKAH ────────────────────────────────── -->
   <div class="card mb2">
@@ -3421,6 +3430,7 @@ function progCard(p){
     '<div class="pc-top">'
       +'<div class="fx ic" style="gap:.32rem;"><div class="stag '+sc+'">'+p['Status']+'</div>'
       +(p._katMismatch?'<span class="pc-kat-warn" title="⚠ Kategori penyertaan tidak sepadan: '+esc((p._katAsing||[]).join(', '))+'">!</span>':'')
+      +(p['Aktiviti Luar']===true?'<span class="luar-tag" title="Aktiviti Luar — tidak semua sekolah menyertai">🌐 LUAR</span>':'')
       +'</div>'
       +'<span class="pc-bidang">'+p['Bidang']+'</span>'
     +'</div>'
@@ -3492,7 +3502,7 @@ function tutupRow(p){
   div.innerHTML=
     '<div class="trow-dot"></div>'
     +'<div class="trow-body">'
-      +'<div class="trow-title">'+p['Nama Program']+(p._katMismatch?' <span class="pc-kat-warn" title="⚠ Kategori penyertaan tidak sepadan: '+esc((p._katAsing||[]).join(', '))+'">!</span>':'')+'</div>'
+      +'<div class="trow-title">'+p['Nama Program']+(p._katMismatch?' <span class="pc-kat-warn" title="⚠ Kategori penyertaan tidak sepadan: '+esc((p._katAsing||[]).join(', '))+'">!</span>':'')+(p['Aktiviti Luar']===true?' <span class="luar-tag">🌐 LUAR</span>':'')+'</div>'
       +'<div class="trow-meta">'+meta+'</div>'
       +leHtml
     +'</div>'
@@ -7409,6 +7419,14 @@ function _tempatRank(t){
 // polisi rasmi semasa yang dipersetujui. Tukar ke 'KATEGORI' jika dasar berubah kelak supaya
 // 1 kredit diberi bagi SETIAP kategori dalam program yang sama — tanpa gali semula logik dedup.
 var PELIBATAN_DEDUP_SCOPE='PROGRAM';
+// == POLISI AKTIVITI LUAR (Projek 7) — SATU tempat untuk menukar dasar markah ==========
+// Aktiviti luar = tidak semua sekolah menyertai. Kredit Pelibatan (mis. 17 mata KEBANGSAAN hanya kerana berdaftar)
+// boleh memberi kelebihan kuantiti kepada sekolah yang lebih banyak menyertai, jadi lalai: PENCAPAIAN sahaja.
+//   pelibatan : 'TIADA' (lalai; aktiviti luar dikira pada pencapaian sahaja) | 'SETENGAH' (50%) | 'PENUH'
+//   had       : maksimum mata aktiviti luar bagi setiap sekolah/peserta/guru (null = tiada had)
+var LUAR_POLISI={pelibatan:'TIADA', had:null};
+var LUAR_FAKTOR_PELIBATAN={TIADA:0, SETENGAH:0.5, PENUH:1};
+var _dashJenis=''; // jenis aktiviti Dashboard: '' = Teras sahaja (lalai, ranking rasmi) | 'LUAR' | 'SEMUA' (komprehensif)
 function _pelibatanDedupKey(k, progId, kat){
   return PELIBATAN_DEDUP_SCOPE==='KATEGORI' ? (progId+'|'+kat+'|'+k) : (progId+'|'+k);
 }
@@ -7426,8 +7444,8 @@ function getSkor(pc, field, py, pg){
   });
 
   // Build progId → Peringkat map from program list
-  var progPer={}, progKat={};
-  (pg||[]).forEach(function(p){ progPer[p['ID']]=(p['Peringkat']||'SEKOLAH').toUpperCase(); progKat[p['ID']]=(p['Kategori']||'INDIVIDU').toUpperCase(); });
+  var progPer={}, progKat={}, luarSet={};
+  (pg||[]).forEach(function(p){ progPer[p['ID']]=(p['Peringkat']||'SEKOLAH').toUpperCase(); progKat[p['ID']]=(p['Kategori']||'INDIVIDU').toUpperCase(); if(p['Aktiviti Luar']===true) luarSet[p['ID']]=1; });
 
   // Helper — bina kunci unik & nama paparan
   function _entityKey(p){
@@ -7490,7 +7508,7 @@ function getSkor(pc, field, py, pg){
     sc[k].totalPenc+=pts;
     sc[k].detail.push({
       prog:p['Nama Program'], progId:progKey, tempat:p['Tempat'], per:per, pts:pts, kat:kat,
-      sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru']
+      sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru'], luar:!!luarSet[progKey]
     });
   });
 
@@ -7510,6 +7528,9 @@ function getSkor(pc, field, py, pg){
 
     // JADUAL 6: auto-assign PELIBATAN I bila peserta tak dapat tempat (Sekolah = 0 mata, tiada opsyen Pelibatan)
     var pts=mPts(per,'PELIBATAN I');
+    // Projek 7: kredit Pelibatan bagi aktiviti luar ikut LUAR_POLISI.pelibatan (entri tetap dicipta, 0 mata, supaya penyertaan kelihatan)
+    var _luar=!!luarSet[progId];
+    if(_luar){ var _f=LUAR_FAKTOR_PELIBATAN[LUAR_POLISI.pelibatan]; pts=Math.round(pts*(_f==null?1:_f)); }
 
     if(!sc[k]) sc[k]={total:0,totalPenc:0,totalPel:0,detail:[],display:disp,sekolah:sek};
     sc[k].total+=pts;
@@ -7518,7 +7539,7 @@ function getSkor(pc, field, py, pg){
     sc[k].detail.push({
       prog:progNm||progId, progId:progId,
       tempat:'PELIBATAN I', per:per, pts:pts, kat:_kat2,
-      sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru']
+      sek:sek, pes:p['Nama Peserta'], guru:p['Nama Guru'], luar:_luar
     });
   }
   // Sumber utama: jadual Penyertaan (pendaftaran)
@@ -7536,6 +7557,16 @@ function getSkor(pc, field, py, pg){
     _grantPelibatan(p, per, progId, p['Nama Program']);
   });
 
+  // Projek 7: had mata aktiviti luar bagi setiap entiti (null = tiada had). Lebihan ditolak dari pencapaian dahulu, kemudian pelibatan.
+  if(LUAR_POLISI.had!=null){
+    Object.keys(sc).forEach(function(k){
+      var e=sc[k], ls=0; e.detail.forEach(function(d){ if(d.luar) ls+=d.pts; });
+      if(ls>LUAR_POLISI.had){
+        var ex=ls-LUAR_POLISI.had, dp=Math.min(ex,e.totalPenc);
+        e.totalPenc-=dp; e.totalPel-=(ex-dp); e.total-=ex; e.luarDipotong=ex;
+      }
+    });
+  }
   return sc;
 }
 
@@ -8962,6 +8993,7 @@ function rebuildDash(){
   _renderRkType('sekPel');
   _renderRkType('guruAda');
   _renderRkType('guruTiada');
+  buildPanelLuar();
   buildPenc(pc, 3);
 
   // Original charts
@@ -10654,9 +10686,10 @@ function applyDashFilters() {
   _dashPeringkat = (document.getElementById('df-peringkat')||{}).value || '';
   _dashBulan     = (document.getElementById('df-bulan')||{}).value     || '';
   _dashSekolah   = (document.getElementById('df-sekolah')||{}).value   || '';
+  _dashJenis     = (document.getElementById('df-jenis')||{}).value     || '';
 
   // Highlight active selects
-  ['df-bidang','df-peringkat','df-bulan','df-sekolah'].forEach(function(id) {
+  ['df-bidang','df-peringkat','df-bulan','df-sekolah','df-jenis'].forEach(function(id) {
     var el = document.getElementById(id);
     if (!el) return;
     el.classList.toggle('active-filter', !!el.value);
@@ -10687,9 +10720,10 @@ function resetDashFilters(silent) {
   _dashPeringkat = '';
   _dashBulan     = '';
   _dashSekolah   = '';
+  _dashJenis     = '';
 
   // Reset selects
-  ['df-bidang','df-peringkat','df-bulan','df-sekolah'].forEach(function(id) {
+  ['df-bidang','df-peringkat','df-bulan','df-sekolah','df-jenis'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) { el.value = ''; el.classList.remove('active-filter'); }
   });
@@ -10725,6 +10759,9 @@ function _dfFilterProgs(arr) {
   var bVal = bidangSel ? bidangSel.value.toUpperCase() : '';
 
   return (arr||[]).filter(function(p) {
+    // Jenis aktiviti (Projek 7): lalai = Teras sahaja; 'LUAR' = aktiviti luar sahaja; 'SEMUA' = kedua-duanya
+    var _luarP = p['Aktiviti Luar'] === true;
+    if (_dashJenis === 'LUAR' ? !_luarP : (_dashJenis !== 'SEMUA' && _luarP)) return false;
     // Bidang filter
     if (bVal) {
       var pBidang = (p['Bidang']||'').toUpperCase();
@@ -10775,9 +10812,69 @@ function _dfFilterPny(pny, allPg) {
 // ── Master filter: pencapaian ─────────────────────────────────
 function _dfFilterPnc(pnc, allPg) {
   var filteredPg = _dfFilterProgs(allPg);
-  var okNms = {};
-  filteredPg.forEach(function(p) { okNms[p['Nama Program']]=1; });
-  return (pnc||[]).filter(function(r) { return okNms[r['Nama Program']]; });
+  var okNms = {}, okIds = {};
+  filteredPg.forEach(function(p) { okNms[p['Nama Program']]=1; okIds[p['ID']]=1; });
+  // Padan ikut ID program (nama boleh sama antara program teras & luar); nama hanya jika ID tiada
+  return (pnc||[]).filter(function(r) { return r['Program ID'] ? !!okIds[r['Program ID']] : !!okNms[r['Nama Program']]; });
+}
+
+// ── PANEL: AKTIVITI LUAR & SKOR KOMPREHENSIF (Projek 7) ───────
+// Dikira berasingan daripada pilihan "Jenis aktiviti": panel sentiasa membandingkan Teras / Luar / Komprehensif
+// (mengikut tapisan lain: bidang, peringkat, bulan, status, sekolah). Sekolah yang tidak menyertai aktiviti luar
+// dipaparkan "—" (bukan 0) dan TIDAK dihukum dalam Skor Teras.
+function _withJenis(j, fn) { var o = _dashJenis; _dashJenis = j; try { return fn(); } finally { _dashJenis = o; } }
+function buildPanelLuar() {
+  var el = document.getElementById('dash-luar'); if (!el) return;
+  var head = '<div class="ch"><div class="dot"></div>🌐 AKTIVITI LUAR &amp; SKOR KOMPREHENSIF</div>';
+  var note = function(t) { el.innerHTML = '<div class="card mb2">' + head + '<div class="cbody" style="padding:.7rem 1rem;font-size:.74rem;color:var(--g5);line-height:1.5;">' + t + '</div></div>'; };
+  if (!(_aPg || []).some(function(p) { return p['Aktiviti Luar'] === true; })) {
+    note('Tiada program ditanda sebagai <b>Aktiviti Luar</b>. Tandakan melalui ✏ EDIT program → <b>🌐 Aktiviti Luar</b>. Ranking di bawah ialah markah <b>Teras</b>.');
+    return;
+  }
+  function sel(j) { return _withJenis(j, function() { return { pg: _dfFilterProgs(_aPg), py: _dfFilterPny(_aP, _aPg), pc: _dfFilterPnc(_aPnc, _aPg) }; }); }
+  var L = sel('LUAR'), A = sel('SEMUA'), T = sel('');
+  if (!L.pg.length) { note('Tiada aktiviti luar yang sepadan dengan tapisan semasa.'); return; }
+  var skL = getSkor(L.pc, 'Nama Sekolah', L.py, L.pg),
+      skA = getSkor(A.pc, 'Nama Sekolah', A.py, A.pg),
+      skT = getSkor(T.pc, 'Nama Sekolah', T.py, T.pg);
+  var sekSemua = {}; A.py.forEach(function(r) { if (r['Nama Sekolah']) sekSemua[r['Nama Sekolah']] = 1; });
+  var nPenc = L.pc.filter(function(r) { return r['Tempat']; }).length, markahLuar = 0;
+  var rows = Object.keys(skA).map(function(k) {
+    var t = skT[k] ? skT[k].total : 0, kom = skA[k].total, l = skL[k], pr = {};
+    if (l) l.detail.forEach(function(d) { pr[d.progId] = 1; });
+    markahLuar += (kom - t);
+    return { nm: k, t: t, kom: kom, lu: kom - t, ada: !!l, nProg: Object.keys(pr).length,
+             penc: L.pc.filter(function(r) { return r['Nama Sekolah'] === k && r['Tempat']; }).length };
+  }).sort(function(a, b) { return b.kom - a.kom || a.nm.localeCompare(b.nm); });
+  var kpi = function(ico, cls, num, lbl) { return '<div class="sc"><div class="sico ' + cls + '">' + ico + '</div><div><div class="snum">' + num + '</div><div class="slbl">' + lbl + '</div></div></div>'; };
+  var dasar = 'Dasar markah aktiviti luar: <b>pencapaian ikut Jadual Markah</b> + pelibatan <b>'
+    + ({ TIADA: 'tiada (0)', SETENGAH: '50%', PENUH: 'penuh' }[LUAR_POLISI.pelibatan] || LUAR_POLISI.pelibatan)
+    + '</b>; had: <b>' + (LUAR_POLISI.had == null ? 'tiada' : LUAR_POLISI.had + ' mata') + '</b>. '
+    + 'Sekolah yang tidak menyertai ditunjuk “—” dan tidak dikenakan penalti dalam Skor Teras.';
+  var td = 'padding:.22rem .4rem;border-bottom:1px solid var(--g2);';
+  var body = rows.map(function(r, i) {
+    return '<tr style="' + (r.ada ? '' : 'color:var(--g5);') + '">'
+      + '<td style="' + td + 'text-align:center;">' + (i + 1) + '</td>'
+      + '<td style="' + td + 'font-weight:' + (r.ada ? '800' : '500') + ';">' + esc(r.nm) + '</td>'
+      + '<td style="' + td + 'text-align:center;">' + (r.ada ? r.nProg : '—') + '</td>'
+      + '<td style="' + td + 'text-align:center;">' + (r.ada ? r.penc : '—') + '</td>'
+      + '<td style="' + td + 'text-align:center;">' + r.t + '</td>'
+      + '<td style="' + td + 'text-align:center;">' + (r.ada ? r.lu : '—') + '</td>'
+      + '<td style="' + td + 'text-align:center;font-weight:900;color:var(--red);">' + r.kom + '</td></tr>';
+  }).join('');
+  var th = 'padding:.3rem .4rem;background:var(--red);color:#fff;font-size:.6rem;text-align:center;position:sticky;top:0;';
+  el.innerHTML = '<div class="card mb2">' + head + '<div class="cbody" style="padding:.7rem 1rem;">'
+    + '<div class="sgrid" style="margin-bottom:.7rem;">'
+    + kpi('🌐', 'ir', L.pg.length, 'Program Luar')
+    + kpi('🏫', 'ig', Object.keys(skL).length + ' / ' + Object.keys(sekSemua).length, 'Sekolah Menyertai')
+    + kpi('🏅', 'ib', nPenc, 'Pencapaian Luar')
+    + kpi('⭐', 'io', markahLuar, 'Markah Luar')
+    + '</div>'
+    + '<div style="font-size:.64rem;color:var(--g5);margin-bottom:.45rem;line-height:1.5;">' + dasar + '</div>'
+    + '<div style="max-height:360px;overflow:auto;border:1px solid var(--g2);border-radius:8px;">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:.7rem;"><thead><tr>'
+    + ['#', 'Sekolah', 'Aktiviti Luar', 'Pencapaian Luar', 'Markah Teras', 'Markah Luar', 'Skor Komprehensif'].map(function(h) { return '<th style="' + th + '">' + h + '</th>'; }).join('')
+    + '</tr></thead><tbody>' + body + '</tbody></table></div></div></div>';
 }
 
 // ── CARTA: BIDANG (bar) ───────────────────────────────────────
@@ -11020,7 +11117,7 @@ function buildProgTable(pg, py) {
     var sek = sekCount[p['ID']] ? Object.keys(sekCount[p['ID']]).length : 0;
     var pes = pesCount[p['ID']] || 0;
     var tr = document.createElement('tr');
-    tr.innerHTML = '<td><div class="ptbl-nama" title="'+esc(p['Nama Program']||'')+'">'+esc(p['Nama Program']||'—')
+    tr.innerHTML = '<td><div class="ptbl-nama" title="'+esc(p['Nama Program']||'')+'">'+esc(p['Nama Program']||'—')+(p['Aktiviti Luar']===true?' <span class="luar-tag">🌐 LUAR</span>':'')
       + '<div class="ptbl-sub">'+esc(p['Pengelola']||'')+'</div></div></td>'
       + '<td>'+esc(p['Bidang']||'—')+'</td>'
       + '<td>'+esc(p['Peringkat']||'—')+'</td>'

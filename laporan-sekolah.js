@@ -57,6 +57,11 @@
   function normNamaProgram(s) {   // buang tahun supaya program sama dipadan antara sesi
     return U(s).replace(/\bTAHUN\s*(19|20)\d{2}\b/g, '').replace(/\b(19|20)\d{2}\b/g, '').replace(/\s+/g, ' ').trim();
   }
+  function luarDasarTeks() {   // dasar aktiviti luar semasa (LUAR_POLISI dalam index.html)
+    var p = G.LUAR_POLISI || { pelibatan: 'TIADA', had: null };
+    return 'pencapaian ikut Jadual Markah, pelibatan ' + ({ TIADA: 'tiada (0)', SETENGAH: '50%', PENUH: 'penuh' }[p.pelibatan] || p.pelibatan)
+      + ', had ' + (p.had == null ? 'tiada' : p.had + ' mata');
+  }
   function pecah(n, base) {
     if (base == null || base === 0) return '—';
     var p = Math.round((n - base) / base * 100);
@@ -97,6 +102,12 @@
       tot += e.total; totPenc += e.totalPenc; totPel += e.totalPel;
       (e.detail || []).forEach(function (d) { perProg[d.progId] = (perProg[d.progId] || 0) + d.pts; });
     });
+    // Projek 7: pecahan Teras / Aktiviti Luar. `tot` = markah komprehensif (luar ikut LUAR_POLISI); luar = tot - teras
+    var isLuarId = function (id) { var g = progById[id]; return !!(g && g['Aktiviti Luar'] === true); };
+    var scT = G.getSkor(pcC.filter(function (r) { return !isLuarId(r['Program ID']); }), 'Nama Sekolah',
+      pyC.filter(function (r) { return !isLuarId(r['Program ID']); }), progs);
+    var totTeras = 0;
+    Object.keys(scT).forEach(function (k) { totTeras += scT[k].total; });
     // Senarai pencapaian: SEMUA kedudukan yang direkod (getSkor hanya kira kedudukan terbaik
     // bagi setiap sekolah/program/kategori untuk MARKAH — tak sesuai untuk senarai penuh)
     var pencList = pcC.filter(function (r) { return r['Tempat']; }).map(function (r) {
@@ -104,7 +115,7 @@
       return {
         progId: r['Program ID'], prog: pg['Nama Program'] || r['Nama Program'] || r['Program ID'],
         tempat: r['Tempat'], kat: r['Kategori'] || '', per: r['Peringkat'] || pg['Peringkat'] || '',
-        pes: r['Nama Peserta'] || '', guru: r['Nama Guru'] || ''
+        pes: r['Nama Peserta'] || '', guru: r['Nama Guru'] || '', luar: isLuarId(r['Program ID'])
       };
     });
     pencList.sort(function (a, b) {
@@ -139,7 +150,8 @@
         peserta: pes.map(function (r) { return { nama: r['Nama Peserta'], jantina: r['Jantina Peserta'] || '', kategori: r['Kategori Penyertaan'] || '' }; }),
         guru: gu.map(function (r) { return { nama: r['Nama Guru'], jantina: r['Jantina Guru'] || '' }; }),
         pencapaian: pn,
-        markah: perProg[id] || 0
+        markah: perProg[id] || 0,
+        luar: isLuarId(id)
       };
     });
     programs.sort(function (a, b) {
@@ -170,7 +182,8 @@
       ringkas: {
         nProgram: programs.length, nPeserta: allPes.length, nGuru: allGu.length,
         nPenc: pencList.length, byTempat: byTempat,
-        skor: tot, skorPenc: totPenc, skorPel: totPel,
+        nProgramLuar: programs.filter(function (p) { return p.luar; }).length,
+        skor: tot, skorPenc: totPenc, skorPel: totPel, skorTeras: totTeras, skorLuar: tot - totTeras,
         byBidang: grp(function (p) { return p.bidang; }),
         byPeringkat: grp(function (p) { return p.peringkat; }),
         jantinaPeserta: cnt(allPes, function (r) { return U(r['Jantina Peserta']); }),
@@ -187,17 +200,23 @@
     S.push({ t: 'title', title: 'LAPORAN PENYERTAAN & PENCAPAIAN', sub: [m.nama, 'Kod: ' + m.kod + '   |   Tahun: ' + m.tahun] });
 
     S.push({ t: 'sec', text: '1. Ringkasan' });
+    var adaLuar = r.nProgramLuar > 0;
+    var rr = [
+      ['Program disertai', r.nProgram, 'Pencapaian (tempat)', r.nPenc],
+      ['Peserta unik', r.nPeserta, '- Pertama', r.byTempat['PERTAMA']],
+      ['Guru pengiring unik', r.nGuru, '- Kedua', r.byTempat['KEDUA']],
+      ['Markah pencapaian', r.skorPenc, '- Ketiga', r.byTempat['KETIGA']],
+      ['Markah pelibatan', r.skorPel, '- Lain-lain', r.byTempat['LAIN-LAIN']]
+    ];
+    if (adaLuar) {   // hanya bila sekolah ini ada aktiviti luar
+      rr.push(['Program teras', r.nProgram - r.nProgramLuar, 'Program aktiviti luar', r.nProgramLuar]);
+      rr.push(['Markah teras', r.skorTeras, 'Markah aktiviti luar', r.skorLuar]);
+    }
+    rr.push(['JUMLAH MARKAH' + (adaLuar ? ' (KOMPREHENSIF)' : ''), r.skor, '', '']);
     S.push({
       t: 'table',
       cols: [{ h: 'Petunjuk', w: 4 }, { h: 'Nilai', w: 1.3, a: 'c' }, { h: 'Petunjuk', w: 4 }, { h: 'Nilai', w: 1.3, a: 'c' }],
-      rows: [
-        ['Program disertai', r.nProgram, 'Pencapaian (tempat)', r.nPenc],
-        ['Peserta unik', r.nPeserta, '- Pertama', r.byTempat['PERTAMA']],
-        ['Guru pengiring unik', r.nGuru, '- Kedua', r.byTempat['KEDUA']],
-        ['Markah pencapaian', r.skorPenc, '- Ketiga', r.byTempat['KETIGA']],
-        ['Markah pelibatan', r.skorPel, '- Lain-lain', r.byTempat['LAIN-LAIN']],
-        ['JUMLAH MARKAH', r.skor, '', '']
-      ]
+      rows: rr
     });
 
     var grpRows = function (o) {
@@ -213,14 +232,16 @@
 
     S.push({ t: 'sec', text: '3. Senarai Program Disertai' });
     if (m.programs.length) {
-      S.push({
-        t: 'table',
-        cols: [{ h: 'Bil', w: .7, a: 'c' }, { h: 'Program', w: 6 }, { h: 'Bidang', w: 1.6, a: 'c' }, { h: 'Peringkat', w: 1.5, a: 'c' },
-          { h: 'Tarikh', w: 1.6, a: 'c' }, { h: 'Peserta', w: 1.1, a: 'c' }, { h: 'Guru', w: .9, a: 'c' }, { h: 'Markah', w: 1.1, a: 'c' }],
-        rows: m.programs.map(function (p, i) {
-          return [i + 1, p.nama, p.bidang, p.peringkat, fmtTarikh(p.tarikh), p.peserta.length, p.guru.length, p.markah];
-        })
-      });
+      var progCols = [{ h: 'Bil', w: .7, a: 'c' }, { h: 'Program', w: 6 }, { h: 'Bidang', w: 1.6, a: 'c' }, { h: 'Peringkat', w: 1.5, a: 'c' },
+        { h: 'Tarikh', w: 1.6, a: 'c' }, { h: 'Peserta', w: 1.1, a: 'c' }, { h: 'Guru', w: .9, a: 'c' }, { h: 'Markah', w: 1.1, a: 'c' }];
+      var progRow = function (p, i) { return [i + 1, p.nama, p.bidang, p.peringkat, fmtTarikh(p.tarikh), p.peserta.length, p.guru.length, p.markah]; };
+      var prTeras = m.programs.filter(function (p) { return !p.luar; }), prLuar = m.programs.filter(function (p) { return p.luar; });
+      if (prLuar.length) S.push({ t: 'sub', text: 'Aktiviti Teras (' + prTeras.length + ')' });
+      if (prTeras.length || !prLuar.length) S.push({ t: 'table', cols: progCols, rows: prTeras.map(progRow) });
+      if (prLuar.length) {   // aktiviti luar dipisahkan daripada aktiviti teras
+        S.push({ t: 'sub', text: 'Aktiviti Luar (' + prLuar.length + ') — tidak semua sekolah menyertai' });
+        S.push({ t: 'table', cols: progCols, rows: prLuar.map(progRow) });
+      }
     } else {
       S.push({ t: 'note', text: 'Tiada program.' });
     }
@@ -230,7 +251,7 @@
       S.push({
         t: 'table',
         cols: [{ h: 'Program', w: 4.6 }, { h: 'Kategori', w: 2, a: 'c' }, { h: 'Peringkat', w: 1.7, a: 'c' }, { h: 'Tempat', w: 1.8, a: 'c' }, { h: 'Peserta', w: 3.1 }, { h: 'Guru', w: 2.8 }],
-        rows: m.pencList.map(function (d) { return [d.prog, d.kat || '—', d.per || '—', d.tempat, d.pes || '—', d.guru || '—']; })
+        rows: m.pencList.map(function (d) { return [d.prog + (d.luar ? ' [AKTIVITI LUAR]' : ''), d.kat || '—', d.per || '—', d.tempat, d.pes || '—', d.guru || '—']; })
       });
       S.push({ t: 'note', text: 'Senarai di atas memuatkan semua kedudukan yang direkod. Markah sekolah dikira mengikut kedudukan terbaik bagi setiap program dan kategori (kaedah ranking Dashboard).' });
     } else {
@@ -241,7 +262,7 @@
     if (m.programs.length) {
       var byNama = function (x, y) { return String(x.nama).localeCompare(String(y.nama)); };
       m.programs.forEach(function (p, i) {
-        S.push({ t: 'sub', text: (i + 1) + '. ' + p.nama + '   (Guru: ' + p.guru.length + '  |  Peserta: ' + p.peserta.length + ')' });
+        S.push({ t: 'sub', text: (i + 1) + '. ' + p.nama + (p.luar ? '  [AKTIVITI LUAR]' : '') + '   (Guru: ' + p.guru.length + '  |  Peserta: ' + p.peserta.length + ')' });
         var rows = [], n = 0;
         p.guru.slice().sort(byNama).forEach(function (g) { rows.push([++n, g.nama, 'GURU', '—', g.jantina || '—']); });
         p.peserta.slice().sort(byNama).forEach(function (x) { rows.push([++n, x.nama, 'PESERTA', x.kategori || '—', x.jantina || '—']); });
@@ -263,6 +284,7 @@
       rows: jk.length ? jk.map(function (k) { return [k, r.jantinaPeserta[k] || 0, r.jantinaGuru[k] || 0]; }) : [['—', 0, 0]]
     });
 
+    if (adaLuar) S.push({ t: 'note', text: 'Aktiviti luar dikira: ' + luarDasarTeks() + '. Markah teras tidak terjejas; sekolah yang tidak menyertai aktiviti luar tidak dikenakan penalti.' });
     S.push({ t: 'note', text: 'Dijana pada ' + hariIni() + ' daripada data yang dilaporkan dalam Sistem UPBM Subis. Markah dikira dengan kaedah yang sama seperti ranking Dashboard (pencapaian + pelibatan). Laporan ini untuk simpanan sekolah.' });
     return S;
   }
@@ -285,6 +307,13 @@
       ['Markah pelibatan', function (r) { return r.skorPel; }],
       ['JUMLAH MARKAH', function (r) { return r.skor; }]
     ];
+    var luarBanding = models.some(function (m) { return m.ringkas.nProgramLuar > 0; });
+    if (luarBanding) {   // baris tambahan hanya bila ada aktiviti luar dalam mana-mana sesi
+      met.splice(met.length - 1, 0,
+        ['Program aktiviti luar', function (r) { return r.nProgramLuar; }],
+        ['Markah teras', function (r) { return r.skorTeras; }],
+        ['Markah aktiviti luar', function (r) { return r.skorLuar; }]);
+    }
     S.push({ t: 'sec', text: '1. Perbandingan Ringkasan' });
     var cols = [{ h: 'Petunjuk', w: 4.5 }].concat(models.map(function (m) { return { h: String(m.tahun), w: 1.4, a: 'c' }; }));
     cols.push({ h: 'Perubahan ' + a.tahun + ' vs ' + b.tahun, w: 2.4, a: 'c' });
@@ -321,6 +350,7 @@
     S.push({ t: 'para', label: 'Disertai ' + a.tahun + ' sahaja (' + onlyA.length + ')', text: lst(onlyA) });
     S.push({ t: 'para', label: 'Disertai ' + b.tahun + ' sahaja (' + onlyB.length + ')', text: lst(onlyB) });
     if (models.length > 2) S.push({ t: 'note', text: 'Perbandingan program dan lajur "Perubahan" hanya antara dua sesi terkini (' + a.tahun + ' dan ' + b.tahun + ').' });
+    if (luarBanding) S.push({ t: 'note', text: 'Aktiviti luar dikira: ' + luarDasarTeks() + '. Sekolah yang tidak menyertai aktiviti luar tidak dikenakan penalti.' });
     S.push({ t: 'note', text: 'Dijana pada ' + hariIni() + '. Program dipadan mengikut nama (tahun dibuang). Markah dikira dengan kaedah yang sama seperti ranking Dashboard.' });
     return S;
   }
