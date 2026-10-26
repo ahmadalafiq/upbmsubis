@@ -269,6 +269,32 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 
 ---
 
+## ⭐ Cadangan Projek Mudah (untuk SESI SETERUSNYA)
+_Disimpan 26 Okt 2026 atas arahan pengguna ("simpan dulu"). Mulakan sesi seterusnya dengan memilih daripada senarai ini. ⭐ = kurang sejam, ⭐⭐ = kira-kira satu sesi._
+
+**Keselamatan (disyorkan dahulu):**
+1. ⭐ **Putar kod admin** dalam `app_secrets` (kod lama ada dalam sejarah repo awam). Kod baharu diberi dalam sembang sahaja, tidak ditulis dalam fail.
+2. ⭐⭐ **Had percubaan log masuk**: kunci akaun/No.KP sementara selepas beberapa kegagalan pada `login_pengguna`, `login_admin`, `claim_akaun_google` (PIN 6 digit = 1 juta kombinasi, kini tiada had). Jadual log percubaan + ujian dalam transaksi dibatalkan.
+3. ⭐ **Revoke PAT GitHub** yang pernah dikongsi (tindakan pengguna di GitHub).
+
+**Pembersihan / baiki kecil:**
+4. ⭐ **Seragamkan nama sekolah varian** pada `penyertaan` dan `pencapaian` serentak (58 baris; guna `sekolah.nama` mengikut `kod_sekolah`). Satu migrasi + sahkan markah Dashboard tak berubah.
+5. ⭐ **Buang kod mati frontend** (Fasa E): `askPin`/`doPin`/`verifyPinGS`, `lgDaftar()`. Ujian regresi sedia ada melindungi.
+6. ⭐ **Semak edge function `ai-chat`** (Fasa D): kekukuhan, kos, had kadar.
+7. ⭐⭐ **AI Analitik tapis aktiviti luar**: RPC `analitik_*` mengira aktiviti luar dengan peraturan lama; tapis/asingkan dan kemas kini `ai-chat`.
+
+**Ciri kecil yang berguna:**
+8. ⭐⭐ **UI "Kemaskini profil sendiri"**: RPC `kemaskini_profil_sendiri` sudah ada, tiada UI (guru kemas kini nama/No.Tel sendiri).
+9. ⭐⭐ **PDF nama beraksara Cina** (4 baris sekarang jadi `?`): benam fon CJK dalam pdf-lib.
+10. ⭐⭐ **Semakan pendua muat naik Excel** (Bulk): amaran sebelum simpan.
+11. ⭐ **Had kadar `cek_status_akaun`** (oracle status akaun mengikut No.KP).
+
+**Lebih besar (bila sedia):** projek 8 (log masuk e-mel OTP; perlu SMTP + keputusan A/B), projek 2 (modal edit penyertaan), projek 3 (wizard), projek 4 (SPBM).
+
+**Ujian pelayar tertunggak (oleh pengguna, tiada kod):** Laporan Sekolah (satu sekolah, perbandingan, ZIP semua sekolah), Aktiviti Luar (tanda program → Dashboard JENIS/panel/lencana → laporan), simpan pencapaian dari UI (semak `kod_sekolah` terisi), claim akaun Google, log masuk/keluar berulang.
+
+---
+
 ## Nota Kerja (rujukan tetap)
 
 ### 🔑 Nota kredensial (JANGAN letak nilai sebenar dalam fail ini)
@@ -308,4 +334,4 @@ fail JS/HTML berasingan, bukan menambah index.html yg sudah 585 KB — setiap tu
 
 ---
 
-## Checkpoint semasa (26 Okt 2026): **PROJEK 1 SIAP (ARKIB) + KERJA KECIL PENGERASAN SIAP. PROJEK 6 & 7 TUNGGU UJIAN PELAYAR. PROJEK 8 (LOG MASUK E-MEL OTP) = CADANGAN. Terbuka utama: had percubaan log masuk PIN, putar kod admin, revoke PAT GitHub.**
+## Checkpoint semasa (26 Okt 2026): **DIJEDA ATAS ARAHAN PENGGUNA. Semua kerja dipush (`83b49bd` + rekod ini). Sesi seterusnya: mulakan dengan memilih daripada "⭐ Cadangan Projek Mudah". Projek 8 (log masuk e-mel OTP) ditangguh. Terbuka utama: putar kod admin, had percubaan log masuk, revoke PAT GitHub; projek 6 & 7 menunggu ujian pelayar.**
