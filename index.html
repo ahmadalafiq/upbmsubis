@@ -1567,6 +1567,7 @@ body.view-list .pc::after { display: none; }
           <button class="view-tog on" id="peny-vtog-kad" onclick="setPenyView('kad')" title="Paparan Kad">⊞ KAD</button>
           <button class="view-tog" id="peny-vtog-senarai" onclick="setPenyView('senarai')" title="Senarai Padat">☰ SENARAI</button>
         </div>
+        <button class="btn bs bsm" onclick="if(typeof openLaporanSekolah==='function')openLaporanSekolah();else toast('Modul laporan belum dimuatkan, sila muat semula halaman','er');" title="Laporan penyertaan &amp; pencapaian sekolah (PDF)">📄 LAPORAN SEKOLAH</button>
         <button class="btn bs bsm" onclick="loadProgsForPeny(true)">↻</button>
       </div>
     </div>
@@ -1663,8 +1664,6 @@ body.view-list .pc::after { display: none; }
         <button class="btn bs bsm" id="ak-filt-aktif" onclick="akFilt('aktif')">✅ AKTIF</button>
         <button class="btn bs bsm" onclick="loadAkaun(true)">🔄 MUAT SEMULA</button>
         <button class="btn bs bsm" style="background:#1a5276;color:#fff;" onclick="bukaSenaraiSekolah()" title="Urus senarai rasmi nama & kod sekolah">🏫 SENARAI SEKOLAH</button>
-        <button class="btn bs bsm" onclick="akMigrateSheet()" title="Kemaskini header sheet PIN">🛠 MIGRATE</button>
-        <button class="btn bs bsm" onclick="akBackfillTahun()" title="Isi kolum Tahun untuk rekod lama">📅 BACKFILL TAHUN</button>
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.65rem;">
@@ -2736,7 +2735,7 @@ async function _supaDispatch(fn, payload){
     // Isi jadual sekolah kali pertama daripada senarai statik terbina-dalam (guna hanya jika jadual kosong)
     var seedRows = (payload.senarai||[]).map(function(s){return {kod:s.kod, nama:s.nama};});
     if(!seedRows.length) return {ok:false, msg:'Tiada data untuk di-seed.'};
-    var rSd = await sb.rpc('sekolah_seed', {p_no_kp_admin: (_sesi&&_sesi.noKP)||'', p_senarai: seedRows});
+    var rSd = await sb.rpc('sekolah_seed', {p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'', p_senarai: seedRows});
     _throwIfErr(rSd.error);
     return {ok:true, msg:(rSd.data||0)+' sekolah berjaya di-seed.'};
   }
@@ -2756,18 +2755,6 @@ async function _supaDispatch(fn, payload){
     });
     _throwIfErr(rUpM.error);
     return {ok:true, msg:'Maklumat pengguna dikemaskini.'};
-  }
-
-  // -------- UTILITI ADMIN --------
-  if(fn === 'migrateSheetGS'){
-    // Tiada migrasi header diperlukan — skema Supabase sudah tetap.
-    return {ok:true, msg:'Tiada migrasi diperlukan (Supabase).'};
-  }
-
-  if(fn === 'backfillTahunGS'){
-    var rBf2 = await sb.rpc('program_backfill_tahun', {p_no_kp_admin: (_sesi&&_sesi.noKP)||''});
-    _throwIfErr(rBf2.error);
-    return {ok:true, msg:'Backfill selesai ('+(rBf2.data||0)+' rekod dikemaskini)'};
   }
 
   throw new Error('Fungsi tidak dikenali: '+fn);
@@ -2969,7 +2956,7 @@ var RFN={getProgramsGS:1,getAllDataGS:1,getRumusanGS:1,getPenyertaanByProgramGS:
 var _WRITE_FNS = {
   daftarProgramGS:1, kemaskiniProgramGS:1, padamProgramGS:1,
   simpanPencapaianGS:1, hantarPenyertaanGS:1, kemaskiniPenyertaanSekolahGS:1,
-  resetPinGS:1, kemaskiniAkaunGS:1, migrateSheetGS:1, backfillTahunGS:1,
+  resetPinGS:1, kemaskiniAkaunGS:1,
   tambahSekolahGS:1, kemaskiniSekolahGS:1, seedSekolahGS:1, kemaskiniMaklumatPenggunaGS:1
 };
 
@@ -10014,27 +10001,6 @@ async function sekSimpanEdit(kod){
       toast((r&&r.msg)||'Ralat semasa kemaskini','er');
       _renderSenaraiSekolah();
     }
-  }catch(e){ hideOv(); toast('Ralat: '+e.message,'er'); }
-}
-
-async function akMigrateSheet(){
-  showOv('MENGEMASKINI HEADER SHEET...');
-  try{
-    var r = await run('migrateSheetGS');
-    hideOv();
-    if(r&&r.ok){ toast(r.msg||'Migrate berjaya','ok'); loadAkaun(true); }
-    else toast((r&&r.msg)||'Migrate gagal','er');
-  }catch(e){ hideOv(); toast('Ralat: '+e.message,'er'); }
-}
-
-async function akBackfillTahun(){
-  if(!confirm('Isi kolum Tahun untuk semua rekod lama?\n\nOperasi ini selamat — hanya rekod yang tiada nilai Tahun akan dikemaskini.')) return;
-  showOv('BACKFILL KOLUM TAHUN...');
-  try{
-    var r = await run('backfillTahunGS');
-    hideOv();
-    if(r&&r.ok){ toast(r.msg||'Backfill berjaya','ok'); cBust(); }
-    else toast((r&&r.msg)||'Backfill gagal','er');
   }catch(e){ hideOv(); toast('Ralat: '+e.message,'er'); }
 }
 

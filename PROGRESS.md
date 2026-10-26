@@ -6,28 +6,15 @@ _Kemas kini terakhir: 16 Okt 2026 — projek 6 (Laporan Sekolah) ditambah. Hanya
 ## Ringkasan Projek
 | No | Projek | Status | Seterusnya |
 |---|---|---|---|
-| 1 | Buang butang MIGRATE & BACKFILL TAHUN | Dirancang | 1 commit di index.html; drop RPC `program_backfill_tahun` perlu kelulusan berasingan |
 | 2 | Edit penyertaan dalam modal | Dirancang | M1 kerangka modal → M2 → M3 → M4 |
 | 3 | Wizard pendaftaran (Program & Penyertaan) | Dirancang, 4 keputusan dibuat | W1 Program dahulu, kemudian W2–W4 |
 | 4 | SPBM (HEM + PBM) | Rancangan sahaja | Fasa 0 jadual `murid`; tunggu arahan mula |
 | 5 | Semakan sistem & ujian tertunggak | Terbuka | Ujian dalam app sebenar; putar semula kod admin |
 | 6 | Laporan Sekolah (penyertaan & pencapaian + perbandingan sesi) | Dibina & dipush (`88333f6` + pembetulan admin/semua sekolah), **belum diuji dalam pelayar** | Uji dalam app sebenar selepas deploy |
 | 7 | Aktiviti Luar (penanda program + Dashboard + penilaian) | Fasa 1–3 siap & dipush (dasar: pencapaian sahaja); **belum diuji dalam pelayar** | Uji dalam app sebenar; Fasa 4 pilihan |
+| 8 | Log masuk e-mel dengan kod (OTP) | CADANGAN; menunggu keputusan & tetapan SMTP | Putuskan kaedah ikatan akaun (A/B) + sediakan SMTP |
 
-**Urutan kerja cadangan:** uji projek 6 dahulu → 1 → 2 → 3 (W1→W4) → 4. Projek 5 boleh dibuat selari. Kerja yang sudah siap: lihat `ARKIB.md`.
-
----
-
-## 1. Buang Butang MIGRATE & BACKFILL TAHUN
-**Status:** dirancang, belum dilaksanakan. Cadangan kerja pertama (kecil, risiko rendah).
-
-**Bukti:** handler `migrateSheetGS` (baris ~2740) cuma pulang "Tiada migrasi diperlukan (Supabase)" — sisa zaman
-Google Sheets. `BACKFILL TAHUN`: Supabase semak → 0 daripada 114 program ber-`tahun` NULL, dan `daftar_program`
-sentiasa set tahun → utiliti ini pun tak berguna lagi.
-**Lokasi buang (index.html):** butang MIGRATE (baris ~1661) + butang BACKFILL TAHUN sebelahnya; handler
-`migrateSheetGS` & `backfillTahunGS` dlm `_supaDispatch`; entri `migrateSheetGS:1, backfillTahunGS:1` dlm `_WRITE_FNS`
-(~2950); fungsi `akMigrateSheet()` (~9922) & `akBackfillTahun()`. **DB (kemudian, perlu kelulusan berasingan):**
-drop RPC `program_backfill_tahun`. Risiko rendah, 1 commit. Kekalkan butang "SENARAI SEKOLAH" (panel urus sekolah).
+**Urutan kerja cadangan:** uji projek 6 & 7 dahulu → 2 → 3 (W1→W4) → 4; projek 8 menunggu keputusan. (Projek 1 siap — lihat ARKIB.) Projek 5 boleh dibuat selari. Kerja yang sudah siap: lihat `ARKIB.md`.
 
 ---
 
@@ -194,7 +181,6 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 - [ ] UI untuk `kemaskini_profil_sendiri` (RPC sedia, tiada UI)
 
 **Fungsi pangkalan data yang masih tiada token (dikenal pasti 19 Okt; fungsi berbahaya sudah ditutup — lihat ARKIB):**
-- [ ] `sekolah_seed` dan `program_backfill_tahun` masih dipanggil klien dengan No.KP admin sahaja (tiada token) — tukar ke `_sahkan_token`. `program_backfill_tahun` juga ada pepijat jenis data (`coalesce` teks/masa) dan akan dibuang bersama butang BACKFILL TAHUN (projek 1).
 - [ ] `cek_status_akaun(p_no_kp)` boleh dipanggil tanpa log masuk (oracle status akaun mengikut No.KP) — diperlukan sebelum log masuk; pertimbangkan had kadar.
 
 **Had reka bentuk sesi (dikenal pasti 19 Okt):**
@@ -235,7 +221,6 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 - [ ] Keputusan: seragamkan nama sekolah varian pada KEDUA-DUA jadual serentak (58 baris: 48 penyertaan + 10 pencapaian) — pilihan, tak wajib sebab laporan padan ikut kod.
 - [ ] Had PDF: nama beraksara bukan-Latin (4 baris penyertaan) jadi `?` dalam PDF (Helvetica); cetak paparkan dengan betul. Jika perlu: benam fon CJK.
 - [ ] Perbandingan sesi hanya bermakna bila ada ≥2 tahun data (kini hanya 2026).
-- [ ] Pilihan: pautan Laporan Sekolah di tab Penyertaan (guru mendarat di sana).
 
 ---
 
@@ -266,6 +251,21 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 - [ ] **AI Analitik** (`analitik_*` RPC) belum membezakan aktiviti luar (ia guna `sum(markah)` lajur sendiri + kiraan, bukan Jadual Markah). Pertimbangkan tapis aktiviti luar atau tambah RPC khas; perlu kemas kini edge function `ai-chat`.
 - [ ] Fasa 4 (pilihan): jadual "sekolah dijemput" bagi setiap aktiviti luar untuk kadar penyertaan yang adil ("tak menyertai" ≠ "tak dijemput").
 - [ ] Semak dasar dengan pihak berkuasa: jika aktiviti luar patut diberi pelibatan separa, tukar `LUAR_POLISI.pelibatan` kepada `SETENGAH`.
+
+---
+
+## 8. Log masuk E-mel dengan Kod (OTP)
+**Status:** CADANGAN (26 Okt 2026), belum dibina. Menunggu keputusan pengguna dan tetapan SMTP dalam dashboard Supabase.
+
+**Fakta sistem:** `login_via_google()` bergantung pada `auth.uid()` SAHAJA (bukan penyedia) → sesi e-mel OTP daripada Supabase Auth boleh guna RPC yang sama tanpa ubah DB. Hanya domain `@moe-dl.edu.my` dibenarkan (`_domain_dibenarkan`). `pengguna.auth_uid`/`emel_aktif` sudah wujud (diisi semasa claim). Hanya 1 daripada 83 akaun sudah diikat ke Google — majoriti masih log masuk PIN 6 digit (tiada had percubaan).
+
+**Aliran dicadang (Supabase Email OTP, kod 6 digit, luput ~10 min):** (1) skrin log masuk: "Log masuk dengan e-mel" → taip e-mel → `signInWithOtp` → (2) taip kod → `verifyOtp` → sesi → `_semakSesiGoogle` sedia ada (single-flight) → `login_via_google` → token app. Kali pertama (akaun belum terikat): **A** = skrin claim sedia ada (No.KP + PIN) sekali; **B (disyorkan)** = e-mel pra-daftar: admin/PKK isi e-mel pada akaun (`emel_aktif`, unik) → selepas OTP mengesahkan e-mel, sistem ikat `auth_uid` automatik (tiada PIN, tiada risiko brute-force).
+**Tidak disyorkan:** magic link (dalam iframe Google Sites / tab baharu, pautan hilang konteks); OTP buatan sendiri (lebih kod & risiko, Supabase sudah ada).
+**Konfigurasi (dilakukan pengguna dalam dashboard Supabase — alat saya tiada akses tetapan Auth):** (1) **SMTP tersuai WAJIB** — e-mel lalai Supabase terhad & hanya kepada ahli pasukan projek (Resend/Brevo/SendGrid/Gmail Workspace; sahkan domain SPF/DKIM supaya tak masuk spam, `moe-dl.edu.my` ialah Google Workspace); (2) templat e-mel guna `{{ .Token }}` dalam BM; (3) Auth → Email: OTP expiry 600s, panjang 6; (4) semak had kadar e-mel & interval hantar semula.
+**Perubahan kod:** skrin log masuk 2 langkah + `sb.auth.signInWithOtp/verifyOtp`; DB (kaedah B): fungsi ikat e-mel (padan `lower(emel_aktif)` dgn e-mel Auth yang disahkan, `auth_uid is null`, status AKTIF) + ruang e-mel pada urus akaun. Kekalkan Google & PIN sebagai sandaran semasa peralihan.
+**Kaitan keselamatan:** selepas peralihan, log masuk PIN boleh dihentikan untuk bukan-admin (menghapuskan risiko brute-force PIN). Sebelum itu had percubaan PIN & putar kod admin TETAP perlu dibuat.
+**Fasa:** (1) pengguna sediakan SMTP → (2) bina OTP + claim sedia ada → (3) e-mel pra-daftar → (4) peralihan.
+**Keputusan diperlukan:** adakah setiap guru/PKK ada e-mel `@moe-dl.edu.my` peribadi (satu e-mel = satu akaun), atau ada e-mel dikongsi?
 
 ---
 
@@ -308,4 +308,4 @@ fail JS/HTML berasingan, bukan menambah index.html yg sudah 585 KB — setiap tu
 
 ---
 
-## Checkpoint semasa (22 Okt 2026): **PROJEK 7 (AKTIVITI LUAR) FASA 1–3 SIAP & DIPUSH (dasar pencapaian sahaja) — TUNGGU UJIAN PELAYAR. PROJEK 6 (LAPORAN SEKOLAH) DIBINA & DIPUSH (`88333f6`) — TUNGGU UJIAN PELAYAR. Projek 1 (buang MIGRATE), 2 (modal edit), 3 (wizard) SIAP DIRANCANG; 4 (SPBM) tergantung. Seterusnya: uji projek 6, kemudian 1 → 2 → 3. Item terbuka: revoke PAT, putar kod admin.**
+## Checkpoint semasa (26 Okt 2026): **PROJEK 1 SIAP (ARKIB) + KERJA KECIL PENGERASAN SIAP. PROJEK 6 & 7 TUNGGU UJIAN PELAYAR. PROJEK 8 (LOG MASUK E-MEL OTP) = CADANGAN. Terbuka utama: had percubaan log masuk PIN, putar kod admin, revoke PAT GitHub.**

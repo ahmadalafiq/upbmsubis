@@ -699,3 +699,15 @@ Individu + Berkumpulan + Keseluruhan), tapi TAK BOLEH ada 2 kedudukan untuk kate
 **Pembetulan (`index.html`):** `_numTeks()` mengesan nilai berangka yang bukan kuantiti (≥7 digit, atau 0 pendahulu, atau bermula `+`; tarikh ISO dikecualikan). CSV: `_csvCell()` menulis `="..."` bagi nilai sedemikian (Excel kekalkan teks); nilai bermula `=`/`@`/`+`/`-` (bukan nombor) diawali `'` untuk menghalang CSV injection. Excel: `_xlTeksSheets()` menetapkan format `@` pada sel teks berangka dalam workbook program. Telefon Excel guna `_fmtTel60` (sama dgn CSV). Templat: lajur NO. KP (PESERTA & GURU) dan NO. TEL (GURU) berformat teks pada baris 2–302 + baris panduan 6. Import: sel NOMBOR No.KP (Excel buang 0 pendahulu) dipulihkan ke 12 digit (`_kpSel`).
 **Disahkan dengan program hamparan sebenar:** CSV baharu dibuka dalam LibreOffice — semua nilai kekal teks & tepat (termasuk 15 digit); sel Excel No.KP/No.Tel bertipe `s` format `@`; templat berformat `@`; import sel nombor → `010101-13-0001`, `000229-12-0003`. Nota: `="..."` dipaparkan literal oleh alat bukan-hamparan (cth skrip Python/pandas) — pilihan ini untuk Excel.
 
+---
+
+## Projek 1 + kerja kecil pengerasan & pembersihan (26 Okt 2026) — SIAP
+**Projek 1:** butang 🛠 MIGRATE dan 📅 BACKFILL TAHUN dibuang (halaman Akaun) berserta handler `migrateSheetGS`/`backfillTahunGS`, entri `_WRITE_FNS`, fungsi `akMigrateSheet()`/`akBackfillTahun()`. Sebab: MIGRATE hanya sisa zaman Google Sheets (pulang "tiada migrasi"); BACKFILL: 0 daripada 114 program ber-`tahun` NULL dan `daftar_program` sentiasa set tahun. RPC `program_backfill_tahun` (juga rosak: ralat jenis `coalesce` teks/masa) di-DROP. Butang SENARAI SEKOLAH dikekalkan.
+**Pangkalan data (migrasi `kerja_kecil_pengerasan_dan_pembersihan`, `tutup_akses_awam_sahkan_token`):**
+- `search_path` ditetapkan pada `keep_alive` dan `_domain_dibenarkan` (amaran imbasan keselamatan hilang).
+- Indeks `idx_penyertaan_program_id` (kunci asing `penyertaan.program_id` tiada indeks — satu-satunya cadangan prestasi).
+- `sekolah_seed` kini `(p_no_kp, p_token, p_senarai)` — mesti sesi admin sah (dahulu hanya No.KP admin, tanpa token); klien `seedSekolahGS` dikemas kini.
+- `_sahkan_token` ditutup daripada `anon`/`authenticated` (oracle pengesahan token; tiada polisi RLS bergantung padanya; 12 fungsi security definer memanggilnya sebagai pemilik; klien tak memanggil terus).
+**Lain-lain:** butang 📄 LAPORAN SEKOLAH ditambah pada tab Penyertaan (tempat guru mendarat).
+**Disahkan (transaksi dibatalkan, sebagai `anon`):** `_sahkan_token` terus → ditolak; log masuk sah → `daftar_program` & `admin_senarai_akaun` bertoken berfungsi; token palsu ditolak; `sekolah_seed` menolak token palsu/guru dan tidak mengubah jadual; ujian klien (jsdom) lulus; semua 9 suite regresi lulus.
+
