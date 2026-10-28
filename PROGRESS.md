@@ -273,22 +273,22 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 _Disimpan 26 Okt 2026 atas arahan pengguna ("simpan dulu"). Mulakan sesi seterusnya dengan memilih daripada senarai ini. ⭐ = kurang sejam, ⭐⭐ = kira-kira satu sesi._
 
 **Keselamatan (disyorkan dahulu):**
-0. ⭐ **BARU (26 Okt) — tutup lubang `kemaskini_profil_sendiri`**: RPC ini membenarkan SESIAPA yang log masuk menukar `kod_sekolah`/`nama_sekolah` akaunnya sendiri tanpa semakan. Peraturan kebenaran RPC lain bergantung pada `pengguna.kod_sekolah`, jadi seorang PKK/guru boleh menukar sekolahnya lalu mengubah program/penyertaan/pencapaian sekolah LAIN. **Disahkan** dalam transaksi dibatalkan (PKK sekolah A: kemaskini program sekolah B ditolak; selepas tukar sekolah melalui RPC itu → berjaya). Pembetulan (migrasi kecil, tiada UI menggunakannya): hadkan kepada `nama` dan `no_tel` sahaja; tukar sekolah hanya oleh admin melalui `admin_kemaskini_akaun`.
 1. ⭐ **Putar kod admin** dalam `app_secrets` (kod lama ada dalam sejarah repo awam). Kod baharu diberi dalam sembang sahaja, tidak ditulis dalam fail.
 2. ⭐⭐ **Had percubaan log masuk**: kunci akaun/No.KP sementara selepas beberapa kegagalan pada `login_pengguna`, `login_admin`, `claim_akaun_google` (PIN 6 digit = 1 juta kombinasi, kini tiada had). Jadual log percubaan + ujian dalam transaksi dibatalkan.
 3. ⭐ **Revoke PAT GitHub** yang pernah dikongsi (tindakan pengguna di GitHub).
 
 **Pembersihan / baiki kecil:**
-4. ⭐ **Seragamkan nama sekolah varian** pada `penyertaan` dan `pencapaian` serentak (58 baris; guna `sekolah.nama` mengikut `kod_sekolah`). Satu migrasi + sahkan markah Dashboard tak berubah.
 5. ⭐ **Buang kod mati frontend** (Fasa E): `askPin`/`doPin`/`verifyPinGS`, `lgDaftar()`. Ujian regresi sedia ada melindungi.
 6. ⭐ **Semak edge function `ai-chat`** (Fasa D): kekukuhan, kos, had kadar.
 7. ⭐⭐ **AI Analitik tapis aktiviti luar**: RPC `analitik_*` mengira aktiviti luar dengan peraturan lama; tapis/asingkan dan kemas kini `ai-chat`.
 
 **Ciri kecil yang berguna:**
-8. ⭐⭐ **UI "Kemaskini profil sendiri"** (guru kemas kini nama/No.Tel sendiri). **Buat SELEPAS item 0**, dan UI hanya untuk nama & No.Tel (bukan sekolah). Tiada UI/pemanggil sekarang.
 9. ⭐⭐ **PDF nama beraksara Cina** (4 baris sekarang jadi `?`): benam fon CJK dalam pdf-lib.
 10. ⭐⭐ **Semakan pendua muat naik Excel** (Bulk): disahkan tiada semakan pendua dalam `_prosesBulkXlsx` hari ini (No.KP sama dua kali dalam helaian, atau sudah ada dalam borang/DB, akan ditambah semula). Tambah amaran sebelum simpan.
 11. ⭐ **`cek_status_akaun`**: boleh dipanggil tanpa log masuk dan memulangkan nama, peranan, status, sekolah dan 'sudah ikat Google' bagi mana-mana No.KP (kebocoran data peribadi + membantu pemilihan sasaran). Kurangkan medan dipulangkan (skrin log masuk perlukan status sahaja sebelum PIN) dan tambah had kadar.
+12. ⭐ **Putuskan 7 baris 'SK RUMAH BARAT'** (program KEJOHANAN MERENTAS DESA 12TKB MSSB MIRI TAHUN 2026): nama "SK RUMAH BARAT" tetapi kod 7 sekolah lain (YBB4413/4419/4421/4422/4425/4427/4429). Pilih: (a) baris milik sekolah ikut kod → tukar nama; (b) milik SK Rumah Barat (YBB4404) → tukar `kod_sekolah`. Dashboard (ikut nama) dan laporan (ikut kod) kini berbeza untuk 7 baris ini.
+13. ⭐ **Seragamkan format No.Tel `pengguna`**: 62 daripada 83 bukan `+60…` (digit sahaja / `60…` / `+600…`). Guna `_norm_tel`; satu migrasi + sandaran. Juga betulkan paparan Excel guru yang bergantung pada format.
+14. ⭐ **Padam jadual sandaran `arkib_nama_sekolah_20261026`** selepas anda yakin seragaman nama betul (ia membolehkan pemulihan nama lama).
 
 **Lebih besar (bila sedia):** projek 8 (log masuk e-mel OTP; perlu SMTP + keputusan A/B), projek 2 (modal edit penyertaan), projek 3 (wizard), projek 4 (SPBM).
 
@@ -335,4 +335,4 @@ fail JS/HTML berasingan, bukan menambah index.html yg sudah 585 KB — setiap tu
 
 ---
 
-## Checkpoint semasa (26 Okt 2026): **DIJEDA ATAS ARAHAN PENGGUNA. Semua kerja dipush (`83b49bd` + rekod ini). Sesi seterusnya: mulakan dengan memilih daripada "⭐ Cadangan Projek Mudah". Projek 8 (log masuk e-mel OTP) ditangguh. Terbuka utama: putar kod admin, had percubaan log masuk, revoke PAT GitHub; projek 6 & 7 menunggu ujian pelayar.**
+## Checkpoint semasa (26 Okt 2026): **SIAP: seragaman nama sekolah (54 baris) + Profil Saya selamat (lubang kemaskini_profil_sendiri ditutup). Projek 6 & 7 tunggu ujian pelayar; projek 8 (log masuk e-mel OTP) ditangguh. Terbuka utama: putar kod admin, had percubaan log masuk, revoke PAT GitHub, keputusan 7 baris SK RUMAH BARAT.**

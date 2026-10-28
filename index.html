@@ -1438,7 +1438,7 @@ body.view-list .pc::after { display: none; }
   </div>
   <!-- User chip (shown after login) -->
   <div id="nav-user-wrap" style="display:none;align-items:center;gap:.4rem;margin-left:.5rem;">
-    <div class="nav-user">
+    <div class="nav-user" onclick="openProfil()" title="Profil saya (kemaskini nama &amp; No. Tel)" style="cursor:pointer;">
       <span class="nav-user-ico">👤</span>
       <div>
         <div class="nav-user-name" id="nav-user-name">—</div>
@@ -2125,6 +2125,29 @@ body.view-list .pc::after { display: none; }
 </div>
 
 <!-- MODAL: EDIT PROGRAM -->
+<div class="mo" id="mo-profil">
+  <div class="md" style="max-width:460px;">
+    <div class="mh">👤 PROFIL SAYA</div>
+    <div id="pf-ld" style="display:none;padding:1rem 0;font-size:.78rem;color:var(--g5);">Memuatkan profil...</div>
+    <div id="pf-body" style="display:none;">
+      <div class="fi" style="margin-bottom:.7rem;"><label>Nama</label>
+        <input type="text" id="pf-nama" class="nc" maxlength="100" autocomplete="name" oninput="_pfOnChange()" onkeydown="if(event.key==='Enter')simpanProfil()" style="text-transform:uppercase;width:100%;"></div>
+      <div class="fi" style="margin-bottom:.7rem;"><label>No. Tel</label>
+        <div style="display:flex;align-items:center;background:var(--g1);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;">
+          <span style="padding:0 .5rem;font-size:.78rem;font-weight:700;color:var(--g5);border-right:1.5px solid var(--bd);white-space:nowrap;line-height:2.2rem;">+60</span>
+          <input type="tel" id="pf-tel" class="nc" inputmode="numeric" placeholder="123456789" oninput="_pfOnChange()" onkeydown="if(event.key==='Enter')simpanProfil()" style="border:none;border-radius:0;background:transparent;flex:1;min-width:0;"></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .8rem;font-size:.74rem;margin-bottom:.4rem;">
+        <div><div style="font-size:.58rem;font-weight:800;color:var(--g5);">NO. KP</div><div id="pf-kp" style="font-weight:700;">—</div></div>
+        <div><div style="font-size:.58rem;font-weight:800;color:var(--g5);">PERANAN</div><div id="pf-role" style="font-weight:700;">—</div></div>
+        <div style="grid-column:1/-1;"><div style="font-size:.58rem;font-weight:800;color:var(--g5);">SEKOLAH</div><div id="pf-sek" style="font-weight:700;">—</div></div>
+      </div>
+      <div style="font-size:.64rem;color:var(--g5);line-height:1.5;">Nama sekolah dan peranan hanya boleh ditukar oleh admin. Hubungi admin PPD jika perlu.</div>
+      <div id="pf-err" style="color:var(--red);font-size:.72rem;min-height:1.1rem;margin-top:.4rem;"></div>
+    </div>
+    <div class="mt2 fx gu"><button class="btn bp" id="pf-simpan" onclick="simpanProfil()" disabled>SIMPAN</button><button class="btn bs" onclick="closeMo('mo-profil')">BATAL</button></div>
+  </div>
+</div>
+
 <div class="mo" id="mo-edit">
   <div class="md" style="max-width:860px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
     <div class="mh" style="padding:1.25rem 1.55rem .9rem;flex-shrink:0;">✏️ KEMASKINI PROGRAM</div>
@@ -2755,6 +2778,25 @@ async function _supaDispatch(fn, payload){
     });
     _throwIfErr(rUpM.error);
     return {ok:true, msg:'Maklumat pengguna dikemaskini.'};
+  }
+
+  // -------- PROFIL SAYA (nama & No.Tel sendiri sahaja; pelayan mengesahkan token & tiada parameter sekolah) --------
+  if(fn === 'profilSayaGS'){
+    var rPf = await sb.rpc('profil_saya', {p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||''});
+    _throwIfErr(rPf.error);
+    var pf = (rPf.data||[])[0];
+    if(!pf) return {ok:false, msg:'Profil tidak dijumpai.'};
+    return {ok:true, data:{nama:pf.nama, noKP:pf.no_kp, role:pf.role, tel:pf.no_tel||'', kodSekolah:pf.kod_sekolah, namaSekolah:pf.nama_sekolah}};
+  }
+  if(fn === 'kemaskiniProfilGS'){
+    var rKp2 = await sb.rpc('kemaskini_profil_sendiri', {
+      p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'',
+      p_nama:   payload.nama  !=null ? String(payload.nama)  : null,
+      p_no_tel: payload.noTel !=null ? String(payload.noTel) : null
+    });
+    _throwIfErr(rKp2.error);
+    var upd = (rKp2.data||[])[0] || {};
+    return {ok:true, nama:upd.nama_baru, tel:upd.no_tel_baru, msg:'Profil dikemas kini.'};
   }
 
   throw new Error('Fungsi tidak dikenali: '+fn);
@@ -9311,6 +9353,56 @@ async function _mulakanSesi(data){
   // (mengelakkan paparan sisa cth. tab AKAUN admin masih terpapar bila guru log masuk)
   var defaultPg = _sesi.role==='admin' ? 'akaun' : (_sesi.role==='pkk' ? 'dashboard' : 'peserta');
   _doShowPage(defaultPg);
+}
+
+// == PROFIL SAYA: kemaskini nama & No.Tel SENDIRI (sekolah/peranan hanya oleh admin) ==============
+var _pfAsal = null;
+function _pfNamaVal(){ return String((document.getElementById('pf-nama')||{}).value||'').replace(/\s+/g,' ').trim().toUpperCase(); }
+function _pfMaskKP(kp){ var d=String(kp||'').replace(/\D/g,''); return d.length===12 ? '••••••-••-'+d.slice(8) : '••••'; }
+async function openProfil(){
+  if(!_sesi) return;
+  var ld=document.getElementById('pf-ld'), bd=document.getElementById('pf-body');
+  document.getElementById('pf-err').textContent=''; document.getElementById('pf-simpan').disabled=true; _pfAsal=null;
+  ld.textContent='Memuatkan profil...'; ld.style.display='block'; bd.style.display='none';
+  openMo('mo-profil');
+  try{
+    var r = await run('profilSayaGS',{});
+    if(!(r&&r.ok&&r.data)) throw new Error((r&&r.msg)||'Gagal memuatkan profil.');
+    var d=r.data;
+    _pfAsal = {nama:String(d.nama||'').trim().toUpperCase(), tel:normTel(d.tel)};
+    document.getElementById('pf-nama').value = d.nama||'';
+    document.getElementById('pf-tel').value  = _pfAsal.tel;
+    document.getElementById('pf-kp').textContent   = _pfMaskKP(d.noKP);
+    document.getElementById('pf-role').textContent = d.role==='admin'?'Admin':d.role==='pkk'?'PKK':'Guru';
+    document.getElementById('pf-sek').textContent  = d.namaSekolah||'—';
+    ld.style.display='none'; bd.style.display='block';
+  }catch(e){ ld.textContent='Gagal memuatkan profil: '+(e&&e.message?e.message:e); }
+}
+function _pfOnChange(){
+  if(!_pfAsal) return;
+  var tel=normTel((document.getElementById('pf-tel')||{}).value);
+  document.getElementById('pf-simpan').disabled = !(_pfNamaVal()!==_pfAsal.nama || tel!==_pfAsal.tel);
+}
+async function simpanProfil(){
+  if(!_pfAsal) return;
+  var err=document.getElementById('pf-err'), btn=document.getElementById('pf-simpan'); err.textContent='';
+  var nama=_pfNamaVal(), tel=normTel((document.getElementById('pf-tel')||{}).value);
+  if(nama.length<3||nama.length>100){ err.textContent='Nama mesti 3 hingga 100 aksara.'; return; }
+  if(/[<>&"`{}\\]/.test(nama)){ err.textContent='Nama mengandungi aksara yang tidak dibenarkan.'; return; }
+  if(!/^[1-9][0-9]{7,9}$/.test(tel)){ err.textContent='No. telefon tidak sah. Contoh: 123456789 (tanpa 0 di hadapan).'; return; }
+  var ubahNama = nama!==_pfAsal.nama, ubahTel = tel!==_pfAsal.tel;
+  if(!ubahNama && !ubahTel){ closeMo('mo-profil'); return; }
+  btn.disabled=true;
+  try{
+    var r = await run('kemaskiniProfilGS',{nama:ubahNama?nama:null, noTel:ubahTel?('+60'+tel):null});
+    if(!(r&&r.ok)) throw new Error((r&&r.msg)||'Gagal menyimpan profil.');
+    if(r.nama && _sesi){
+      _sesi.nama = r.nama;
+      try{ sessionStorage.setItem('upbm_sesi', JSON.stringify(_sesi)); }catch(e){}
+      var nn=document.getElementById('nav-user-name'); if(nn) nn.textContent=_sesi.nama||'—';
+    }
+    toast('Profil berjaya dikemas kini ✓','ok'); closeMo('mo-profil');
+  }catch(e){ err.textContent=(e&&e.message)?e.message:String(e); btn.disabled=false; }
 }
 
 function _refreshNavUser(){
