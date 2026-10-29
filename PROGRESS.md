@@ -286,9 +286,9 @@ _Disimpan 26 Okt 2026 atas arahan pengguna ("simpan dulu"). Mulakan sesi seterus
 9. ⭐⭐ **PDF nama beraksara Cina** (4 baris sekarang jadi `?`): benam fon CJK dalam pdf-lib.
 10. ⭐⭐ **Semakan pendua muat naik Excel** (Bulk): disahkan tiada semakan pendua dalam `_prosesBulkXlsx` hari ini (No.KP sama dua kali dalam helaian, atau sudah ada dalam borang/DB, akan ditambah semula). Tambah amaran sebelum simpan.
 11. ⭐ **`cek_status_akaun`**: boleh dipanggil tanpa log masuk dan memulangkan nama, peranan, status, sekolah dan 'sudah ikat Google' bagi mana-mana No.KP (kebocoran data peribadi + membantu pemilihan sasaran). Kurangkan medan dipulangkan (skrin log masuk perlukan status sahaja sebelum PIN) dan tambah had kadar.
-12. ⭐ **Putuskan 7 baris 'SK RUMAH BARAT'** (program KEJOHANAN MERENTAS DESA 12TKB MSSB MIRI TAHUN 2026): nama "SK RUMAH BARAT" tetapi kod 7 sekolah lain (YBB4413/4419/4421/4422/4425/4427/4429). Pilih: (a) baris milik sekolah ikut kod → tukar nama; (b) milik SK Rumah Barat (YBB4404) → tukar `kod_sekolah`. Dashboard (ikut nama) dan laporan (ikut kod) kini berbeza untuk 7 baris ini.
 13. ⭐ **Seragamkan format No.Tel `pengguna`**: 62 daripada 83 bukan `+60…` (digit sahaja / `60…` / `+600…`). Guna `_norm_tel`; satu migrasi + sandaran. Juga betulkan paparan Excel guru yang bergantung pada format.
-14. ⭐ **Padam jadual sandaran `arkib_nama_sekolah_20261026`** selepas anda yakin seragaman nama betul (ia membolehkan pemulihan nama lama).
+14. ⭐ **Padam jadual sandaran** `arkib_nama_sekolah_20261026` dan `arkib_penyelarasan_sekolah_20261026b` selepas anda yakin penyeragaman nama & kod betul (ia membolehkan pemulihan nilai lama; RLS dikunci).
+15. ⭐ **Carian AI Analitik** (`analitik_carian_sekolah`) memadan nama dgn `ilike` — carian "SJKC …" tak lagi padan nama baharu `SJK(C) …`; pertimbangkan padanan longgar (buang tanda kurungan/ `SJKC`≈`SJK(C)`).
 
 **Lebih besar (bila sedia):** projek 8 (log masuk e-mel OTP; perlu SMTP + keputusan A/B), projek 2 (modal edit penyertaan), projek 3 (wizard), projek 4 (SPBM).
 
@@ -335,4 +335,4 @@ fail JS/HTML berasingan, bukan menambah index.html yg sudah 585 KB — setiap tu
 
 ---
 
-## Checkpoint semasa (26 Okt 2026): **SIAP: seragaman nama sekolah (54 baris) + Profil Saya selamat (lubang kemaskini_profil_sendiri ditutup). Projek 6 & 7 tunggu ujian pelayar; projek 8 (log masuk e-mel OTP) ditangguh. Terbuka utama: putar kod admin, had percubaan log masuk, revoke PAT GitHub, keputusan 7 baris SK RUMAH BARAT.**
+## Checkpoint semasa (26 Okt 2026): **SIAP: seragaman nama sekolah semua jadual (induk = sekolah.nama; SJKC→SJK(C)), 7 baris RUMAH BARAT dibetulkan kod, punca varian nama ditutup dalam 5 fungsi, Profil Saya selamat. Projek 6 & 7 tunggu ujian pelayar; projek 8 (log masuk e-mel OTP) ditangguh. Terbuka utama: putar kod admin, had percubaan log masuk, revoke PAT GitHub.**
