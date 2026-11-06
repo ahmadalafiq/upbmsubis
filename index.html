@@ -2039,22 +2039,6 @@ body.view-list .pc::after { display: none; }
   </div>
 </div>
 
-<!-- MODAL: PIN -->
-<div class="mo" id="mo-pin">
-  <div class="md" style="max-width:400px;">
-    <div class="mh" id="pin-tit">🔐 MASUKKAN PIN</div>
-    <div class="pin-wrap">
-      <p id="pin-desc">Masukkan PIN pengesahan</p>
-      <input type="password" class="pin-inp nc" id="pin-inp" placeholder="••••" maxlength="12" onkeydown="if(event.key==='Enter')doPin()">
-      <div class="pin-err" id="pin-err"></div>
-    </div>
-    <div class="mt2 fx gu">
-      <button class="btn bp" onclick="doPin()">✓ SAHKAN</button>
-      <button class="btn bs" onclick="closeMo('mo-pin');pAct=null;">BATAL</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL: CLAIM AKAUN GOOGLE -->
 <div class="mo" id="mo-claim">
   <div class="md" style="max-width:440px;">
@@ -2680,15 +2664,6 @@ async function _supaDispatch(fn, payload){
     return {ok:true, role:uL.role, nama:uL.nama, kodSekolah:uL.kod_sekolah, namaSekolah:uL.nama_sekolah, token:uL.session_token};
   }
 
-  if(fn === 'verifyPinGS'){
-    if(!_sesi || !_sesi.noKP) return {ok:false, msg:'Sesi tidak sah. Sila log masuk semula.'};
-    var rV = await sb.rpc('login_pengguna', {p_no_kp: _sesi.noKP, p_pin: payload.pin});
-    _throwIfErr(rV.error);
-    var uv = (rV.data||[])[0];
-    if(!uv) return {ok:false, msg:'PIN tidak sah.'};
-    return {ok:true, role:uv.role};
-  }
-
   if(fn === 'daftarAkaunGS'){
     var rDaf = await sb.rpc('daftar_akaun_baru', {
       p_no_kp: payload.noKP, p_nama: payload.nama, p_role: payload.role,
@@ -2889,7 +2864,7 @@ var _salinanPayload=null,_salinanRows=null; // simpan data hantar terakhir untuk
 var gCnt=0,pCnt=0;
 var eId='',eNm='',eKat='INDIVIDU';
 var _pps={},_gps={},_curPny=[],_curPnc=[];
-var pAct=null,markahOpen=false;
+var markahOpen=false;
 var _rk={sek:{},pes:{},guru:{}};
 var _aP=[],_aPnc=[],_aPg=[],_allProg=[],_allPny=[];
 var _selTahun = new Date().getFullYear(); // tahun aktif, default tahun semasa
@@ -3190,26 +3165,6 @@ function askConfirm(title, msg, onYes, onNo) {
   openMo('mo-cfm');
 }
 
-function askPin(tit,desc,cb){
-  document.getElementById('pin-tit').textContent=tit;
-  document.getElementById('pin-desc').textContent=desc;
-  document.getElementById('pin-inp').value='';
-  document.getElementById('pin-err').textContent='';
-  pAct=cb; openMo('mo-pin');
-  setTimeout(function(){document.getElementById('pin-inp').focus();},180);
-}
-async function doPin(){
-  var pin=document.getElementById('pin-inp').value.trim();
-  if(!pin){document.getElementById('pin-err').textContent='Sila masukkan PIN';return;}
-  document.getElementById('pin-err').textContent='';
-  showOv('MENGESAHKAN PIN...');
-  try{
-    var r=await run('verifyPinGS',{pin:pin});
-    hideOv();
-    if(r&&r.ok){closeMo('mo-pin');if(pAct)pAct(r.role,r.kod,pin);pAct=null;}
-    else document.getElementById('pin-err').textContent=(r&&r.msg)||'PIN tidak sah.';
-  }catch(e){hideOv();document.getElementById('pin-err').textContent='Ralat: '+e.message;}
-}
 
 // == PAGE 1 — PROGRAM =================================
 function getKatChecked(wrapId){
@@ -3848,7 +3803,6 @@ async function openEdit(p){
     renderPcForm(_curPny,_curPnc,_katRaw4);
   }catch(e){document.getElementById('pc-ld').innerHTML='<span style="color:var(--red);">Gagal: '+e.message+'</span>';}
 }
-function onEKat(){} // kategori kini dari checkbox
 
 // == Dirty flag — aktif semula butang simpan apabila ada perubahan selepas simpan ==
 var _editSaved = false;
@@ -4520,10 +4474,6 @@ function _chkdGetSel(id){
   // Baca dari memori (_chkdSel) — bukan dari DOM yang mungkin tertapis/filtered
   var el=document.getElementById(id);
   return (el&&el._chkdSel)?el._chkdSel.slice():[];
-}
-function _chkdGetNorm(id){
-  var el=document.getElementById(id);
-  return (el&&el._chkdNorm)?el._chkdNorm:[];
 }
 
 
@@ -5345,67 +5295,9 @@ function buildPrintPortal(prog,pny,pnc,isTutup,nSek,nG,nPs,per,printDate){
   document.getElementById('print-portal').innerHTML = out;
 }
 
-// Print-specific dBox (uses rp- classes)
-function rpDBox(tit,counts,full){
-  var rows=Object.entries(counts).filter(function(e){return e[0]&&e[0]!=='—';})
-    .map(function(e){return '<div class="rp-di"><span>'+e[0]+'</span><span>'+e[1]+'</span></div>';}).join('');
-  return '<div class="rp-dbox'+(full?' full':'')+'"><h4>'+tit+'</h4>'+(rows||'<span style="font-size:7.5pt;color:#aaa;">—</span>')+'</div>';
-}
-// Print-specific bangsa×jantina table
-function rpBJ(label,rows,bKey,jKey){
-  var bt={};
-  rows.forEach(function(r){
-    var b=r[bKey]||'LAIN-LAIN',j=r[jKey]||'—';
-    if(!bt[b])bt[b]={};bt[b][j]=(bt[b][j]||0)+1;
-  });
-  if(!Object.keys(bt).length) return '<div class="rp-dbox full"><h4>'+label+'</h4><span style="font-size:7.5pt;color:#aaa;">—</span></div>';
-  var jList=['LELAKI','PEREMPUAN'];
-  Object.values(bt).forEach(function(o){Object.keys(o).forEach(function(j){if(jList.indexOf(j)<0)jList.push(j);});});
-  var tot={grand:0};jList.forEach(function(j){tot[j]=0;});
-  var th='<thead><tr><th style="text-align:left;">Bangsa</th>'
-    +jList.map(function(j){return '<th>'+j+'</th>';}).join('')+'<th>JML</th></tr></thead>';
-  var tb='<tbody>'+Object.keys(bt).sort().map(function(b){
-    var rt=0;
-    var cells=jList.map(function(j){var v=bt[b][j]||0;rt+=v;tot[j]=(tot[j]||0)+v;tot.grand+=v;return '<td>'+(v||'—')+'</td>';}).join('');
-    return '<tr><td>'+b+'</td>'+cells+'<td>'+rt+'</td></tr>';
-  }).join('')+'</tbody>';
-  var tf='<tfoot><tr><td>JUMLAH</td>'
-    +jList.map(function(j){return '<td>'+(tot[j]||'—')+'</td>';}).join('')
-    +'<td>'+tot.grand+'</td></tr></tfoot>';
-  return '<div class="rp-dbox full"><h4>'+label+'</h4><table class="rp-bjt">'+th+tb+tf+'</table></div>';
-}
 function dBox(tit,counts){
   var rows=Object.entries(counts).filter(function(e){return e[0]&&e[0]!=='—';}).map(function(e){return '<div class="ditem"><span>'+e[0]+'</span><span>'+e[1]+'</span></div>';}).join('');
   return '<div class="dbox"><h4>'+tit+'</h4>'+(rows||'<div style="font-size:.66rem;color:var(--g5);">—</div>')+'</div>';
-}
-// Cross-tab bangsa × jantina for a given group (guru/peserta)
-function dBoxBangsaJantina(label,rows,bangsaKey,jantinaKey){
-  var bt={};
-  rows.forEach(function(r){
-    var b=r[bangsaKey]||'LAIN-LAIN', j=r[jantinaKey]||'—';
-    if(!bt[b])bt[b]={};
-    bt[b][j]=(bt[b][j]||0)+1;
-  });
-  var jantinaList=['LELAKI','PEREMPUAN'];
-  // Collect all unique jantina values
-  Object.values(bt).forEach(function(jObj){Object.keys(jObj).forEach(function(j){if(jantinaList.indexOf(j)<0)jantinaList.push(j);});});
-  var thead='<tr><th style="text-align:left;font-size:.58rem;font-weight:800;color:var(--g6);padding:.15rem .3rem;text-transform:uppercase;">Bangsa</th>'
-    +jantinaList.map(function(j){return '<th style="font-size:.58rem;font-weight:800;color:var(--g6);padding:.15rem .3rem;text-align:center;">'+j+'</th>';}).join('')
-    +'<th style="font-size:.58rem;font-weight:800;color:var(--red);padding:.15rem .3rem;text-align:center;">JML</th></tr>';
-  var total={};
-  var tbody=Object.keys(bt).sort().map(function(b){
-    var rowTotal=0;
-    var cells=jantinaList.map(function(j){var v=bt[b][j]||0;rowTotal+=v;total[j]=(total[j]||0)+v;return '<td style="text-align:center;font-size:.68rem;color:var(--g7);padding:.14rem .3rem;">'+(v||'—')+'</td>';}).join('');
-    return '<tr><td style="font-size:.68rem;font-weight:700;color:var(--g8);padding:.14rem .3rem;">'+b+'</td>'+cells+'<td style="text-align:center;font-size:.68rem;font-weight:800;color:var(--red);padding:.14rem .3rem;">'+rowTotal+'</td></tr>';
-  }).join('');
-  var grandTotal=jantinaList.reduce(function(s,j){return s+(total[j]||0);},0);
-  var tfoot='<tr style="border-top:1.5px solid var(--g3);"><td style="font-size:.62rem;font-weight:800;color:var(--g7);padding:.14rem .3rem;">JUMLAH</td>'
-    +jantinaList.map(function(j){return '<td style="text-align:center;font-size:.66rem;font-weight:800;color:var(--g7);padding:.14rem .3rem;">'+(total[j]||'—')+'</td>';}).join('')
-    +'<td style="text-align:center;font-size:.68rem;font-weight:900;color:var(--red);padding:.14rem .3rem;">'+grandTotal+'</td></tr>';
-  return '<div class="dbox" style="grid-column:1/-1;"><h4>'+label+'</h4>'
-    +'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;border:1px solid var(--g2);border-radius:6px;overflow:hidden;">'
-    +'<thead style="background:var(--g1);">'+thead+'</thead><tbody>'+tbody+'</tbody>'
-    +'<tfoot>'+tfoot+'</tfoot></table></div></div>';
 }
 // Cross-tab bangsa × jantina table
 function dBoxBJ(label,rows,bKey,jKey){
@@ -6181,13 +6073,6 @@ function normTel(v){
   return s.replace(/\D/g,'');
 }
 
-// Format tel untuk papar (cth: 123456789 → 12-34567-89)
-function telDisplay(v){
-  if(!v) return '';
-  var s = String(v);
-  if(!s.startsWith('+60')) return s;
-  return s; // simpan as-is, papar penuh
-}
 
 // == FORMAT NO KP =============================================================
 // Auto-format: xxxxxx-xx-xxxx | kekalkan format asal | 12 digit sahaja
@@ -7892,36 +7777,6 @@ function buildPodium(items){
   }
   return wrap;
 }
-function renderPencGrp(bp,keys){
-  return keys.map(function(prog){
-    var en=bp[prog];
-    var byP={};en.forEach(function(e){var p=(e['Peringkat']||'SEKOLAH').toUpperCase();if(!byP[p])byP[p]=[];byP[p].push(e);});
-    var rows='';
-    var perSorted=PER_ORDER.filter(function(p){return byP[p];});
-    Object.keys(byP).forEach(function(p){if(perSorted.indexOf(p)<0)perSorted.push(p);});
-    perSorted.forEach(function(per){
-      var items=byP[per];
-      rows+='<div style="font-size:.58rem;font-weight:800;color:var(--g5);text-transform:uppercase;padding:.18rem 0 .06rem;letter-spacing:.5px;">'+per+'</div>';
-      var seenTempat={};
-      TPT_STANDARD.forEach(function(t){
-        var found=items.filter(function(e){
-          var key=t.l+'|'+(e['Nama Sekolah']||'');
-          if((e['Tempat']||'').toUpperCase()!==t.l) return false;
-          if(seenTempat[key]) return false;
-          seenTempat[key]=1; return true;
-        });
-        if(!found.length) return;
-        var f=found[0];
-        rows+='<div style="display:flex;align-items:flex-start;gap:.42rem;padding:.22rem 0;border-bottom:1px dashed var(--g1);">'
-          +'<span style="font-size:.57rem;font-weight:800;color:var(--red);min-width:78px;">'+f['Tempat']+'</span>'
-          +'<div style="flex:1;"><div style="font-size:.7rem;font-weight:700;color:var(--g8);">'+f['Nama Sekolah']+'</div>'
-          +'<div style="font-size:.62rem;color:var(--g5);">'+(f['Nama Peserta']?'<div style="font-size:.62rem;color:var(--g5);">'+f['Nama Peserta']+'</div>':'')+(f['Nama Guru']?'<div style="font-size:.62rem;color:var(--g4);">'+f['Nama Guru']+'</div>':'')+'</div>'
-          +'<span style="font-size:.64rem;font-weight:800;color:var(--red);">'+(f['Markah']||mPts(per,f['Tempat']))+'pt</span></div>';
-      });
-    });
-    return '<div class="pgrp"><div class="phdr">'+prog+'</div>'+rows+'</div>';
-  }).join('');
-}
 function morePenc(){
   var bp={};_aPnc.forEach(function(p){var k=p['Nama Program']||'';if(!k)return;if(!bp[k])bp[k]=[];bp[k].push(p);});
   var keys=Object.keys(bp);
@@ -8119,7 +7974,6 @@ function _closeDynMo(id){
 }
 // P1-A: Backdrop click-to-close DINYAHAKTIFKAN — modal hanya ditutup melalui butang Tutup.
 function gv(id){return document.getElementById(id).value.trim();}
-function ej(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 function cntBy(arr,key){var c={};arr.forEach(function(i){var k=i[key]||'—';c[k]=(c[k]||0)+1;});return c;}
 function uniqGuru(pny){var u={};pny.forEach(function(r){var k=r['No KP Guru']||r['Nama Guru'];if(k&&r['Nama Guru'])u[k]=r;});return Object.values(u);}
 function uniqPes(pny){var u={};pny.forEach(function(r){var k=r['No KP Peserta']||r['Nama Peserta'];if(k&&r['Nama Peserta'])u[k]=r;});return Object.values(u);}
@@ -8154,273 +8008,11 @@ function toast(msg,type){
 }
 
 // == FUNGSI CARIAN ===================================
-var _srchTimer=null;
-function toggleReveal(btn){
-  if(btn.dataset.shown==='1'){
-    btn.textContent=btn.dataset.label||btn.textContent.split(':')[0];
-    btn.dataset.shown='0';
-    // Restore original label
-    if(btn.dataset.origLabel) btn.innerHTML=btn.dataset.origLabel;
-  } else {
-    if(!btn.dataset.origLabel) btn.dataset.origLabel=btn.innerHTML;
-    btn.innerHTML='<span style="font-family:monospace;font-weight:700;letter-spacing:.5px;">'+esc(btn.dataset.secret)+'</span> <span style="font-size:.65em;opacity:.7;">(klik sembunyikan)</span>';
-    btn.dataset.shown='1';
-  }
-}
 
 // Carian header dibuang — fungsi carian dipindah ke modal sahaja
 
-function openSrchDetProg(p){
-  var pnc=(_aPnc||[]).filter(function(e){return e['Nama Program']===p['Nama Program'];});
-  var pny=(_aP||[]).filter(function(r){return r['Nama Program']===p['Nama Program'];});
-  // Unique pes/guru
-  var uGuru={}, uPes={};
-  pny.forEach(function(r){
-    var gk=r['No KP Guru']||r['Nama Guru'];if(gk&&r['Nama Guru'])uGuru[gk]=r;
-    var pk=r['No KP Peserta']||r['Nama Peserta'];if(pk&&r['Nama Peserta'])uPes[pk]=r;
-  });
-  var gList=Object.values(uGuru), pList=Object.values(uPes);
-  var uSek={}; pny.forEach(function(r){if(r['Nama Sekolah'])uSek[r['Nama Sekolah']]=1;});
-  var now=new Date(); var printDate=now.toLocaleDateString('ms-MY',{day:'2-digit',month:'long',year:'numeric'});
-  var html='';
-  html+='<div style="text-align:center;border-bottom:2px solid var(--red);padding-bottom:.9rem;margin-bottom:1rem;">'
-    +'<div class="rum-logo"><img src="'+LOGO_URL+'" alt="" style="max-height:48px;object-fit:contain;"></div>'
-    +'<div style="font-family:Montserrat,sans-serif;font-size:1.1rem;font-weight:900;color:var(--red);">'+p['Nama Program']+'</div>'
-    +'<div style="font-size:.72rem;color:var(--g5);margin-top:.2rem;">'+p['Bidang']+' &bull; '+p['Peringkat']+' &bull; '+(p['Kategori']||'INDIVIDU')+'</div>'
-    +'</div>';
-  html+='<div class="rsec"><div class="rtit">1. Maklumat Program</div>'
-    +[['Pengelola',p['Pengelola']],['Peringkat',p['Peringkat']],['Tarikh',fd(p['Tarikh'])],['Tempat',p['Tempat']||'—'],['Status',p['Status']],['Sekolah',Object.keys(uSek).length],['Peserta (unik)',pList.length],['Guru (unik)',gList.length]]
-    .map(function(r){return '<div class="rrow"><span class="rk">'+r[0]+'</span><span class="rv">'+r[1]+'</span></div>';}).join('')
-    +'</div>';
-  // Pencapaian
-  if(pnc.length){
-    html+='<div class="rsec"><div class="rtit">2. Pencapaian</div>';
-    var byT={};
-    pnc.forEach(function(e){var tk=(e['Tempat']||'').toUpperCase();if(!byT[tk])byT[tk]=[];byT[tk].push(e);});
-    TPT_STANDARD.forEach(function(t){
-      if(!byT[t.l])return;
-      byT[t.l].forEach(function(e){
-        var per=(e['Peringkat']||'SEKOLAH').toUpperCase();
-        var m=mPts(per,t.l);
-        html+='<div class="rrow"><span class="rk" style="color:var(--red);">'+t.l+'</span>'
-          +'<span class="rv"><strong>'+(e['Nama Sekolah']||'—')+'</strong>'
-          +(e['Nama Peserta']?'<div style="font-size:.65rem;color:var(--g6);">🧑‍🎓 '+e['Nama Peserta']+'</div>':'')
-          +(e['Nama Guru']?'<div style="font-size:.65rem;color:var(--g5);">👨‍🏫 '+e['Nama Guru']+'</div>':'')
-          +'</span></div>';
-      });
-    });
-    html+='</div>';
-  }
-  // Peserta list (compact)
-  if(pList.length){
-    html+='<div class="rsec"><div class="rtit">3. Peserta ('+pList.length+')</div>';
-    html+='<div style="display:flex;flex-wrap:wrap;gap:.28rem;padding:.3rem 0;">';
-    pList.forEach(function(ps){
-      html+='<span style="font-size:.65rem;background:var(--g1);border-radius:20px;padding:.12rem .42rem;">'+ps['Nama Peserta']+'</span>';
-    });
-    html+='</div></div>';
-  }
-  // Demografi
-  if(pny.length){
-    html+='<div class="rsec"><div class="rtit">4. Demografi</div>'
-      +'<div class="dgrid">'
-      +dBox('Jantina Guru',cntBy(uniqGuru(pny),'Jantina Guru'))
-      +dBox('Jantina Peserta',cntBy(uniqPes(pny),'Jantina Peserta'))
-      +'</div></div>';
-  }
-  document.getElementById('sdet-inner').innerHTML=html;
-  buildSdetPrint('prog',{p:p,pnc:pnc,pny:pny,gList:gList,pList:pList,uSek:uSek,printDate:printDate});
-  openMo('mo-sdet');
-}
 
 // == UNIFIED PRINT BUILDER ======================================
-function buildSdetPrint(type,d){
-  var out=''; var LF='https://drive.google.com/thumbnail?id=16W_2I2bcuea1YwDnya0v-M94AGB-A1A3&sz=w800';
-  var secT=function(t){return '<div style="font-family:Montserrat,sans-serif;font-size:9pt;font-weight:900;color:#c0392b;border-left:3pt solid #c0392b;padding-left:6pt;margin:10pt 0 5pt;text-transform:uppercase;">'+t+'</div>';};
-  var rowH=function(k,v){return '<div style="display:flex;border-bottom:0.4pt solid #eee;padding:3pt 0;font-size:8.5pt;"><span style="color:#777;min-width:110pt;font-weight:600;flex-shrink:0;">'+k+'</span><span style="font-weight:700;color:#111;">'+v+'</span></div>';};
-  var hdr=function(title,sub1,sub2){
-    return '<div style="text-align:center;padding-bottom:8pt;margin-bottom:10pt;border-bottom:2pt solid #c0392b;">'
-      +'<div style="margin-bottom:5pt;"><img src="'+LF+'" alt="" style="max-height:52px;max-width:170px;object-fit:contain;"></div>'
-      +'<div style="font-family:Montserrat,sans-serif;font-size:13pt;font-weight:900;color:#c0392b;">'+title+'</div>'
-      +(sub1?'<div style="font-size:8.5pt;color:#666;margin-top:2pt;">'+sub1+'</div>':'')
-      +'<div style="font-size:7.5pt;color:#aaa;margin-top:3pt;">Dicetak: '+d.printDate+'</div>'
-      +'</div>';
-  };
-
-  if(type==='sek'){
-    var sekNm=d.sekNm,rows=d.rows,allPnc=d.allPnc,gList=d.gList,pList=d.pList;
-    var progOrder=d.progOrder, progMap=d.progMap, kod=d.kod;
-    out+=hdr(sekNm,'Kod: '+kod+' &nbsp;|&nbsp; '+progOrder.length+' Program &nbsp;|&nbsp; '+pList.length+' Peserta &nbsp;|&nbsp; '+gList.length+' Guru');
-    // Per-program collation
-    progOrder.forEach(function(pr,pi){
-      var pd=progMap[pr]; var pPnc=pd.pnc; var info=pd.progInfo;
-      var pgGuru={}, pgPes={};
-      pd.rows.forEach(function(p){
-        var gk=p['No KP Guru']||p['Nama Guru'];if(gk&&p['Nama Guru'])pgGuru[gk]=p;
-        var pk=p['No KP Peserta']||p['Nama Peserta'];if(pk&&p['Nama Peserta'])pgPes[pk]=p;
-      });
-      var pgGL=Object.values(pgGuru), pgPL=Object.values(pgPes);
-      out+=secT((pi+1)+'. '+pr);
-      out+='<div style="font-size:8pt;color:#555;margin-bottom:4pt;">'+(info['Peringkat']||'—')+(info['Tarikh']?' &bull; '+fd(info['Tarikh']):'')+(info['Tempat']?' &bull; '+info['Tempat']:'')+'</div>';
-      if(pPnc.length){
-        out+='<table style="width:100%;border-collapse:collapse;margin-bottom:5pt;font-size:8pt;">'
-          +'<thead><tr><th style="background:#c0392b;color:#fff;padding:2.5pt 5pt;text-align:left;font-size:7pt;">Tempat</th>'
-          +'<th style="background:#c0392b;color:#fff;padding:2.5pt 5pt;text-align:left;font-size:7pt;">Peserta</th>'
-          +'<th style="background:#c0392b;color:#fff;padding:2.5pt 5pt;text-align:left;font-size:7pt;">Guru</th>'
-          +'<th style="background:#c0392b;color:#fff;padding:2.5pt 5pt;text-align:center;font-size:7pt;">Mata</th>'
-          +'</tr></thead><tbody>';
-        pPnc.forEach(function(e,i){
-          var per=(e['Peringkat']||'SEKOLAH').toUpperCase();
-          out+='<tr style="background:'+(i%2===0?'#fff':'#fdf2f2')+'">'
-            +'<td style="padding:2pt 5pt;border:0.3pt solid #eee;font-weight:700;color:#c0392b;">'+e['Tempat']+'</td>'
-            +'<td style="padding:2pt 5pt;border:0.3pt solid #eee;">'+( e['Nama Peserta']||'—')+'</td>'
-            +'<td style="padding:2pt 5pt;border:0.3pt solid #eee;color:#777;">'+( e['Nama Guru']||'—')+'</td>'
-            +'<td style="padding:2pt 5pt;border:0.3pt solid #eee;text-align:center;font-weight:900;color:#c0392b;">'+mPts(per,e['Tempat'])+'</td></tr>';
-        });
-        out+='</tbody></table>';
-      }
-      // Peserta+Guru in 2-col
-      out+='<table style="width:100%;border-collapse:separate;border-spacing:4pt;margin-bottom:2pt;font-size:7.5pt;">'
-        +'<tr>'
-        +'<td style="width:50%;vertical-align:top;background:#f8f9fa;border-radius:3pt;padding:4pt;">'
-        +'<div style="font-weight:800;color:#c0392b;margin-bottom:2pt;font-size:7pt;text-transform:uppercase;">Peserta ('+pgPL.length+')</div>'
-        +pgPL.map(function(p,i){return '<div style="padding:1.5pt 0;border-bottom:0.3pt solid #eee;">'+p['Nama Peserta']+(p['Jantina Peserta']?' <span style="color:#888;">'+p['Jantina Peserta']+'</span>':'')+'</div>';}).join('')
-        +'</td>'
-        +'<td style="width:50%;vertical-align:top;background:#f8f9fa;border-radius:3pt;padding:4pt;">'
-        +'<div style="font-weight:800;color:#c0392b;margin-bottom:2pt;font-size:7pt;text-transform:uppercase;">Guru ('+pgGL.length+')</div>'
-        +pgGL.map(function(g,i){return '<div style="padding:1.5pt 0;border-bottom:0.3pt solid #eee;">'+g['Nama Guru']+(g['Jantina Guru']?' <span style="color:#888;">'+g['Jantina Guru']+'</span>':'')+'</div>';}).join('')
-        +'</td>'
-        +'</tr></table>';
-    });
-    // Demografi
-    out+='<div style="page-break-before:auto;margin-top:8pt;">'+secT('Demografi Keseluruhan');
-    out+='<table style="width:100%;border-collapse:separate;border-spacing:4pt;font-size:8pt;">'
-      +'<tr>'
-      +'<td style="width:50%;vertical-align:top;background:#fdf2f2;border-radius:3pt;padding:5pt;">'
-      +'<div style="font-weight:800;color:#c0392b;margin-bottom:3pt;font-size:7pt;text-transform:uppercase;">Jantina Guru</div>'
-      +Object.entries(cntBy(uniqGuru(rows),'Jantina Guru')).map(function(e){return '<div style="display:flex;justify-content:space-between;padding:1.5pt 0;border-bottom:0.3pt solid #fde8e8;"><span>'+e[0]+'</span><span style="font-weight:700;color:#c0392b;">'+e[1]+'</span></div>';}).join('')
-      +'</td>'
-      +'<td style="width:50%;vertical-align:top;background:#fdf2f2;border-radius:3pt;padding:5pt;">'
-      +'<div style="font-weight:800;color:#c0392b;margin-bottom:3pt;font-size:7pt;text-transform:uppercase;">Jantina Peserta</div>'
-      +Object.entries(cntBy(uniqPes(rows),'Jantina Peserta')).map(function(e){return '<div style="display:flex;justify-content:space-between;padding:1.5pt 0;border-bottom:0.3pt solid #fde8e8;"><span>'+e[0]+'</span><span style="font-weight:700;color:#c0392b;">'+e[1]+'</span></div>';}).join('')
-      +'</td></tr></table></div>';
-
-  }else if(type==='pes'){
-    var pesNm=d.pesNm,sekNm=d.sekNm,rows=d.rows,allPnc=d.allPnc,progOrder=d.progOrder,progMap=d.progMap,info=d.info,totalPts=d.totalPts;
-    out+=hdr('🧑‍🎓 '+pesNm,'Sekolah: '+sekNm+(totalPts?' &nbsp;|&nbsp; Jumlah Mata: '+totalPts:''));
-    out+=secT('1. Maklumat Peserta');
-    out+=rowH('No. KP',info['No KP Peserta']||'—')+rowH('Jantina',info['Jantina Peserta']||'—')+rowH('Bangsa',info['Bangsa Peserta']||'—')+rowH('Sekolah',sekNm);
-    out+=secT('2. Penyertaan mengikut Program');
-    progOrder.forEach(function(pr,pi){
-      var pd=progMap[pr]; var pPnc=pd.pnc; var info2=pd.progInfo;
-      out+='<div style="margin-bottom:5pt;padding:4pt 6pt;border:0.5pt solid #ddd;border-radius:3pt;page-break-inside:avoid;">'
-        +'<div style="font-size:8pt;font-weight:700;color:#1a1a2e;">'+pr+'</div>'
-        +'<div style="font-size:7.5pt;color:#777;">'+(info2['Peringkat']||'—')+(info2['Tarikh']?' &bull; '+fd(info2['Tarikh']):'')+'</div>';
-      if(pPnc.length){
-        out+='<div style="margin-top:3pt;">';
-        pPnc.forEach(function(e){
-          var per=(e['Peringkat']||'SEKOLAH').toUpperCase();
-          var m=mPts(per,e['Tempat']||'');
-          out+='<span style="background:#c0392b;color:#fff;border-radius:20pt;padding:1.5pt 6pt;font-size:7pt;font-weight:700;margin-right:3pt;">'+e['Tempat']+' +'+m+'pt</span>';
-        });
-        out+='</div>';
-      }
-      out+='</div>';
-    });
-
-  }else if(type==='guru'){
-    var guruNm=d.guruNm,sekNm=d.sekNm,rows=d.rows,allPnc=d.allPnc,progOrder=d.progOrder,progMap=d.progMap,info=d.info,totalPts=d.totalPts;
-    out+=hdr('👨‍🏫 '+guruNm,'Sekolah: '+sekNm+(totalPts?' &nbsp;|&nbsp; Jumlah Mata: '+totalPts:''));
-    out+=secT('1. Maklumat Guru');
-    out+=rowH('No. KP',info['No KP Guru']||'—')+rowH('Jantina',info['Jantina Guru']||'—')+rowH('Bangsa',info['Bangsa Guru']||'—')+rowH('No. Tel',_fmtTel60(info['No Tel Guru']))+rowH('Sekolah',sekNm);
-    out+=secT('2. Penyertaan mengikut Program');
-    progOrder.forEach(function(pr,pi){
-      var pd=progMap[pr]; var pPnc=pd.pnc; var info2=pd.progInfo;
-      var pgPes={};
-      pd.rows.forEach(function(p){var pk=p['No KP Peserta']||p['Nama Peserta'];if(pk&&p['Nama Peserta'])pgPes[pk]=p;});
-      var pgPL=Object.values(pgPes);
-      out+='<div style="margin-bottom:5pt;padding:4pt 6pt;border:0.5pt solid #ddd;border-radius:3pt;page-break-inside:avoid;">'
-        +'<div style="font-size:8pt;font-weight:700;color:#1a1a2e;">'+pr+'</div>'
-        +'<div style="font-size:7.5pt;color:#777;">'+(info2['Peringkat']||'—')+(info2['Tarikh']?' &bull; '+fd(info2['Tarikh']):'')+'</div>';
-      if(pgPL.length)out+='<div style="font-size:7.5pt;color:#555;margin-top:2pt;">Peserta: '+pgPL.map(function(p){return p['Nama Peserta'];}).join(', ')+'</div>';
-      if(pPnc.length){
-        out+='<div style="margin-top:3pt;">';
-        pPnc.forEach(function(e){
-          var per=(e['Peringkat']||'SEKOLAH').toUpperCase();
-          var m=mPts(per,e['Tempat']||'');
-          out+='<span style="background:#c0392b;color:#fff;border-radius:20pt;padding:1.5pt 6pt;font-size:7pt;font-weight:700;margin-right:3pt;">'+e['Tempat']+' +'+m+'pt</span>';
-        });
-        out+='</div>';
-      }
-      out+='</div>';
-    });
-
-  }else if(type==='prog'){
-    var p2=d.p,pnc=d.pnc,pny=d.pny,gList=d.gList,pList=d.pList,uSek=d.uSek;
-    var nSek=Object.keys(uSek).length;
-    out+=hdr(p2['Nama Program'],p2['Bidang']+' &bull; '+p2['Peringkat']+' &bull; '+(p2['Kategori']||'INDIVIDU'));
-    out+=secT('1. Maklumat Program');
-    [['Pengelola',p2['Pengelola']],['Peringkat',p2['Peringkat']],['Tarikh',fd(p2['Tarikh'])],['Tempat',p2['Tempat']||'—'],['Status',p2['Status']],['Sekolah',nSek],['Peserta (unik)',pList.length],['Guru (unik)',gList.length]]
-      .forEach(function(r){out+=rowH(r[0],r[1]);});
-    if(pnc.length){
-      out+=secT('2. Pencapaian');
-      out+='<table style="width:100%;border-collapse:collapse;font-size:8pt;">'
-        +'<thead><tr><th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:left;font-size:7pt;">Tempat</th>'
-        +'<th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:left;font-size:7pt;">Sekolah</th>'
-        +'<th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:left;font-size:7pt;">Peserta</th>'
-        +'<th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:left;font-size:7pt;">Guru</th>'
-        +'<th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:center;font-size:7pt;">Mata</th>'
-        +'</tr></thead><tbody>';
-      var byT2={};
-      pnc.forEach(function(e){var tk=(e['Tempat']||'').toUpperCase();if(!byT2[tk])byT2[tk]=[];byT2[tk].push(e);});
-      var ri=0;
-      TPT_STANDARD.forEach(function(t){
-        (byT2[t.l]||[]).forEach(function(e){
-          var per=(e['Peringkat']||'SEKOLAH').toUpperCase();
-          out+='<tr style="background:'+(ri%2===0?'#fff':'#fdf2f2')+'">'
-            +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;font-weight:700;color:#c0392b;">'+t.l+'</td>'
-            +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;font-weight:700;">'+(e['Nama Sekolah']||'—')+'</td>'
-            +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;">'+(e['Nama Peserta']||'—')+'</td>'
-            +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;color:#777;">'+(e['Nama Guru']||'—')+'</td>'
-            +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;text-align:center;font-weight:900;color:#c0392b;">'+mPts(per,t.l)+'</td></tr>';
-          ri++;
-        });
-      });
-      out+='</tbody></table>';
-    }
-    // Peserta table
-    if(pList.length){
-      out+=secT('3. Senarai Peserta ('+pList.length+')');
-      out+='<table style="width:100%;border-collapse:collapse;font-size:8pt;">'
-        +'<thead><tr><th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:left;font-size:7pt;">Nama Peserta</th>'
-        +'<th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:left;font-size:7pt;">Sekolah</th>'
-        +'<th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:center;font-size:7pt;">Jantina</th>'
-        +'<th style="background:#c0392b;color:#fff;padding:3pt 5pt;text-align:center;font-size:7pt;">Bangsa</th>'
-        +'</tr></thead><tbody>';
-      pList.forEach(function(p,i){
-        out+='<tr style="background:'+(i%2===0?'#fff':'#fdf2f2')+'">'
-          +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;font-weight:700;">'+p['Nama Peserta']+'</td>'
-          +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;">'+(p['Nama Sekolah']||'—')+'</td>'
-          +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;text-align:center;">'+(p['Jantina Peserta']||'—')+'</td>'
-          +'<td style="padding:2.5pt 5pt;border:0.3pt solid #eee;text-align:center;">'+(p['Bangsa Peserta']||'—')+'</td></tr>';
-      });
-      out+='</tbody></table>';
-    }
-    // Demografi
-    out+=secT('4. Demografi');
-    out+='<table style="width:100%;border-collapse:separate;border-spacing:4pt;font-size:8pt;"><tr>'
-      +'<td style="width:50%;vertical-align:top;background:#fdf2f2;border-radius:3pt;padding:5pt;">'
-      +'<div style="font-weight:800;color:#c0392b;margin-bottom:3pt;font-size:7pt;text-transform:uppercase;">Jantina Peserta</div>'
-      +Object.entries(cntBy(uniqPes(pny),'Jantina Peserta')).map(function(e){return '<div style="display:flex;justify-content:space-between;padding:1.5pt 0;border-bottom:0.3pt solid #fde8e8;"><span>'+e[0]+'</span><span style="font-weight:700;color:#c0392b;">'+e[1]+'</span></div>';}).join('')
-      +'</td>'
-      +'<td style="width:50%;vertical-align:top;background:#fdf2f2;border-radius:3pt;padding:5pt;">'
-      +'<div style="font-weight:800;color:#c0392b;margin-bottom:3pt;font-size:7pt;text-transform:uppercase;">Jantina Guru</div>'
-      +Object.entries(cntBy(uniqGuru(pny),'Jantina Guru')).map(function(e){return '<div style="display:flex;justify-content:space-between;padding:1.5pt 0;border-bottom:0.3pt solid #fde8e8;"><span>'+e[0]+'</span><span style="font-weight:700;color:#c0392b;">'+e[1]+'</span></div>';}).join('')
-      +'</td></tr></table>';
-  }
-
-  document.getElementById('sdet-print-portal').innerHTML=out;
-}
 
 function printSdet(){
   var p=document.getElementById('sdet-print-portal');
@@ -8758,70 +8350,10 @@ function _getNamaSekolahByKod(kod){
   return rec ? (rec['Nama Sekolah']||'') : '';
 }
 
-// Tambah sekolah baharu ke _sekExtraDb (elak pendua) — dipanggil bila pengguna taip kod/nama baru
-function _tambahSekExtra(kod, nama){
-  kod=(kod||'').toUpperCase().trim();
-  nama=(nama||'').toUpperCase().trim();
-  if(!kod||!nama) return;
-  var inStatik=_SEKOLAH_STATIK.some(function(s){return s.kod===kod;});
-  if(inStatik) return; // sudah ada dalam senarai rasmi
-  var inExtra=_sekExtraDb.some(function(s){return s.kod===kod;});
-  if(!inExtra) _sekExtraDb.push({kod:kod,nama:nama});
-}
 
-function onSugKod(q){
-  var drop=document.getElementById('sug-kod'); if(!drop)return;
-  var v=(q||'').trim();
-  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
-  var lv=v.toLowerCase();
-  var items=_getSekSuggestions().filter(function(s){
-    return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
-  }).slice(0,6);
-  if(!items.length){drop.innerHTML='';drop.classList.remove('on');return;}
-  drop.innerHTML=items.map(function(s){
-    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🔑</span><span>'+s.kod+' — '+s.nama+'</span></div>';
-  }).join('');
-  drop.querySelectorAll('.sug-item').forEach(function(el){
-    el.addEventListener('mousedown',function(){pickSugKod(decodeURIComponent(el.dataset.sugKod),decodeURIComponent(el.dataset.sugSek));});
-  });
-  drop.classList.add('on');
-}
 
-function pickSugKod(kod,nama){
-  var ki=document.getElementById('daf-kod'); if(ki)ki.value=kod;
-  var si=document.getElementById('daf-sek'); if(si)si.value=nama;
-  hideSug('sug-kod'); hideSug('sug-sek');
-  _tambahSekExtra(kod,nama);
-  onKodIn();
-  renderMainGuruList(); renderMainPesList();
-}
 
-function onSugSek(q){
-  var drop=document.getElementById('sug-sek'); if(!drop)return;
-  var v=(q||'').trim();
-  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
-  var lv=v.toLowerCase();
-  var items=_getSekSuggestions().filter(function(s){
-    return s.nama.toLowerCase().indexOf(lv)>-1;
-  }).slice(0,6);
-  if(!items.length){drop.innerHTML='';drop.classList.remove('on');return;}
-  drop.innerHTML=items.map(function(s){
-    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+s.nama+'</span></div>';
-  }).join('');
-  drop.querySelectorAll('.sug-item').forEach(function(el){
-    el.addEventListener('mousedown',function(){pickSugSek(decodeURIComponent(el.dataset.sugKod),decodeURIComponent(el.dataset.sugSek));});
-  });
-  drop.classList.add('on');
-}
 
-function pickSugSek(kod,nama){
-  var si=document.getElementById('daf-sek'); if(si)si.value=nama;
-  var ki=document.getElementById('daf-kod'); if(ki&&!ki.value)ki.value=kod;
-  _tambahSekExtra(kod,nama);
-  hideSug('sug-sek');
-  onKodIn();
-  renderMainGuruList(); renderMainPesList();
-}
 
 function hideSug(id){
   setTimeout(function(){var d=document.getElementById(id);if(d)d.classList.remove('on');},200);
@@ -8872,31 +8404,6 @@ function pickSugProg(kod,nama){
 }
 
 // == Suggestion helpers untuk borang DAFTAR AKAUN ============
-// Autocomplete ikut corak tab Pengelola — medan #daf-kodsek-search (paparan)
-// + #daf-kodsek (hidden, nilai kod) + #daf-nmsek (hidden, nama).
-function onSugDafSek(q){
-  var drop=document.getElementById('sug-daf-kodsek'); if(!drop)return;
-  var v=(q||'').trim();
-  if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
-  var lv=v.toLowerCase();
-  var items=_getSekSuggestions().filter(function(s){
-    return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
-  }).sort(function(a,b){return a.nama.localeCompare(b.nama);}).slice(0,8);
-  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g5);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
-  drop.innerHTML=items.map(function(s){
-    return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+esc(s.nama)+' ('+esc(s.kod)+')</span></div>';
-  }).join('');
-  drop.querySelectorAll('.sug-item[data-sug-kod]').forEach(function(el){
-    el.addEventListener('mousedown',function(){pickDafSek(decodeURIComponent(el.dataset.sugKod),decodeURIComponent(el.dataset.sugSek));});
-  });
-  drop.classList.add('on');
-}
-function pickDafSek(kod,nama){
-  var hidK=document.getElementById('daf-kodsek'); if(hidK) hidK.value=kod;
-  var hidN=document.getElementById('daf-nmsek'); if(hidN) hidN.value=nama;
-  var vis=document.getElementById('daf-kodsek-search'); if(vis) vis.value=nama+' ('+kod+')';
-  hideSug('sug-daf-kodsek');
-}
 // Fungsi lama (_populateDafSekDropdown / onDafSekSelect / onDafKodSekIn / onDafSugKod / onDafSugSek)
 // dibuang — digantikan sepenuhnya oleh autocomplete di atas. Kekalkan sebagai no-op
 // supaya panggilan sedia ada di tempat lain (jika ada) tidak ranap.
@@ -8932,38 +8439,7 @@ function filterByBidang(arr, field){
   return arr;
 }
 
-function filterPnyByBidang(pny, pg){
-  if(_dashBidang==='semua') return pny;
-  var bidangSel = document.getElementById('df-bidang');
-  var bVal = bidangSel ? bidangSel.value.toUpperCase() : '';
-  var allowed;
-  if(_dashBidang==='sukan') allowed = BIDANG_SUKAN;
-  else if(_dashBidang==='koku') allowed = BIDANG_KOKU_LIST;
-  else if(bVal) allowed = [bVal];
-  else return pny;
-  // Build set of program IDs that match bidang
-  var okIds = {};
-  (pg||[]).forEach(function(p){
-    if(allowed.indexOf((p['Bidang']||'').toUpperCase()) >= 0) okIds[p['ID']]=1;
-  });
-  return pny.filter(function(r){ return okIds[r['Program ID']]; });
-}
 
-function filterPncByBidang(pnc, pg){
-  if(_dashBidang==='semua') return pnc;
-  var bidangSel = document.getElementById('df-bidang');
-  var bVal = bidangSel ? bidangSel.value.toUpperCase() : '';
-  var allowed;
-  if(_dashBidang==='sukan') allowed = BIDANG_SUKAN;
-  else if(_dashBidang==='koku') allowed = BIDANG_KOKU_LIST;
-  else if(bVal) allowed = [bVal];
-  else return pnc;
-  var okNms = {};
-  (pg||[]).forEach(function(p){
-    if(allowed.indexOf((p['Bidang']||'').toUpperCase()) >= 0) okNms[p['Nama Program']]=1;
-  });
-  return pnc.filter(function(r){ return okNms[r['Nama Program']]; });
-}
 
 function rebuildDash(){
   // Apply all active filters
@@ -9534,60 +9010,6 @@ function lgKeluar(idleMode){
 }
 
 // == Daftar akaun ============================================
-async function lgDaftar(){
-  lgClearMsg();
-  var nama   = document.getElementById('daf-nama').value.trim();
-  var kp     = document.getElementById('daf-kp').value.trim();
-  var tel    = document.getElementById('daf-tel').value.trim();
-  var kodsek = document.getElementById('daf-kodsek').value.trim();
-  var nmsek  = document.getElementById('daf-nmsek').value.trim();
-  var pin    = document.getElementById('daf-pin').value.trim();
-  var pin2   = document.getElementById('daf-pin2').value.trim();
-  var role   = document.getElementById('daf-role').value;
-
-  if(!nama||!kp||!tel||!kodsek||!nmsek){
-    lgMsg('daf-err','Sila isi semua maklumat yang diperlukan.');return;
-  }
-  // Daftar sekolah baharu ke dalam senarai tempatan supaya boleh dicadangkan pada masa hadapan
-  _tambahSekExtra(kodsek, nmsek);
-  if(kp.replace(/\D/g,'').length!==12){
-    lgMsg('daf-err','No. KP mesti 12 digit.');return;
-  }
-  if(!pin||pin.length!==6||!/^\d{6}$/.test(pin)){
-    lgMsg('daf-err','PIN mestilah tepat 6 digit angka.');return;
-  }
-  if(pin!==pin2){
-    lgMsg('daf-err','PIN tidak sepadan. Sila semak semula.');
-    document.getElementById('daf-pin2').value='';
-    document.getElementById('daf-pin2').focus();
-    return;
-  }
-
-  document.getElementById('daf-btn').disabled=true;
-  showOv('MENGHANTAR PERMOHONAN...');
-  try{
-    var r = await run('daftarAkaunGS',{
-      role:role, nama:nama, noKP:kp,
-      noTel:'+60'+tel.replace(/\D/g,''),
-      kodSekolah:kodsek, namaSekolah:nmsek,
-      pin:pin
-    });
-    hideOv();
-    if(r&&r.ok){
-      lgMsg('daf-ok','✅ '+r.msg+' Kelulusan biasanya dalam 1–2 hari bekerja.');
-      ['daf-nama','daf-kp','daf-tel','daf-kodsek','daf-kodsek-search','daf-nmsek','daf-pin','daf-pin2'].forEach(function(id){
-        var el=document.getElementById(id); if(el) el.value='';
-      });
-    } else {
-      lgMsg('daf-err',(r&&r.msg)||'Ralat semasa mendaftar.');
-    }
-  }catch(e){
-    hideOv();
-    lgMsg('daf-err','Ralat: '+e.message);
-  } finally {
-    document.getElementById('daf-btn').disabled=false;
-  }
-}
 
 // == Panel Akaun (Admin) =====================================
 var _akaunData = [];
