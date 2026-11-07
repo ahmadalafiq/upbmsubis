@@ -57,6 +57,14 @@
   function normNamaProgram(s) {   // buang tahun supaya program sama dipadan antara sesi
     return U(s).replace(/\bTAHUN\s*(19|20)\d{2}\b/g, '').replace(/\b(19|20)\d{2}\b/g, '').replace(/\s+/g, ' ').trim();
   }
+  // Nama fail muat turun: KOD_NAMA-SEKOLAH_LAPORAN_TAHUN.pdf  /  KOD_NAMA-SEKOLAH_PERBANDINGAN_TAHUNLAMA-TAHUNBARU.pdf
+  function slugNama(nama) { return U(nama).replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40); }
+  function namaFail(kod, nama, mode, years) {   // years: tahun terkini dahulu
+    var asas = U(kod) + '_' + slugNama(nama);
+    return mode === 'tunggal'
+      ? asas + '_LAPORAN_' + years[0] + '.pdf'
+      : asas + '_PERBANDINGAN_' + years[years.length - 1] + '-' + years[0] + '.pdf';
+  }
   function luarDasarTeks() {   // dasar aktiviti luar semasa (LUAR_POLISI dalam index.html)
     var p = G.LUAR_POLISI || { pelibatan: 'TIADA', had: null };
     return 'pencapaian ikut Jadual Markah, pelibatan ' + ({ TIADA: 'tiada (0)', SETENGAH: '50%', PENUH: 'penuh' }[p.pelibatan] || p.pelibatan)
@@ -451,10 +459,25 @@
         sl.forEach(function (ln) { txt(ln, LM, Y - 9, 8.5, fB, rgb(0.2, 0.2, 0.2)); Y -= 11; });
         Y -= 3;
       } else if (b.t === 'table') {
+        var FS = 8, LH = 10, PAD = 3;
         var tw = b.cols.reduce(function (s, c) { return s + c.w; }, 0);
         var cw = b.cols.map(function (c) { return c.w / tw * AW; });
+        // Lebar minimum setiap lajur = perkataan TERPANJANG di dalamnya (tajuk & kandungan) + ruang tepi, supaya perkataan seperti
+        // "BERKUMPULAN" tak terputus separuh ("BERKUMPULA / N"). Lajur yang terlalu sempit dilebarkan; lebihan diambil daripada
+        // lajur yang longgar (jumlah lebar kekal). Had 30% lebar halaman bagi satu lajur mengelakkan satu token luar biasa panjang merampas ruang.
+        var longgarKata = function (t, size, font) { var m = 0; String(safe(t)).split(/[\s\n]+/).forEach(function (w) { var x = font.widthOfTextAtSize(w, size); if (x > m) m = x; }); return m; };
+        var minW = b.cols.map(function (c, i) {
+          var m = longgarKata(c.h, 7.5, fB);
+          b.rows.forEach(function (row) { var x = longgarKata(row[i], FS, fR); if (x > m) m = x; });
+          return Math.min(m + PAD * 2 + 1, AW * 0.30);
+        });
+        var kurang = 0, lebih = 0;
+        cw.forEach(function (w, i) { if (w < minW[i]) kurang += minW[i] - w; else lebih += w - minW[i]; });
+        if (kurang > 0 && lebih >= kurang) {
+          var nisbah = kurang / lebih;
+          cw = cw.map(function (w, i) { return w < minW[i] ? minW[i] : w - (w - minW[i]) * nisbah; });
+        }
         var cx = []; cw.reduce(function (x, w, i) { cx[i] = x; return x + w; }, LM);
-        var FS = 8, LH = 10, PAD = 3;
         var drawHead = function () {
           ensure(18);
           page.drawRectangle({ x: LM, y: Y - 14, width: AW, height: 14, color: cRed });
@@ -541,13 +564,10 @@
       nama = nama || k;
       var models = years.map(function (y, i) { return buildModel(k, nama, y, datas[i]); });
       if (!models.some(function (m) { return m.ringkas.nProgram > 0; })) return;   // tiada penyertaan langsung: langkau
-      var slug = U(nama).replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
       items.push({
         kod: k, nama: nama, models: models,
         spec: mode === 'tunggal' ? specTunggal(models[0]) : specBanding(models),
-        fileName: mode === 'tunggal'
-          ? k + '_' + slug + '_LAPORAN_' + years[0] + '.pdf'
-          : k + '_' + slug + '_PERBANDINGAN_' + years[years.length - 1] + '-' + years[0] + '.pdf'
+        fileName: namaFail(k, nama, mode, years)
       });
     });
     items.sort(function (a, b) { return String(a.nama).localeCompare(String(b.nama)); });
@@ -717,10 +737,10 @@
       LS.models = models; LS.kod = kod; LS.nama = nama;
       if (LS.mode === 'tunggal') {
         LS.spec = specTunggal(models[0]);
-        LS.fileName = 'LAPORAN_' + kod + '_' + years[0] + '.pdf';
+        LS.fileName = namaFail(kod, nama, 'tunggal', years);
       } else {
         LS.spec = specBanding(models);
-        LS.fileName = 'PERBANDINGAN_' + kod + '_' + years[years.length - 1] + '-' + years[0] + '.pdf';
+        LS.fileName = namaFail(kod, nama, 'banding', years);
       }
       body.innerHTML = renderHtml(LS.spec);
       $('ls-btn-pdf').disabled = false; $('ls-btn-cetak').disabled = false;
@@ -774,5 +794,5 @@
   /* ───────────── eksport ───────────── */
   G.openLaporanSekolah = openLaporanSekolah;
   G.lsJana = lsJana; G.lsPdf = lsPdf; G.lsCetak = lsCetak; G.lsOnJenis = lsOnJenis;
-  G.__LS = { buildBatch: buildBatch, specSenaraiBatch: specSenaraiBatch, zipItems: zipItems, buildModel: buildModel, specTunggal: specTunggal, specBanding: specBanding, renderHtml: renderHtml, renderPdf: renderPdf, safe: safe };
+  G.__LS = { namaFail: namaFail, buildBatch: buildBatch, specSenaraiBatch: specSenaraiBatch, zipItems: zipItems, buildModel: buildModel, specTunggal: specTunggal, specBanding: specBanding, renderHtml: renderHtml, renderPdf: renderPdf, safe: safe };
 })(typeof window !== 'undefined' ? window : globalThis);

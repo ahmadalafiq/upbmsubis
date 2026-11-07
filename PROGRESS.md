@@ -13,6 +13,9 @@ _Kemas kini terakhir: 16 Okt 2026 — projek 6 (Laporan Sekolah) ditambah. Hanya
 | 6 | Laporan Sekolah (penyertaan & pencapaian + perbandingan sesi) | Dibina & dipush (`88333f6` + pembetulan admin/semua sekolah), **belum diuji dalam pelayar** | Uji dalam app sebenar selepas deploy |
 | 7 | Aktiviti Luar (penanda program + Dashboard + penilaian) | Fasa 1–3 siap & dipush (dasar: pencapaian sahaja); **belum diuji dalam pelayar** | Uji dalam app sebenar; Fasa 4 pilihan |
 | 8 | Log masuk e-mel dengan kod (OTP) | CADANGAN; menunggu keputusan & tetapan SMTP | Putuskan kaedah ikatan akaun (A/B) + sediakan SMTP |
+| 9 | Laporan Analitik PPD (menggantikan Cetak Ringkasan; admin sahaja) | CADANGAN (26 Okt) — menunggu persetujuan | Putuskan 4 perkara dlm projek 9, kemudian bina P1 |
+| 10 | **Privasi data peserta** (No.KP murid/guru & telefon boleh dibaca awam) | **PENEMUAN KRITIKAL** — belum dibetulkan | Keutamaan tertinggi; projek reka bentuk (perlu ujian pelayar) |
+| 11 | Pengerasan edge function `ai-chat` | Dikaji (dijeda separuh); belum dilaksanakan | Senarai putih alat, had input, pengesahan sesi, had kadar |
 
 **Urutan kerja cadangan:** uji projek 6 & 7 dahulu → 2 → 3 (W1→W4) → 4; projek 8 menunggu keputusan. (Projek 1 siap — lihat ARKIB.) Projek 5 boleh dibuat selari. Kerja yang sudah siap: lihat `ARKIB.md`.
 
@@ -269,18 +272,77 @@ _Item di bawah bertanda belum selesai/belum diuji dalam bahagian yang diarkibkan
 
 ---
 
+## 9. Laporan Analitik PPD (menggantikan "Cetak Ringkasan"; khas admin / pegawai PPD)
+**Status:** CADANGAN (26 Okt 2026), belum dibina. Menunggu persetujuan pengguna.
+
+**Masalah semasa:** butang 🖨 CETAK RINGKASAN (`printDashRingkasan`) hanya menyalin 4 kad statistik + jadual program dari skrin ke tetingkap popup (disekat popup-blocker dan Google Sites), tanpa penapis, analitik atau perbandingan, dan boleh dilihat semua peranan.
+
+**Nama butang dicadang:** **📊 LAPORAN ANALITIK PPD** (papar hanya jika `_sesi.role==='admin'`; pegawai PPD = akaun admin). Alternatif: "LAPORAN PEGAWAI".
+
+**Antara muka:** modal `mo-lapppd` (corak sama dengan Laporan Sekolah) dengan tapisan: **Sesi/Tahun** (satu; atau 2+ untuk perbandingan), **Bidang** (SENI, BAHASA, STEM, PBB, SUKAN, LAIN-LAIN: satu/beberapa/semua), **Peringkat** (lalai SEMUA: sekolah → daerah → bahagian → negeri → kebangsaan → antarabangsa), **Jenis aktiviti** (Teras lalai / Luar / Semua; dasar projek 7), **Jenis sekolah** (SK / SJK(C) / SMK / semua; daripada kod YBA·YBB, YCC, YE*). Pratonton ringkas dalam modal, kemudian **MUAT TURUN PDF / EXCEL (selamat nombor) / CETAK**. Guna semula enjin spesifikasi-dokumen Laporan Sekolah (`__LS.renderHtml/renderPdf`) dalam modul baharu `laporan-ppd.js`: **tiada enjin PDF baharu**, `index.html` tak membesar.
+
+**Struktur laporan:** 1 Muka depan + tapisan digunakan (ketelusan) · 2 **Ringkasan Eksekutif** (1 halaman: KPI utama, 3–5 penemuan automatik, sekolah perlu perhatian) · 3 Penglibatan Sekolah · 4 Penglibatan Murid · 5 Mengikut Peringkat (corong) · 6 Pencapaian · 7 Program dalam bidang · 8 Sekolah tidak menyertai · 9 Perbandingan sesi · 10 Kualiti data & nota kaedah.
+
+**Analitik dicadang untuk dilaporkan kepada Ketua Jabatan** (semua boleh dikira daripada data sedia ada; angka dalam kurungan = keadaan semasa 2026):
+1. **Kadar penglibatan sekolah** = sekolah ada ≥1 penyertaan ÷ jumlah sekolah (47/49 = 96%); per bidang×peringkat (cth BAHASA/Daerah 35 sekolah, SENI/Daerah 26, STEM/Daerah 30, SUKAN/Bahagian 40, PBB/Daerah 17).
+2. **Kedalaman penglibatan**: purata program per sekolah; taburan (1 / 2–3 / 4+ program); sekolah penyertaan rendah (bawah persentil 25).
+3. **Murid unik** (ikut No.KP, dikira dalaman sahaja; kini 1,027) per bidang/peringkat; murid dalam >1 bidang (pelbagai bakat).
+4. **Demografi** jantina (L 1,098 / P 1,139) dan bangsa. **Nota jujur:** ~157 rekod tanpa jantina dan ~158 tanpa bangsa → papar "Tidak dinyatakan" + cadangan kemas kini, bukan diabaikan.
+5. **Corong peringkat**: murid & sekolah di setiap peringkat dan **kadar naik peringkat** (cth SUKAN: 489 murid unik di Bahagian → 15 di Negeri = 3%).
+6. **Pencapaian**: kedudukan 1/2/3 mengikut peringkat; **kadar kejayaan** = pencapaian ÷ penyertaan unik; 10 sekolah teratas (markah teras); sekolah tanpa pencapaian.
+7. **Jurang akses**: sekolah tidak menyertai bidang X (senarai sekolah: "ruang pembangunan", bukan penalti); jenis sekolah (SK/SJK(C)/SMK) berbanding penyertaan.
+8. **Beban guru**: guru pengiring unik, purata murid per guru, guru dengan beban tinggi.
+9. **Program**: bil. program, program tanpa penyertaan, tanpa pencapaian, paling ramai peserta; **aktiviti luar vs teras dipisahkan**.
+10. **Tren bulanan** penyertaan (ikut bulan program) untuk perancangan kalendar.
+11. **Kualiti data**: rekod tanpa jantina/bangsa/kategori, program tanpa tarikh, nama sekolah tak sepadan.
+12. **Penemuan automatik** (templat ayat): cth "Bidang SENI tiada program peringkat Bahagian", "N sekolah tidak menyertai STEM", "Penyertaan murid perempuan 51%".
+**Data yang BELUM ada tetapi menambah nilai besar:** **enrolmen murid per sekolah** (untuk kadar penyertaan % murid; kini hanya angka mutlak), **sasaran KPI PPD** (sebenar vs sasaran), kategori lokasi sekolah (bandar/luar bandar/pedalaman).
+
+**Perbandingan antara sesi (untuk masa depan, dibina sejak awal):** pilih sesi A vs B (atau semua tahun). Metrik: program, sekolah menyertai, murid unik, penyertaan, pencapaian (1/2/3), markah teras, mengikut bidang & peringkat; **perubahan mutlak dan %**; **sekolah baharu menyertai / tidak lagi menyertai**; **murid berulang vs baharu** (dikira dalaman daripada No.KP, laporan hanya agregat); sekolah naik/turun ranking ≥5 tempat; program berulang (dipadan nama tanpa tahun, sama seperti Laporan Sekolah). Dengan 1 sesi (kini): papar "Perbandingan tersedia mulai sesi 2027" dengan baik. Tiada perubahan pangkalan data: data dimuat per tahun melalui `getAllDataGS`.
+
+**Privasi:** laporan agregat sahaja; **tiada No.KP / nama murid secara lalai**. Senarai nama hanya lampiran pilihan untuk admin (lalai MATI). Selaras projek 10.
+
+**Fasa:** **P1** modal + tapisan + ringkasan eksekutif + sekolah & murid (PDF) → **P2** peringkat/corong + pencapaian + sekolah tidak menyertai + Excel → **P3** perbandingan sesi → **P4** penemuan automatik, tren bulanan, enrolmen/KPI (bila data tersedia).
+**Keputusan diperlukan:** (1) satu laporan tetap atau pengguna pilih bahagian? (2) ada data enrolmen murid per sekolah / sasaran KPI? (3) senarai nama murid dalam lampiran, atau agregat sahaja (disyorkan)? (4) nama butang (cadangan: LAPORAN ANALITIK PPD).
+
+---
+
+## 10. Privasi Data Peserta — No.KP murid/guru & telefon boleh dibaca awam (KRITIKAL)
+**Penemuan (26 Okt 2026, disahkan sebagai `anon`):** kunci awam (`anon`, tertanam dalam `index.html`/repo) boleh membaca terus **`no_kp_peserta` 2,186 baris, `no_kp_guru` 2,295, `no_tel_guru` 2,293** dalam `penyertaan`, dan `no_kp_*` 257/226 dalam `pencapaian` (RLS: `SELECT` terbuka). Rekod audit lama (ARKIB: "`programs`/`penyertaan`/`pencapaian` SELECT terbuka") menerima ini sebagai keputusan reka bentuk demi Dashboard, **tanpa menimbang bahawa jadual itu mengandungi PII**. Kesan: sesiapa boleh memuat turun No.KP ±1,000 murid (bawah umur 18) dan guru serta telefon (PDPA 2010).
+**Kenapa tak boleh "tutup SELECT" serta-merta:** klien membaca `select *` dan memakai No.KP sebagai kunci (dedup/markah `getSkor`, borang edit, eksport). Menarik balik terus akan memecahkan Dashboard, laporan dan borang.
+**Reka bentuk pembetulan (projek berasingan, perlu ujian pelayar penuh):**
+1. ID anonim `id_peserta`/`id_guru` (hash bergaram di pelayan) menggantikan No.KP sebagai kunci dalam `getSkor`/Dashboard/laporan.
+2. Tarik balik `SELECT` lajur PII daripada `anon`/`authenticated` (hak lajur); klien baca lajur eksplisit atau paparan `penyertaan_awam` tanpa PII.
+3. RPC bertoken `penyertaan_sekolah_saya(...)` memulangkan No.KP/telefon hanya bagi sekolah pemanggil (atau PKK pengelola) untuk borang edit.
+4. Uji Dashboard, Laporan Sekolah, Laporan Analitik PPD, Excel/CSV, muat naik.
+**Mitigasi tanpa memecahkan klien:** tiada yang selamat; sebab itu keutamaan tertinggi bersama putar kod admin dan had percubaan log masuk.
+
+---
+
+## 11. Pengerasan Edge Function `ai-chat` (semakan dijeda separuh jalan, 26 Okt)
+**Temuan (daripada `supabase/functions/ai-chat/index.ts` + `deploy-edge-functions.yml`):**
+- Deploy tanpa `--no-verify-jwt` → JWT `anon` (awam) mencukupi: dalam praktik fungsi **terbuka kepada sesiapa** yang ada kunci anon; **tiada pengesahan sesi pengguna** (klien hanya aktifkan AI selepas log masuk, pelayan tidak menyemak) dan **tiada had kadar** → risiko kos Gemini (sehingga 4 panggilan × 4096 token bagi satu permintaan) dan penyalahgunaan sebagai proksi LLM percuma.
+- Nama RPC daripada output model dipakai terus dalam URL `rpc/${nama}` **tanpa senarai putih**; argumen tak ditapis (cth `p_limit` tanpa had) → penipuan arahan (prompt injection) boleh memanggil RPC awam lain.
+- `message`/`history`/`context` tanpa had panjang; hasil RPC dihantar penuh kepada model (token).
+- Kunci Gemini dalam URL (`?key=`) → boleh bocor ke log; guna pengepala `x-goog-api-key`. Tiada timeout.
+**Cadangan pembetulan:** senarai putih alat + klem argumen; had saiz input (mesej ≤1000 aksara, sejarah ≤10 giliran, konteks kecil) dan hasil RPC (≤25 baris); kunci dalam pengepala; timeout; **pengesahan sesi di pelayan** (klien hantar `no_kp` + token; pelayan sahkan melalui `_sahkan_token` dengan `service_role` — disahkan `service_role` boleh memanggilnya); had kadar per pengguna (+IP). Nota: deploy automatik setiap push ke `main` (GitHub Actions).
+**Status:** BELUM dilaksanakan. Permintaan menyenaraikan fungsi melalui alat MCP tidak diluluskan (tidak diulang).
+
+---
+
 ## ⭐ Cadangan Projek Mudah (untuk SESI SETERUSNYA)
 _Disimpan 26 Okt 2026 atas arahan pengguna ("simpan dulu"). Mulakan sesi seterusnya dengan memilih daripada senarai ini. ⭐ = kurang sejam, ⭐⭐ = kira-kira satu sesi._
 
 **Keselamatan (disyorkan dahulu):**
+0. ⭐⭐⭐ **BARU — PRIVASI (projek 10)**: No.KP murid/guru & telefon boleh dibaca awam. Keutamaan tertinggi; projek reka bentuk, bukan kerja kecil.
 1. ⭐ **Putar kod admin** dalam `app_secrets` (kod lama ada dalam sejarah repo awam). Kod baharu diberi dalam sembang sahaja, tidak ditulis dalam fail.
 2. ⭐⭐ **Had percubaan log masuk**: kunci akaun/No.KP sementara selepas beberapa kegagalan pada `login_pengguna`, `login_admin`, `claim_akaun_google` (PIN 6 digit = 1 juta kombinasi, kini tiada had). Jadual log percubaan + ujian dalam transaksi dibatalkan.
 3. ⭐ **Revoke PAT GitHub** yang pernah dikongsi (tindakan pengguna di GitHub).
 
 **Pembersihan / baiki kecil:**
-5. ⭐ **Buang kod mati frontend** (Fasa E): `askPin`/`doPin`/`verifyPinGS`, `lgDaftar()`. Ujian regresi sedia ada melindungi.
-6. ⭐ **Semak edge function `ai-chat`** (Fasa D): kekukuhan, kos, had kadar.
-7. ⭐⭐ **AI Analitik tapis aktiviti luar**: RPC `analitik_*` mengira aktiviti luar dengan peraturan lama; tapis/asingkan dan kemas kini `ai-chat`.
+5. ⭐ **Buang kod mati frontend** — SIAP & diuji asap dalam cabang **`jeda/kod-mati-frontend`** (23 fungsi ~551 baris termasuk rantaian PIN lama `askPin`/`doPin`/`mo-pin`/`verifyPinGS`; 0 ralat pemuatan, tepat 23 fungsi global kurang). **Belum digabung ke `main`** (dijeda atas arahan). Gabung bila bersedia (cherry-pick).
+6. ⭐⭐ **Pengerasan edge function `ai-chat`** — kajian siap, temuan dalam **projek 11**; pelaksanaan menunggu.
+7. ⭐⭐ **AI Analitik tapis aktiviti luar**: RPC `analitik_*` mengira aktiviti luar dengan peraturan lama; tapis/asingkan dan kemas kini `ai-chat` (gabungkan dengan projek 11).
 
 **Ciri kecil yang berguna:**
 9. ⭐⭐ **PDF nama beraksara Cina** (4 baris sekarang jadi `?`): benam fon CJK dalam pdf-lib.
@@ -288,7 +350,6 @@ _Disimpan 26 Okt 2026 atas arahan pengguna ("simpan dulu"). Mulakan sesi seterus
 11. ⭐ **`cek_status_akaun`**: boleh dipanggil tanpa log masuk dan memulangkan nama, peranan, status, sekolah dan 'sudah ikat Google' bagi mana-mana No.KP (kebocoran data peribadi + membantu pemilihan sasaran). Kurangkan medan dipulangkan (skrin log masuk perlukan status sahaja sebelum PIN) dan tambah had kadar.
 13. ⭐ **Seragamkan format No.Tel `pengguna`**: 62 daripada 83 bukan `+60…` (digit sahaja / `60…` / `+600…`). Guna `_norm_tel`; satu migrasi + sandaran. Juga betulkan paparan Excel guru yang bergantung pada format.
 14. ⭐ **Padam jadual sandaran** `arkib_nama_sekolah_20261026` dan `arkib_penyelarasan_sekolah_20261026b` selepas anda yakin penyeragaman nama & kod betul (ia membolehkan pemulihan nilai lama; RLS dikunci).
-15. ⭐ **Carian AI Analitik** (`analitik_carian_sekolah`) memadan nama dgn `ilike` — carian "SJKC …" tak lagi padan nama baharu `SJK(C) …`; pertimbangkan padanan longgar (buang tanda kurungan/ `SJKC`≈`SJK(C)`).
 
 **Lebih besar (bila sedia):** projek 8 (log masuk e-mel OTP; perlu SMTP + keputusan A/B), projek 2 (modal edit penyertaan), projek 3 (wizard), projek 4 (SPBM).
 
@@ -335,4 +396,4 @@ fail JS/HTML berasingan, bukan menambah index.html yg sudah 585 KB — setiap tu
 
 ---
 
-## Checkpoint semasa (26 Okt 2026): **SIAP: seragaman nama sekolah semua jadual (induk = sekolah.nama; SJKC→SJK(C)), 7 baris RUMAH BARAT dibetulkan kod, punca varian nama ditutup dalam 5 fungsi, Profil Saya selamat. Projek 6 & 7 tunggu ujian pelayar; projek 8 (log masuk e-mel OTP) ditangguh. Terbuka utama: putar kod admin, had percubaan log masuk, revoke PAT GitHub.**
+## Checkpoint semasa (26 Okt 2026): **TUGAS SEMENTARA SIAP: nama fail laporan (kod+nama sekolah+tahun), perkataan kategori tak terputus, carian sekolah AI longgar. Kerja lain DIJEDA: kod mati (cabang `jeda/kod-mati-frontend`), pengerasan edge function (projek 11). CADANGAN baharu: projek 9 (Laporan Analitik PPD). PENEMUAN KRITIKAL: projek 10 (No.KP/telefon boleh dibaca awam). Terbuka utama: putar kod admin, had percubaan log masuk, revoke PAT GitHub.**
