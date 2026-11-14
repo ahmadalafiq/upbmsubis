@@ -2380,6 +2380,10 @@ var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 var TBL_PROGRAM    = 'programs';
 var TBL_PENYERTAAN = 'penyertaan';
 var TBL_PENCAPAIAN = 'pencapaian';
+// PRIVASI (projek 10): bacaan awam melalui PAPARAN — no_kp_* = ID anonim 'ID-…' (kunci), telefon dikosongkan.
+// TBL_PENYERTAAN / TBL_PENCAPAIAN (jadual asal) kekal hanya untuk Realtime (isyarat muat semula).
+var TBL_PENYERTAAN_R = 'penyertaan_awam';
+var TBL_PENCAPAIAN_R = 'pencapaian_awam';
 var TBL_PENGGUNA   = 'pengguna';
 var TBL_SEKOLAH     = 'sekolah'; // jadual rujukan utama nama & kod sekolah (elak duplikat ejaan)
 
@@ -2403,6 +2407,36 @@ function _mapProgramOut(r){
     'Aktiviti Luar': (r.aktiviti_luar === true || r.aktiviti_luar === 'true' || r['Aktiviti Luar'] === true)
   };
 }
+// == PRIVASI (projek 10) ===========================================================================================
+// 'No KP Peserta'/'No KP Guru' dalam data awam ialah ID anonim 'ID-…' (KUNCI konsisten utk pengiraan/dedup).
+// Nilai SEBENAR hanya untuk baris yang pengguna berhak: dihidratkan melalui RPC bertoken pii_saya ke medan
+// 'KP Peserta Sebenar' / 'KP Guru Sebenar' (+ 'No Tel Guru'). Fungsi yang memerlukan nilai sebenar (borang, cetak, eksport,
+// isi automatik) WAJIB guna kpPesR()/kpGuruR(); pelayan menolak ID anonim jika cuba disimpan.
+function kpR(v){ v=String(v||''); return /^ID-/.test(v) ? '' : v; }
+function kpGuruR(r){ return (r && (r['KP Guru Sebenar'] || kpR(r['No KP Guru']))) || ''; }
+function kpPesR(r){ return (r && (r['KP Peserta Sebenar'] || kpR(r['No KP Peserta']))) || ''; }
+async function _hidrasiPII(py, pc, tahun, programId){
+  if(!(_sesi && _sesi.token)) return;
+  try{
+    var args = {p_no_kp:_sesi.noKP||'', p_token:_sesi.token||''};
+    if(tahun && tahun !== 'SEMUA') args.p_tahun = Number(tahun) || null;
+    if(programId) args.p_program_id = programId;
+    var r = await sb.rpc('pii_saya', args);
+    if(r.error) throw new Error(r.error.message);
+    var mp = {}, mc = {};
+    (r.data||[]).forEach(function(x){ (x.o_jadual === 'penyertaan' ? mp : mc)[x.o_id] = x; });
+    (py||[]).forEach(function(row){
+      var h = mp[row['ID']]; if(!h) return;
+      row['KP Peserta Sebenar'] = h.o_kp_peserta || ''; row['KP Guru Sebenar'] = h.o_kp_guru || '';
+      if(h.o_tel_guru) row['No Tel Guru'] = h.o_tel_guru;
+    });
+    (pc||[]).forEach(function(row){
+      var h = mc[row['ID']]; if(!h) return;
+      row['KP Peserta Sebenar'] = h.o_kp_peserta || ''; row['KP Guru Sebenar'] = h.o_kp_guru || '';
+    });
+  }catch(e){ console.warn('Hidrasi data peribadi gagal (paparan tanpa No.KP sebenar; pelayan memulihkan No.KP kosong semasa simpan):', e && e.message ? e.message : e); }
+}
+
 function _mapPenyertaanOut(r){
   if(!r) return null;
   var nm = r.nama_program || r.nama || r['Nama Program'] || '';
@@ -2524,14 +2558,16 @@ async function _supaDispatch(fn, payload){
     if(tahun && tahun !== 'SEMUA') qP = qP.eq('tahun', tahun);
     var rp = await qP; _throwIfErr(rp.error);
 
-    var allPy = await _fetchAllPaged(TBL_PENYERTAAN, tahun);
-    var allPc = await _fetchAllPaged(TBL_PENCAPAIAN, tahun);
+    var allPy = await _fetchAllPaged(TBL_PENYERTAAN_R, tahun);
+    var allPc = await _fetchAllPaged(TBL_PENCAPAIAN_R, tahun);
+    var pyAll = allPy.map(_mapPenyertaanOut), pcAll = allPc.map(_mapPencapaianOut);
+    await _hidrasiPII(pyAll, pcAll, tahun, null);
 
     return {
       ok:true,
       programs: (rp.data||[]).map(_mapProgramOut),
-      penyertaan: allPy.map(_mapPenyertaanOut),
-      pencapaian: allPc.map(_mapPencapaianOut)
+      penyertaan: pyAll,
+      pencapaian: pcAll
     };
   }
 
@@ -2544,27 +2580,33 @@ async function _supaDispatch(fn, payload){
 
   if(fn === 'getEditDataGS'){
     var pid1 = payload; // dihantar sebagai string mentah, bukan objek
-    var rPy1 = await sb.from(TBL_PENYERTAAN).select('*').eq('program_id', pid1);
+    var rPy1 = await sb.from(TBL_PENYERTAAN_R).select('*').eq('program_id', pid1);
     _throwIfErr(rPy1.error);
-    var rPc1 = await sb.from(TBL_PENCAPAIAN).select('*').eq('program_id', pid1);
+    var rPc1 = await sb.from(TBL_PENCAPAIAN_R).select('*').eq('program_id', pid1);
     _throwIfErr(rPc1.error);
-    return {ok:true, penyertaan:(rPy1.data||[]).map(_mapPenyertaanOut), pencapaian:(rPc1.data||[]).map(_mapPencapaianOut)};
+    var pyE = (rPy1.data||[]).map(_mapPenyertaanOut), pcE = (rPc1.data||[]).map(_mapPencapaianOut);
+    await _hidrasiPII(pyE, pcE, null, pid1);
+    return {ok:true, penyertaan:pyE, pencapaian:pcE};
   }
 
   if(fn === 'getPenyertaanByProgramGS'){
     var pid2 = payload;
-    var rPy2 = await sb.from(TBL_PENYERTAAN).select('*').eq('program_id', pid2);
+    var rPy2 = await sb.from(TBL_PENYERTAAN_R).select('*').eq('program_id', pid2);
     _throwIfErr(rPy2.error);
-    return {ok:true, data:(rPy2.data||[]).map(_mapPenyertaanOut)};
+    var pyB = (rPy2.data||[]).map(_mapPenyertaanOut);
+    await _hidrasiPII(pyB, [], null, pid2);
+    return {ok:true, data:pyB};
   }
 
   if(fn === 'getRumusanGS'){
     var pid3 = payload;
-    var rPy3 = await sb.from(TBL_PENYERTAAN).select('*').eq('program_id', pid3);
+    var rPy3 = await sb.from(TBL_PENYERTAAN_R).select('*').eq('program_id', pid3);
     _throwIfErr(rPy3.error);
-    var rPc3 = await sb.from(TBL_PENCAPAIAN).select('*').eq('program_id', pid3);
+    var rPc3 = await sb.from(TBL_PENCAPAIAN_R).select('*').eq('program_id', pid3);
     _throwIfErr(rPc3.error);
-    return {ok:true, penyertaan:(rPy3.data||[]).map(_mapPenyertaanOut), pencapaian:(rPc3.data||[]).map(_mapPencapaianOut)};
+    var pyR = (rPy3.data||[]).map(_mapPenyertaanOut), pcR = (rPc3.data||[]).map(_mapPencapaianOut);
+    await _hidrasiPII(pyR, pcR, null, pid3);
+    return {ok:true, penyertaan:pyR, pencapaian:pcR};
   }
 
   if(fn === 'daftarProgramGS'){
@@ -3944,11 +3986,11 @@ function renderPcForm(pny,pnc,katRaw){
     var kat2=p['Kategori Penyertaan']||'';
     var key=sk+'||'+kat2;
     if(!_pps[key])_pps[key]=[];if(!_gps[key])_gps[key]=[];
-    if(p['Nama Peserta']&&!_pps[key].find(function(x){return x.n===p['Nama Peserta'];}))_pps[key].push({n:p['Nama Peserta'],kp:p['No KP Peserta']||''});
-    if(p['Nama Guru']&&!_gps[key].find(function(x){return x.n===p['Nama Guru'];}))_gps[key].push({n:p['Nama Guru'],kp:p['No KP Guru']||''});
+    if(p['Nama Peserta']&&!_pps[key].find(function(x){return x.n===p['Nama Peserta'];}))_pps[key].push({n:p['Nama Peserta'],kp:kpPesR(p)});
+    if(p['Nama Guru']&&!_gps[key].find(function(x){return x.n===p['Nama Guru'];}))_gps[key].push({n:p['Nama Guru'],kp:kpGuruR(p)});
     if(!_pps[sk])_pps[sk]=[];if(!_gps[sk])_gps[sk]=[];
-    if(p['Nama Peserta']&&!_pps[sk].find(function(x){return x.n===p['Nama Peserta'];}))_pps[sk].push({n:p['Nama Peserta'],kp:p['No KP Peserta']||''});
-    if(p['Nama Guru']&&!_gps[sk].find(function(x){return x.n===p['Nama Guru'];}))_gps[sk].push({n:p['Nama Guru'],kp:p['No KP Guru']||''});
+    if(p['Nama Peserta']&&!_pps[sk].find(function(x){return x.n===p['Nama Peserta'];}))_pps[sk].push({n:p['Nama Peserta'],kp:kpPesR(p)});
+    if(p['Nama Guru']&&!_gps[sk].find(function(x){return x.n===p['Nama Guru'];}))_gps[sk].push({n:p['Nama Guru'],kp:kpGuruR(p)});
   });
   var katList=(katRaw||'INDIVIDU LELAKI,INDIVIDU PEREMPUAN').split(',').map(function(k){return k.trim().toUpperCase();}).filter(Boolean);
   var sekS={};pny.forEach(function(p){if(p['Nama Sekolah'])sekS[p['Nama Sekolah']]=true;});
@@ -4167,7 +4209,7 @@ function renderPcForm(pny,pnc,katRaw){
         var guruItems=(_gps[ss]||[]).map(function(g){return{val:g.n+'|'+g.kp,lbl:g.n};});
         // Guru disimpan sebagai "A | B | C" dalam rekod pertama; No KP Guru turut disimpan sejajar ("kp1 | kp2 | kp3")
         var guruRaw=e['Nama Guru']||'';
-        var guruKpRaw=e['No KP Guru']||'';
+        var guruKpRaw=kpGuruR(e);
         var guruNames=guruRaw?guruRaw.split('|').map(function(g){return g.trim();}).filter(Boolean):[];
         var guruKps=guruKpRaw?guruKpRaw.split('|').map(function(g){return g.trim();}):[];
         var selGuru=guruNames.map(function(nm,idx){
@@ -4187,7 +4229,7 @@ function renderPcForm(pny,pnc,katRaw){
           rows.forEach(function(row){
             if(!row['Nama Peserta'])return;
             var found=(_pps[pKey]||_pps[ss]||[]).find(function(p){return p.n===row['Nama Peserta'];});
-            var v=found?found.n+'|'+found.kp:row['Nama Peserta']+'|'+(row['No KP Peserta']||'');
+            var v=found?found.n+'|'+found.kp:row['Nama Peserta']+'|'+kpPesR(row);
             if(selPesVal.indexOf(v)<0)selPesVal.push(v);
           });
           _chkdBuild(pWrap.id, pesItems, selPesVal, '— PILIH PESERTA —');
@@ -4221,7 +4263,7 @@ function _autoFillBrkKsl(){
   (_pcPny||[]).forEach(function(p){
     var sk=p['Nama Sekolah'];if(!sk)return;
     var jan=(p['Jantina Peserta']||'').toUpperCase();
-    var pes=p['Nama Peserta'];var kp=p['No KP Peserta']||'';
+    var pes=p['Nama Peserta'];var kp=kpPesR(p);
     if(!pes)return;
     if(jan==='LELAKI'){
       if(!pesBySecL[sk])pesBySecL[sk]=[];
@@ -4291,7 +4333,7 @@ function _autoFillBrkKsl(){
     var pesBySecTrb={};
     (_pcPny||[]).forEach(function(r){
       var sk=r['Nama Sekolah']; if(!sk) return;
-      var nm=r['Nama Peserta']; var kp=r['No KP Peserta']||'';
+      var nm=r['Nama Peserta']; var kp=kpPesR(r);
       var katPny=(r['Kategori Penyertaan']||'').toUpperCase();
       // Skip rekod guru atau baris tanpa nama peserta
       if(!nm||katPny==='GURU') return;
@@ -5299,7 +5341,7 @@ function buildPrintPortal(prog,pny,pnc,isTutup,nSek,nG,nPs,per,printDate){
              + '<tbody>';
         out += '<tr style="background:#fdf2f2;">'
              + '<td style="'+tdSt3+'width:25%;color:#777;font-weight:600;">No. KP</td>'
-             + '<td style="'+tdSt3+'width:25%;">'+(gr['No KP Guru']||'—')+'</td>'
+             + '<td style="'+tdSt3+'width:25%;">'+(kpGuruR(gr)||'—')+'</td>'
              + '<td style="'+tdSt3+'width:25%;color:#777;font-weight:600;">Jantina</td>'
              + '<td style="'+tdSt3+'width:25%;">'+(gr['Jantina Guru']||'—')+'</td>'
              + '</tr>';
@@ -5325,7 +5367,7 @@ function buildPrintPortal(prog,pny,pnc,isTutup,nSek,nG,nPs,per,printDate){
             out += '<tr style="background:'+(pi%2===0?'#fff':'#f8f9fa')+'">'
                  + '<td style="'+tdNum+'">'+(pi+1)+'</td>'
                  + '<td style="'+tdSt3+'font-weight:700;">'+(ps['Nama Peserta']||'—')+'</td>'
-                 + '<td style="'+tdNum+'">'+(ps['No KP Peserta']||'—')+'</td>'
+                 + '<td style="'+tdNum+'">'+(kpPesR(ps)||'—')+'</td>'
                  + '<td style="'+tdNum+'">'+(ps['Jantina Peserta']||'—')+'</td>'
                  + '<td style="'+tdNum+'">'+(ps['Bangsa Peserta']||'—')+'</td>'
                  + '</tr>';
@@ -5491,7 +5533,7 @@ function expCSV(){
   // — CSV 1: PENYERTAAN —
   var hdr=['ID','Program ID','Nama Program','Kod Sekolah','Nama Sekolah','Kategori Penyertaan','Nama Guru','No KP Guru','Bangsa Guru','Jantina Guru','No Tel Guru','Nama Peserta','No KP Peserta','Jantina Peserta','Bangsa Peserta','Tarikh Daftar'];
   var csv=['\uFEFF'+hdr.join(',')].concat(pny.map(function(p){return hdr.map(function(h){
-    var v=p[h]||'';
+    var v=(h==='No KP Guru'?kpGuruR(p):h==='No KP Peserta'?kpPesR(p):p[h])||'';
     if(h==='No Tel Guru') v=_fmtTel60(v)==='—'?'':
 _fmtTel60(v);
     return _csvCell(v);
@@ -5506,7 +5548,7 @@ _fmtTel60(v);
   if(pnc.length){
     var hdrPnc=['ID','Program ID','Nama Program','Peringkat','Kategori','Tempat','Nama Sekolah','Nama Peserta','No KP Peserta','Nama Guru'];
     var csvPnc=['\uFEFF'+hdrPnc.join(',')].concat(pnc.map(function(p){return hdrPnc.map(function(h){
-      return _csvCell(p[h]);
+      return _csvCell(h==='No KP Peserta'?kpPesR(p):p[h]);
     }).join(',');})).join('\n');
     var b2=document.createElement('a');b2.href=URL.createObjectURL(new Blob([csvPnc],{type:'text/csv;charset=utf-8;'}));
     b2.download='pencapaian_'+nm+'.csv';
@@ -5593,7 +5635,7 @@ function _buildXlsxWorkbook(prog, pny, pnc){
     merges.push({s:{r:r,c:0},e:{r:r,c:8}});r++;
     ['BIL','NAMA GURU','NO KP','JANTINA','BANGSA','NO TEL'].forEach(function(h,ci){var col=String.fromCharCode(65+ci);ws[col+(r+1)]={v:h,t:'s',s:{font:{bold:true,sz:9,name:'Arial',color:{rgb:WHITE}},fill:{fgColor:{rgb:'1F618D'}},alignment:{horizontal:'center',vertical:'center'},border:{top:{style:'medium',color:{rgb:'154360'}},bottom:{style:'medium',color:{rgb:'154360'}},left:{style:'thin',color:{rgb:'AED6F1'}},right:{style:'thin',color:{rgb:'AED6F1'}}}}};});
     merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;
-    guruList.forEach(function(g,i){var bg=i%2===0?'EBF5FB':'D6EAF8';var telVal=_fmtTel60(g['No Tel Guru']);/* pemformat sama dgn CSV: 0191234567 -> +60191234567 (dulu +600191234567) */[i+1,g['Nama Guru']||'—',g['No KP Guru']||'—',g['Jantina Guru']||'—',g['Bangsa Guru']||'—',telVal].forEach(function(v,ci){var col=String.fromCharCode(65+ci);var st=bdr(bg,false,'000000',9);if(ci===0)st=ctr(st);var cellType=(ci===5||ci===1||ci===2)?'s':(typeof v==='number'?'n':'s');ws[col+(r+1)]={v:v,t:cellType,s:st};});merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;});
+    guruList.forEach(function(g,i){var bg=i%2===0?'EBF5FB':'D6EAF8';var telVal=_fmtTel60(g['No Tel Guru']);/* pemformat sama dgn CSV: 0191234567 -> +60191234567 (dulu +600191234567) */[i+1,g['Nama Guru']||'—',kpGuruR(g)||'—',g['Jantina Guru']||'—',g['Bangsa Guru']||'—',telVal].forEach(function(v,ci){var col=String.fromCharCode(65+ci);var st=bdr(bg,false,'000000',9);if(ci===0)st=ctr(st);var cellType=(ci===5||ci===1||ci===2)?'s':(typeof v==='number'?'n':'s');ws[col+(r+1)]={v:v,t:cellType,s:st};});merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;});
     if(!guruList.length){ws['A'+(r+1)]={v:'— Tiada guru —',t:'s',s:{font:{italic:true,sz:9,name:'Arial',color:{rgb:DARKGREY}},alignment:{horizontal:'center'}}};merges.push({s:{r:r,c:0},e:{r:r,c:8}});r++;}
     r++;
     var katMap={},katOrder=[];
@@ -5607,7 +5649,7 @@ function _buildXlsxWorkbook(prog, pny, pnc){
       merges.push({s:{r:r,c:0},e:{r:r,c:8}});r++;
       ['BIL','NAMA PESERTA','NO KP','JANTINA','BANGSA','TARIKH DAFTAR'].forEach(function(h,ci){var col=String.fromCharCode(65+ci);ws[col+(r+1)]={v:h,t:'s',s:{font:{bold:true,sz:9,name:'Arial',color:{rgb:WHITE}},fill:{fgColor:{rgb:kc}},alignment:{horizontal:'center',vertical:'center'},border:{top:{style:'medium',color:{rgb:'000000'}},bottom:{style:'medium',color:{rgb:'000000'}},left:{style:'thin',color:{rgb:WHITE}},right:{style:'thin',color:{rgb:WHITE}}}}};});
       merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;
-      pesList.forEach(function(p,i){var bg=i%2===0?'FFFFFF':kb;[i+1,p['Nama Peserta']||'—',p['No KP Peserta']||'—',p['Jantina Peserta']||'—',p['Bangsa Peserta']||'—',p['Tarikh Daftar']?fd(p['Tarikh Daftar']):'—'].forEach(function(v,ci){var col=String.fromCharCode(65+ci);var st=bdr(bg,false,'000000',9);if(ci===0)st=ctr(st);ws[col+(r+1)]={v:v,t:(typeof v==='number'?'n':'s'),s:st};});merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;});
+      pesList.forEach(function(p,i){var bg=i%2===0?'FFFFFF':kb;[i+1,p['Nama Peserta']||'—',kpPesR(p)||'—',p['Jantina Peserta']||'—',p['Bangsa Peserta']||'—',p['Tarikh Daftar']?fd(p['Tarikh Daftar']):'—'].forEach(function(v,ci){var col=String.fromCharCode(65+ci);var st=bdr(bg,false,'000000',9);if(ci===0)st=ctr(st);ws[col+(r+1)]={v:v,t:(typeof v==='number'?'n':'s'),s:st};});merges.push({s:{r:r,c:5},e:{r:r,c:8}});r++;});
       if(!pesList.length){ws['A'+(r+1)]={v:'— Tiada peserta —',t:'s',s:{font:{italic:true,sz:9,name:'Arial',color:{rgb:DARKGREY}},alignment:{horizontal:'center'}}};merges.push({s:{r:r,c:0},e:{r:r,c:8}});r++;}
       r++;
     });
@@ -5666,7 +5708,7 @@ function _buildXlsxWorkbook(prog, pny, pnc){
       });pr++;
       items.forEach(function(e,i){
         var bg=i%2===0?'FFFFFF':kb;
-        [i+1,(e['Tempat']||'—').toUpperCase(),(e['Nama Sekolah']||'—'),(e['Nama Peserta']||'—'),(e['No KP Peserta']||''),  (e['Nama Guru']||'—')].forEach(function(v,ci){
+        [i+1,(e['Tempat']||'—').toUpperCase(),(e['Nama Sekolah']||'—'),(e['Nama Peserta']||'—'),kpPesR(e),  (e['Nama Guru']||'—')].forEach(function(v,ci){
           var col=String.fromCharCode(65+ci);
           var st=bdr(bg,false,'000000',9);if(ci===0)st=ctr(st);
           wsPnc[col+(pr+1)]={v:v,t:(typeof v==='number'?'n':'s'),s:st};
@@ -6061,7 +6103,7 @@ function _getGuruSyorFromAP(kodSekolah){
   if(!kodUp) return list;
   (_aP||[]).forEach(function(r){
     if(String(r['Kod Sekolah']||'').toUpperCase().trim()!==kodUp) return;
-    var kp=String(r['No KP Guru']||'').trim();
+    var kp=String(kpGuruR(r)).trim();
     var nm=String(r['Nama Guru']||'').trim();
     if(!nm) return;
     var key=kp||nm;
@@ -6078,7 +6120,7 @@ function _getPesSyorFromAP(kodSekolah){
   if(!kodUp) return list;
   (_aP||[]).forEach(function(r){
     if(String(r['Kod Sekolah']||'').toUpperCase().trim()!==kodUp) return;
-    var kp=String(r['No KP Peserta']||'').trim();
+    var kp=String(kpPesR(r)).trim();
     var nm=String(r['Nama Peserta']||'').trim();
     var kat=String(r['Kategori Penyertaan']||'').toUpperCase();
     if(!nm||kat==='GURU') return;
@@ -7310,7 +7352,7 @@ function _prefillFromExisting(rows){
   // Bina guruList — guna uGid[gk] bukan r._id
   Object.keys(uG).forEach(function(gk){
     var r=uG[gk];
-    _penyData.guruList.push({id:uGid[gk],nama:r['Nama Guru']||'',kp:r['No KP Guru']||'',bangsa:r['Bangsa Guru']||'',jantina:r['Jantina Guru']||'',tel:r['No Tel Guru']||''});
+    _penyData.guruList.push({id:uGid[gk],nama:r['Nama Guru']||'',kp:kpGuruR(r),bangsa:r['Bangsa Guru']||'',jantina:r['Jantina Guru']||'',tel:r['No Tel Guru']||''});
   });
   // Bina pesList — guna uPid[pk] dan uPkat[pk] bukan r._id/_kat
   Object.keys(uP).forEach(function(pk){
@@ -7325,7 +7367,7 @@ function _prefillFromExisting(rows){
       return true;
     });
     if(!kat.length&&!String(r['Nama Peserta']||'').trim())return; // skip rekod guru tambahan
-    _penyData.pesList.push({id:uPid[pk],nama:r['Nama Peserta']||'',kp:r['No KP Peserta']||'',jantina:r['Jantina Peserta']||'',bangsa:r['Bangsa Peserta']||'',kategori:kat});
+    _penyData.pesList.push({id:uPid[pk],nama:r['Nama Peserta']||'',kp:kpPesR(r),jantina:r['Jantina Peserta']||'',bangsa:r['Bangsa Peserta']||'',kategori:kat});
   });
   _showPenyForm();
   setTimeout(function(){renderMainGuruList();renderMainPesList();},100);
