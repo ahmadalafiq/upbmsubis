@@ -7406,14 +7406,8 @@ async function loadDash(bust, silent){
     var pc=(r&&r.pencapaian)?r.pencapaian:[];
     _aP=py;_aPnc=pc;_aPg=pg;
 
-    // Phase 1 — stats (immediate)
-    var uSekProg={},uPes={};
-    py.forEach(function(p){uSekProg[(p['Program ID']||'')+'|'+(p['Nama Sekolah']||'')]=1;var pk=p['No KP Peserta']||p['Nama Peserta'];if(pk&&p['Nama Peserta'])uPes[pk]=1;});
-    var _stPg=pg.length, _stAk=pg.filter(function(p){return p['Status']==='AKTIF';}).length, _stPy=Object.keys(uSekProg).length, _stPs=Object.keys(uPes).length;
-    animateCounter(document.getElementById('st-pg'), _stPg);
-    animateCounter(document.getElementById('st-ak'), _stAk);
-    animateCounter(document.getElementById('st-py'), _stPy);
-    animateCounter(document.getElementById('st-ps'), _stPs);
+    // Phase 1 — kad statistik DIKIRA oleh rebuildDash() (bertapis, lalai Teras sahaja).
+    // Jangan tulis kiraan mentah di sini: ia berlumba dengan rebuildDash() dan boleh menimpa nilai bertapis.
     buildMarkahGrid();
     _updateDashTimestamp();
     if(!silent) hideOv(); // release overlay early
@@ -10515,11 +10509,15 @@ setTimeout(patchBnavAkaun, 900);
 function animateCounter(el, target, duration) {
   if (!el) return;
   duration = duration || 600;
-  var start = parseInt(el.textContent) || 0;
   target = parseInt(target) || 0;
+  // Token: setiap panggilan baharu membatalkan animasi lama pada elemen yang sama,
+  // supaya animasi lama tidak menimpa nilai akhir yang lebih baharu.
+  var token = (el._acTok = (el._acTok || 0) + 1);
+  var start = parseInt(el.textContent) || 0;
   if (start === target) { el.textContent = target; return; }
   var startTime = null;
   function step(timestamp) {
+    if (el._acTok !== token) return;
     if (!startTime) startTime = timestamp;
     var progress = Math.min((timestamp - startTime) / duration, 1);
     var eased = 1 - Math.pow(1 - progress, 3);
