@@ -1,5 +1,5 @@
 # UPBM Subis — Progress Pembaikan
-_Kemas kini terakhir: 16 Okt 2026 — projek 6 (Laporan Sekolah) ditambah. Hanya kerja AKTIF/BELUM SIAP di sini; kerja siap ada dalam `ARKIB.md`._
+_Kemas kini terakhir: 16 Nov 2026 — projek 12 (pecah index.html) ditambah. Hanya kerja AKTIF/BELUM SIAP di sini; kerja siap ada dalam `ARKIB.md`._
 
 ---
 
@@ -16,6 +16,7 @@ _Kemas kini terakhir: 16 Okt 2026 — projek 6 (Laporan Sekolah) ditambah. Hanya
 | 9 | Laporan Analitik PPD (menggantikan Cetak Ringkasan; admin sahaja) | CADANGAN (26 Okt) — menunggu persetujuan | Putuskan 4 perkara dlm projek 9, kemudian bina P1 |
 | 10 | **Privasi data peserta** (No.KP murid/guru & telefon boleh dibaca awam) | **PENEMUAN KRITIKAL** — belum dibetulkan | Keutamaan tertinggi; projek reka bentuk (perlu ujian pelayar) |
 | 11 | Pengerasan edge function `ai-chat` | Dikaji (dijeda separuh); belum dilaksanakan | Senarai putih alat, had input, pengesahan sesi, had kadar |
+| 12 | Pecah `index.html` kepada modul (css/ + js/) | SIAP di cabang `pecah-modul`, belum merge. Kesetaraan disahkan (JS bait demi bait sama, 624 fungsi global sama, 0 ralat jsdom) | Uji pratonton Vercel + Google Sites → merge ke `main`. Rujuk `STRUKTUR.md`, `INDEKS.md` |
 
 **Urutan kerja cadangan:** uji projek 6 & 7 dahulu → 2 → 3 (W1→W4) → 4; projek 8 menunggu keputusan. (Projek 1 siap — lihat ARKIB.) Projek 5 boleh dibuat selari. Kerja yang sudah siap: lihat `ARKIB.md`.
 
