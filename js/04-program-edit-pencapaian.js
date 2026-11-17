@@ -102,7 +102,13 @@ function renderPcForm(pny,pnc,katRaw){
   });
   var katList=(katRaw||'INDIVIDU LELAKI,INDIVIDU PEREMPUAN').split(',').map(function(k){return k.trim().toUpperCase();}).filter(Boolean);
   var sekS={};pny.forEach(function(p){if(p['Nama Sekolah'])sekS[p['Nama Sekolah']]=true;});
-  (typeof _pcTicked!=='undefined'?_pcTicked:[]).forEach(function(t){ if(t&&t.nama_sekolah) sekS[t.nama_sekolah]=true; });
+  // Sekolah ditick tetapi belum ada penyertaan: tersenarai, ditanda amaran (peserta/guru tiada sehingga mereka daftar penyertaan)
+  var _belumPny={}, _belumSen=[];
+  (typeof _pcTicked!=='undefined'?_pcTicked:[]).forEach(function(t){
+    if(!t||!t.nama_sekolah) return;
+    if(!sekS[t.nama_sekolah]){ _belumPny[t.nama_sekolah]=true; _belumSen.push(t.nama_sekolah); }
+    sekS[t.nama_sekolah]=true;
+  });
   var seks=Object.keys(sekS);
   if(!seks.length){
     document.getElementById('pc-form').innerHTML='<div class="empty" style="padding:.7rem;"><h3>Tiada penyertaan direkod</h3></div>';
@@ -133,7 +139,7 @@ function renderPcForm(pny,pnc,katRaw){
       getTPT(kat).forEach(function(t){
         var e=exForKat[t.l]||{};
         var so='<option value="">— PILIH SEKOLAH —</option>';
-        seks.forEach(function(s){so+='<option'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+'</option>';});
+        seks.forEach(function(s){so+='<option value="'+esc(s)+'"'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+(_belumPny[s]?' ⚠ BELUM DAFTAR PENYERTAAN':'')+'</option>';});
         var katKey=kat.replace(/\s/g,'-');
         var po='<option value="">— PILIH PESERTA —</option>';
         var ss=e['Nama Sekolah']||'';
@@ -171,7 +177,7 @@ function renderPcForm(pny,pnc,katRaw){
       getTPT(kat).forEach(function(t){
         var e=exForKat[t.l]||{};
         var so='<option value="">— PILIH SEKOLAH —</option>';
-        seks.forEach(function(s){so+='<option'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+'</option>';});
+        seks.forEach(function(s){so+='<option value="'+esc(s)+'"'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+(_belumPny[s]?' ⚠ BELUM DAFTAR PENYERTAAN':'')+'</option>';});
         var katKey=kat.replace(/\s/g,'-');
         var go='<option value="">— PILIH GURU —</option>';
         var ss=e['Nama Sekolah']||'';
@@ -208,7 +214,7 @@ function renderPcForm(pny,pnc,katRaw){
       getTPT(kat).forEach(function(t){
         var e=exForKat[t.l]||{};
         var so='<option value="">— PILIH SEKOLAH —</option>';
-        seks.forEach(function(s){so+='<option'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+'</option>';});
+        seks.forEach(function(s){so+='<option value="'+esc(s)+'"'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+(_belumPny[s]?' ⚠ BELUM DAFTAR PENYERTAAN':'')+'</option>';});
         var katKey=kat.replace(/\s/g,'-');
         var go='<option value="">— PILIH GURU —</option>';
         var ss=e['Nama Sekolah']||'';
@@ -236,7 +242,7 @@ function renderPcForm(pny,pnc,katRaw){
       getTPT(kat).forEach(function(t){
         var e=exForKat[t.l]||{};
         var so='<option value="">-- PILIH SEKOLAH --</option>';
-        seks.forEach(function(s){so+='<option'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+'</option>';});
+        seks.forEach(function(s){so+='<option value="'+esc(s)+'"'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+(_belumPny[s]?' ⚠ BELUM DAFTAR PENYERTAAN':'')+'</option>';});
         var katKey=kat.replace(/\s/g,'-');
         var po='<option value="">-- PILIH PESERTA --</option>';
         var ss=e['Nama Sekolah']||'';
@@ -273,7 +279,7 @@ function renderPcForm(pny,pnc,katRaw){
       getTPT(kat).forEach(function(t){
         var e=exForKat[t.l]||{};
         var so='<option value="">— PILIH SEKOLAH —</option>';
-        seks.forEach(function(s){so+='<option'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+'</option>';});
+        seks.forEach(function(s){so+='<option value="'+esc(s)+'"'+(e['Nama Sekolah']===s?' selected':'')+'>'+s+(_belumPny[s]?' ⚠ BELUM DAFTAR PENYERTAAN':'')+'</option>';});
         var katKey=kat.replace(/\s/g,'-');
         var go='<option value="">— PILIH GURU —</option>';
         var ss=e['Nama Sekolah']||'';
@@ -291,6 +297,11 @@ function renderPcForm(pny,pnc,katRaw){
     html+='</div>';
   }
 
+  if(_belumSen.length){
+    html='<div class="iwarn" style="font-size:.72rem;margin-bottom:.8rem;line-height:1.5;">⚠ <b>'+_belumSen.length+' sekolah ditick belum mendaftar penyertaan</b>: '
+      +_belumSen.map(function(n){return esc(n);}).join(', ')
+      +'.<br>Sekolah ini tersenarai dalam pilihan SEKOLAH, tetapi peserta &amp; guru hanya muncul selepas guru/PKK sekolah itu mendaftar penyertaan bagi program ini.</div>'+html;
+  }
   document.getElementById('pc-form').innerHTML=html;
   document.getElementById('pc-ld').style.display='none';
   document.getElementById('pc-form').style.display='block';
