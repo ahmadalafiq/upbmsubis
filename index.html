@@ -254,6 +254,7 @@
         <div style="font-size:.66rem;color:var(--g5);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
       </div>
     </div>
+    <div class="fi full" id="p-sek-box" style="margin-top:.6rem;"></div>
     <div class="mt2 fx gu"><button class="btn bp" id="btn-daftar" onclick="daftarProgram()">+ DAFTAR PROGRAM</button><button class="btn bs" onclick="clearPF()">KOSONGKAN</button></div>
   </div>
   <div class="fx ic jb mb1">
@@ -746,6 +747,14 @@
   <button class="btn bp" onclick="loadDash(true)">↻ MUAT SEMULA DATA</button>
 </div>
 <!-- MODAL: TINGGALKAN PENYERTAAN -->
+<div class="mo" id="mo-tugasan">
+  <div class="md" style="max-width:560px;max-height:88vh;overflow-y:auto;">
+    <div class="mh" style="color:var(--red);">📌 Semakan Selepas Log Masuk</div>
+    <div id="tg-body"></div>
+    <div style="margin-top:.9rem;display:flex;justify-content:flex-end;"><button class="btn bs" onclick="closeMo('mo-tugasan')">NANTI SAYA SEMAK</button></div>
+  </div>
+</div>
+
 <div class="mo" id="mo-tinggal">
   <div class="md" style="max-width:420px;">
     <div class="mh" style="color:var(--red);">⚠️ Tinggalkan Penyertaan?</div>
@@ -892,6 +901,7 @@
         <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="e-luar" onchange="_onEditChange();"> 🌐 Aktiviti Luar</label></div>
         <div style="font-size:.66rem;color:var(--g5);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
       </div>
+      <div class="fi full" id="e-sek-box"></div>
     </div>
     <div class="div"></div>
     <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:.78rem;color:var(--red);margin-bottom:.65rem;">🏆 PENCAPAIAN</div>
@@ -1096,6 +1106,7 @@
 <script src="js/16-akses-sesi-idle-google.js?v=20261116"></script>
 <script src="js/17-dashboard-analitik-fullscreen.js?v=20261116"></script>
 <script src="js/18-ai-fab.js?v=20261116"></script>
+<script src="js/19-sekolah-menyertai.js?v=20261117"></script>
 <script src="laporan-sekolah.js"></script>
 </body>
 </html>

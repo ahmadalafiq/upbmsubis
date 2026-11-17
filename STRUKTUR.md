@@ -40,6 +40,7 @@ Dipecahkan daripada satu fail 600 KB (16 Nov 2026, tag git `pra-pecah` = versi a
 | `16-akses-sesi-idle-google` | semakan akses, `_initSesiDariStorage`, **idle timer**, Google Sign-In & claim akaun, `_initApp` | sesi, timeout, Google login |
 | `17-dashboard-analitik-fullscreen` | bottom-nav, `animateCounter`, toggle kad/senarai, fullscreen, penapis lanjutan, carta (bidang/donut/trend/jantina), jadual program | carta, kad statistik |
 | `18-ai-fab` | widget AI chat, butang "+ TAMBAH" terapung | AI chat |
+| `19-sekolah-menyertai` | projek 16: widget "Sekolah yang menyertai" (Daftar/Edit Program), modal amaran selepas login (`semakTugasanSelepasLogin`), `_pcTicked` untuk Pencapaian | tick sekolah, modal tugasan |
 | `laporan-sekolah.js` | Laporan Sekolah + perbandingan sesi (dimuat terakhir; kekal di akar) | laporan |
 
 **Dashboard merentas 3 fail:** `10` (data/skor), `13` (rebuild/penapis), `17` (kad statistik, carta, penapis lanjutan).

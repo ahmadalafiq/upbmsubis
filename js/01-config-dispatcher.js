@@ -214,7 +214,25 @@ async function _supaDispatch(fn, payload){
       p_aktiviti_luar: !!payload.aktivitiLuar
     });
     _throwIfErr(rInsP.error);
-    return {ok:true, msg:'Program berjaya didaftarkan'};
+    return {ok:true, msg:'Program berjaya didaftarkan', id:newProgId};
+  }
+
+  if(fn === 'getSekolahProgramGS'){
+    var rSp = await sb.rpc('senarai_sekolah_program', {p_no_kp:(_sesi&&_sesi.noKP)||'', p_token:(_sesi&&_sesi.token)||'', p_program_id:String(payload)});
+    _throwIfErr(rSp.error);
+    return {ok:true, data:rSp.data||[]};
+  }
+
+  if(fn === 'tetapkanSekolahProgramGS'){
+    var rTs = await sb.rpc('tetapkan_sekolah_program', {p_no_kp:(_sesi&&_sesi.noKP)||'', p_token:(_sesi&&_sesi.token)||'', p_program_id:payload.programId, p_kod_sekolah:payload.kodSekolah||[]});
+    _throwIfErr(rTs.error);
+    return {ok:true, data:rTs.data};
+  }
+
+  if(fn === 'semakanSelepasLoginGS'){
+    var rSl = await sb.rpc('semakan_selepas_login', {p_no_kp:(_sesi&&_sesi.noKP)||'', p_token:(_sesi&&_sesi.token)||''});
+    _throwIfErr(rSl.error);
+    return {ok:true, data:rSl.data||null};
   }
 
   if(fn === 'kemaskiniProgramGS'){

@@ -27,13 +27,21 @@ async function daftarProgram(){
       per=gv('p-per'),tar=gv('p-tarikh'),tem=gv('p-tempat'),sta=gv('p-status');
   var katList=getKatChecked('p-kat-wrap');
   var luar=!!(document.getElementById('p-luar')||{}).checked;
+  var sekPilih=(typeof psGet==='function')?psGet('p'):[];
   if(!n||!pen||!bid||!per||!tar||!tem){toast('Sila lengkapkan semua medan','er');return;}
   if(!kod){toast('Sila masukkan Kod Sekolah Penganjur','er');return;}
   if(!katList.length){toast('Sila pilih sekurang-kurangnya 1 kategori','er');return;}
   showOv('MENDAFTAR PROGRAM...'); setBtn('btn-daftar',true);
   try{
     var r=await run('daftarProgramGS',{nama:n,pengelola:pen,kodPengelola:kod,bidang:bid,kategori:katList,peringkat:per,tarikh:tar,tempat:tem,status:sta,aktivitiLuar:luar});
-    if(r&&r.ok){toast('Program berjaya didaftarkan','ok');clearPF();await loadProgs(true);}
+    if(r&&r.ok){
+      toast('Program berjaya didaftarkan','ok');
+      if(sekPilih.length && r.id){
+        try{ await run('tetapkanSekolahProgramGS',{programId:r.id,kodSekolah:sekPilih}); toast(sekPilih.length+' sekolah dijemput menyertai','ok'); }
+        catch(e2){ toast('Program didaftar, tetapi sekolah gagal ditetapkan: '+e2.message+'. Tetapkan melalui Edit Program.','er'); }
+      }
+      clearPF();await loadProgs(true);
+    }
     else toast((r&&r.msg)||'Ralat','er');
   }catch(e){toast('Ralat: '+e.message,'er');}
   finally{hideOv();setBtn('btn-daftar',false);}
@@ -42,6 +50,7 @@ function clearPF(){
   ['p-nama','p-pengelola','p-kod','p-bidang','p-per','p-tarikh','p-tempat'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('p-status').value='AKTIF';
   var _pl=document.getElementById('p-luar'); if(_pl) _pl.checked=false;
+  if(typeof psReset==='function') psReset('p');
   // Reset kategori checkboxes to default (Individu L + P)
   document.querySelectorAll('#p-kat-wrap input[type=checkbox]').forEach(function(cb){
     cb.checked=(cb.value==='INDIVIDU LELAKI'||cb.value==='INDIVIDU PEREMPUAN');
@@ -626,8 +635,11 @@ async function openEdit(p){
   document.getElementById('pc-ld').style.display='flex';
   document.getElementById('pc-form').style.display='none';
   openMo('mo-edit');
+  var _psP=(typeof psMuatEdit==='function'&&_sesi&&(_sesi.role==='admin'||_sesi.role==='pkk'))?psMuatEdit(p['ID']):null;
+  if(!_psP){ _pcTicked=[]; var _eb=document.getElementById('e-sek-box'); if(_eb) _eb.innerHTML=''; }
   try{
     var r=await run('getEditDataGS',p['ID']);
+    if(_psP) await _psP;
     _curPny=(r&&r.penyertaan)?r.penyertaan:[];
     _curPnc=(r&&r.pencapaian)?r.pencapaian:[];
     var _prog4Pnc=(_aPg||[]).find(function(p){return p['ID']===eId;})||{};

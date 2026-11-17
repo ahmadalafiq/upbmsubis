@@ -55,6 +55,8 @@ async function saveEdit(){
     });
     if(r&&r.ok){
       toast('Program berjaya dikemaskini ✓','ok');
+      try{ if(typeof psSimpanEdit==='function') await psSimpanEdit(id); }
+      catch(e3){ toast('Program disimpan, tetapi senarai sekolah gagal dikemaskini: '+e3.message,'er'); }
       _editSaved = true;
       cBust();
       await loadProgs(true);
@@ -100,6 +102,7 @@ function renderPcForm(pny,pnc,katRaw){
   });
   var katList=(katRaw||'INDIVIDU LELAKI,INDIVIDU PEREMPUAN').split(',').map(function(k){return k.trim().toUpperCase();}).filter(Boolean);
   var sekS={};pny.forEach(function(p){if(p['Nama Sekolah'])sekS[p['Nama Sekolah']]=true;});
+  (typeof _pcTicked!=='undefined'?_pcTicked:[]).forEach(function(t){ if(t&&t.nama_sekolah) sekS[t.nama_sekolah]=true; });
   var seks=Object.keys(sekS);
   if(!seks.length){
     document.getElementById('pc-form').innerHTML='<div class="empty" style="padding:.7rem;"><h3>Tiada penyertaan direkod</h3></div>';

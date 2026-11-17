@@ -226,6 +226,9 @@ async function _mulakanSesi(data){
   // (mengelakkan paparan sisa cth. tab AKAUN admin masih terpapar bila guru log masuk)
   var defaultPg = _sesi.role==='admin' ? 'akaun' : (_sesi.role==='pkk' ? 'dashboard' : 'peserta');
   _doShowPage(defaultPg);
+
+  // Projek 16: modal amaran (guru & PKK) — program ditugaskan belum dihantar / data tidak lengkap
+  if(typeof semakTugasanSelepasLogin==='function') setTimeout(function(){ semakTugasanSelepasLogin(0); }, 1500);
 }
 
 // == PROFIL SAYA: kemaskini nama & No.Tel SENDIRI (sekolah/peranan hanya oleh admin) ==============
