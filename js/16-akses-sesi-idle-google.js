@@ -130,45 +130,84 @@ function _patchPadamSekBtns(){
 }
 
 // == IDLE TIMER — log keluar automatik selepas tidak aktif ===================
+// Dikemas kini 16 Nov 2026: (1) had dinilai SEMULA ketika semakan (dahulu dipilih sekali pada
+// peristiwa terakhir, jadi borang yang baru aktif masih ikut had 5 minit); (2) amaran 60 saat
+// dengan butang TERUSKAN sebelum log keluar (dahulu toast + log keluar dalam 1.2 saat);
+// (3) jam sebenar (Date.now) digunakan, bukan bergantung pada pemasa yang boleh dilambatkan
+// apabila tab di latar. Had kekal sama: 5 minit biasa, 15 minit semasa borang penyertaan aktif.
 (function(){
-  var IDLE_MS = 5 * 60 * 1000;      // 5 minit — keadaan biasa
-  var IDLE_MS_FORM = 15 * 60 * 1000; // 15 minit — semasa borang penyertaan (ramai peserta) sedang diisi
-  var _idleTimer = null;
-  function _resetIdleTimer(){
-    clearTimeout(_idleTimer);
-    // Hanya jalankan jika pengguna sedang log masuk
-    if(!document.body.classList.contains('loggedin')) return;
-    // PEMBETULAN: panjangkan had idle bila borang penyertaan sedang aktif diisi —
-    // sesi isi data ramai peserta biasanya ambil masa lebih 5 minit.
+  var IDLE_MS = 5 * 60 * 1000;       // 5 minit — keadaan biasa
+  var IDLE_MS_FORM = 15 * 60 * 1000; // 15 minit — borang penyertaan sedang diisi
+  var WARN_MS = 60 * 1000;           // amaran sebelum log keluar
+  var _lastAct = Date.now(), _timer = null, _tick = null, _warnEl = null, _warnTxt = null;
+
+  function _loggedIn(){ return document.body.classList.contains('loggedin'); }
+  function _limit(){
     var formAktif = (typeof _isPenyFormAktif === 'function') && _isPenyFormAktif();
-    var ms = formAktif ? IDLE_MS_FORM : IDLE_MS;
-    _idleTimer = setTimeout(function(){
-      if(document.body.classList.contains('loggedin')){
-        toast('Sesi tamat kerana tidak aktif. Sila log masuk semula — draf borang anda disimpan.','in');
-        // PEMBETULAN KRITIKAL: guna lgKeluar(true) — mod idle — supaya draf borang
-        // penyertaan TIDAK dipadam dan boleh dipulihkan selepas log masuk semula.
-        setTimeout(function(){ lgKeluar(true); }, 1200);
-      }
-    }, ms);
+    return formAktif ? IDLE_MS_FORM : IDLE_MS;
   }
-  // PEMBETULAN: tambah 'input' & 'change' — sesetengah papan kekunci maya (mobile)
-  // tidak sentiasa lepaskan event 'keydown' semasa menaip, menyebabkan timer tidak reset
-  // walaupun user sebenarnya aktif menaip/memilih dropdown.
-  ['mousemove','mousedown','keydown','input','change','touchstart','scroll','click'].forEach(function(ev){
-    document.addEventListener(ev, _resetIdleTimer, {passive:true});
-  });
-  // Mula semak apabila log masuk (body.loggedin)
-  var _bodyObserver = new MutationObserver(function(){
-    if(document.body.classList.contains('loggedin')){
-      _resetIdleTimer();
-    } else {
-      clearTimeout(_idleTimer);
+  function _hideWarn(){
+    clearInterval(_tick); _tick = null;
+    if(_warnEl && _warnEl.parentNode) _warnEl.parentNode.removeChild(_warnEl);
+    _warnEl = null; _warnTxt = null;
+  }
+  function _showWarn(){
+    if(_warnEl) return;
+    _warnEl = document.createElement('div');
+    _warnEl.setAttribute('role','alertdialog');
+    _warnEl.id = 'idle-warn';
+    _warnEl.style.cssText = 'position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);z-index:100000;' +
+      'background:#343a40;color:#fff;padding:.7rem 1rem;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.35);' +
+      'display:flex;gap:.8rem;align-items:center;max-width:92vw;font-size:.9rem;';
+    _warnTxt = document.createElement('span');
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.textContent = 'TERUSKAN';
+    btn.style.cssText = 'background:#c0392b;color:#fff;border:none;border-radius:6px;padding:.4rem .8rem;font-weight:700;cursor:pointer;';
+    btn.onclick = function(){ _markActive(); };
+    _warnEl.appendChild(_warnTxt); _warnEl.appendChild(btn);
+    document.body.appendChild(_warnEl);
+  }
+  function _arm(ms){ clearTimeout(_timer); _timer = setTimeout(_check, Math.max(ms, 1000)); }
+
+  // Dipanggil bila timer tamat DAN setiap saat semasa amaran: nilai semula dengan jam sebenar.
+  function _check(){
+    if(!_loggedIn()){ _hideWarn(); return; }
+    var idle = Date.now() - _lastAct, limit = _limit();
+    if(idle >= limit){
+      _hideWarn();
+      toast('Sesi tamat kerana tidak aktif. Sila log masuk semula — draf borang anda disimpan.','in');
+      // lgKeluar(true) = mod idle: draf borang penyertaan TIDAK dipadam dan boleh dipulihkan.
+      setTimeout(function(){ if(_loggedIn()) lgKeluar(true); }, 1200);
+      return;
     }
+    if(idle >= limit - WARN_MS){
+      _showWarn();
+      if(_warnTxt) _warnTxt.textContent = 'Sesi akan tamat dalam ' + Math.ceil((limit - idle) / 1000) + ' saat kerana tidak aktif.';
+      if(!_tick) _tick = setInterval(_check, 1000);
+      return;
+    }
+    // Aktiviti berlaku / had bertambah (cth. borang baru aktif): sembunyi amaran, jadual semula.
+    _hideWarn();
+    _arm(limit - WARN_MS - idle);
+  }
+  function _markActive(){
+    _lastAct = Date.now();
+    if(!_loggedIn()) return;
+    if(_warnEl){ _hideWarn(); _arm(_limit() - WARN_MS); }
+    else if(!_timer) _arm(_limit() - WARN_MS);
+  }
+  ['mousemove','mousedown','keydown','input','change','touchstart','scroll','click'].forEach(function(ev){
+    document.addEventListener(ev, _markActive, {passive:true});
   });
-  _bodyObserver.observe(document.body, {attributes:true, attributeFilter:['class']});
-  // PEMBETULAN MINOR #4: Ekspos _resetIdleTimer supaya boleh dipanggil dari luar IIFE
-  // (contoh: selepas modal dibuka/ditutup untuk reset timer idle)
-  window._resetIdleTimer = _resetIdleTimer;
+  // Tab kembali dilihat: semak serta-merta mengikut jam sebenar (pemasa latar boleh dilambatkan).
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && _loggedIn()) _check(); });
+  // Mula/henti ikut status log masuk (body.loggedin)
+  new MutationObserver(function(){
+    if(_loggedIn()){ _lastAct = Date.now(); _hideWarn(); _arm(_limit() - WARN_MS); }
+    else { clearTimeout(_timer); _timer = null; _hideWarn(); }
+  }).observe(document.body, {attributes:true, attributeFilter:['class']});
+  // Dikekalkan untuk keserasian (tiada pemanggil luar kini): tandakan aktif.
+  window._resetIdleTimer = _markActive;
 })();
 
 // == INIT ====================================================
