@@ -14,9 +14,12 @@ _Kemas kini terakhir: 16 Nov 2026 — projek 12 (pecah index.html) ditambah. Han
 | 7 | Aktiviti Luar (penanda program + Dashboard + penilaian) | Fasa 1–3 siap & dipush (dasar: pencapaian sahaja); **belum diuji dalam pelayar** | Uji dalam app sebenar; Fasa 4 pilihan |
 | 8 | Log masuk e-mel dengan kod (OTP) | CADANGAN; menunggu keputusan & tetapan SMTP | Putuskan kaedah ikatan akaun (A/B) + sediakan SMTP |
 | 9 | Laporan Analitik PPD (menggantikan Cetak Ringkasan; admin sahaja) | CADANGAN (26 Okt) — menunggu persetujuan | Putuskan 4 perkara dlm projek 9, kemudian bina P1 |
-| 10 | **Privasi data peserta** (No.KP murid/guru & telefon boleh dibaca awam) | **PENEMUAN KRITIKAL** — belum dibetulkan | Keutamaan tertinggi; projek reka bentuk (perlu ujian pelayar) |
+| 10 | **Privasi data peserta** (No.KP murid/guru & telefon boleh dibaca awam) | **PENEMUAN KRITIKAL** — belum dibetulkan | Keutamaan tertinggi; projek reka bentuk (perlu ujian pelayar). Ada cabang WIP `privasi/klien-peringkat2` (14 Nov, **bukan untuk main**, ditulis untuk `index.html` satu fail — perlu dipindah ke `js/`) |
 | 11 | Pengerasan edge function `ai-chat` | Dikaji (dijeda separuh); belum dilaksanakan | Senarai putih alat, had input, pengesahan sesi, had kadar |
-| 12 | Pecah `index.html` kepada modul (css/ + js/) | SIAP di cabang `pecah-modul`, belum merge. Kesetaraan disahkan (JS bait demi bait sama, 624 fungsi global sama, 0 ralat jsdom) | Uji pratonton Vercel + Google Sites → merge ke `main`. Rujuk `STRUKTUR.md`, `INDEKS.md` |
+| 12 | Pecah `index.html` kepada modul (css/ + js/) | **SIAP & digabung ke `main` (16 Nov 2026)**; diuji pengguna pada pratonton Vercel. Tag `pra-pecah` = versi asal | Kerja baharu dibuat pada fail `js/`; rujuk `STRUKTUR.md` + `INDEKS.md` |
+| 13 | Kod mati frontend (23 fungsi + modal PIN lama) | **SIAP & digabung ke `main`** (diulang pada `js/`; cabang lama `jeda/kod-mati-frontend` dah tak diperlukan) | — |
+| 14 | Idle timer (timeout semasa mengisi penyertaan) | Siap dalam cabang **`pembetulan/idle-timer`**, belum merge. Amaran 60s + TERUSKAN, had dinilai semula ketika semakan; had kekal 5/15 min. Diuji 6 senario (jam palsu) | Uji pratonton Vercel, kemudian merge. Punca sebenar di lapangan belum disahkan (lihat nota di bawah) |
+| 15 | Semakan pendua muat naik Excel (Bulk) | Siap dalam cabang **`ciri/semak-pendua-bulk`**, belum merge. Diuji 6 senario | Uji dengan fail Excel sebenar, kemudian merge |
 
 **Urutan kerja cadangan:** uji projek 6 & 7 dahulu → 2 → 3 (W1→W4) → 4; projek 8 menunggu keputusan. (Projek 1 siap — lihat ARKIB.) Projek 5 boleh dibuat selari. Kerja yang sudah siap: lihat `ARKIB.md`.
 
@@ -341,13 +344,13 @@ _Disimpan 26 Okt 2026 atas arahan pengguna ("simpan dulu"). Mulakan sesi seterus
 3. ⭐ **Revoke PAT GitHub** yang pernah dikongsi (tindakan pengguna di GitHub).
 
 **Pembersihan / baiki kecil:**
-5. ⭐ **Buang kod mati frontend** — SIAP & diuji asap dalam cabang **`jeda/kod-mati-frontend`** (23 fungsi ~551 baris termasuk rantaian PIN lama `askPin`/`doPin`/`mo-pin`/`verifyPinGS`; 0 ralat pemuatan, tepat 23 fungsi global kurang). **Belum digabung ke `main`** (dijeda atas arahan). Gabung bila bersedia (cherry-pick).
+5. ✅ **Buang kod mati frontend** — SIAP & digabung ke `main` 16 Nov 2026 (diulang pada fail `js/`; 624→601 fungsi global, 0 ralat jsdom).
 6. ⭐⭐ **Pengerasan edge function `ai-chat`** — kajian siap, temuan dalam **projek 11**; pelaksanaan menunggu.
 7. ⭐⭐ **AI Analitik tapis aktiviti luar**: RPC `analitik_*` mengira aktiviti luar dengan peraturan lama; tapis/asingkan dan kemas kini `ai-chat` (gabungkan dengan projek 11).
 
 **Ciri kecil yang berguna:**
 9. ⭐⭐ **PDF nama beraksara Cina** (4 baris sekarang jadi `?`): benam fon CJK dalam pdf-lib.
-10. ⭐⭐ **Semakan pendua muat naik Excel** (Bulk): disahkan tiada semakan pendua dalam `_prosesBulkXlsx` hari ini (No.KP sama dua kali dalam helaian, atau sudah ada dalam borang/DB, akan ditambah semula). Tambah amaran sebelum simpan.
+10. ✅ **Semakan pendua muat naik Excel** — SIAP dalam cabang `ciri/semak-pendua-bulk` (belum merge; menunggu ujian dengan fail sebenar).
 11. ⭐ **`cek_status_akaun`**: boleh dipanggil tanpa log masuk dan memulangkan nama, peranan, status, sekolah dan 'sudah ikat Google' bagi mana-mana No.KP (kebocoran data peribadi + membantu pemilihan sasaran). Kurangkan medan dipulangkan (skrin log masuk perlukan status sahaja sebelum PIN) dan tambah had kadar.
 13. ⭐ **Seragamkan format No.Tel `pengguna`**: 62 daripada 83 bukan `+60…` (digit sahaja / `60…` / `+600…`). Guna `_norm_tel`; satu migrasi + sandaran. Juga betulkan paparan Excel guru yang bergantung pada format.
 14. ⭐ **Padam jadual sandaran** `arkib_nama_sekolah_20261026` dan `arkib_penyelarasan_sekolah_20261026b` selepas anda yakin penyeragaman nama & kod betul (ia membolehkan pemulihan nilai lama; RLS dikunci).
@@ -355,6 +358,33 @@ _Disimpan 26 Okt 2026 atas arahan pengguna ("simpan dulu"). Mulakan sesi seterus
 **Lebih besar (bila sedia):** projek 8 (log masuk e-mel OTP; perlu SMTP + keputusan A/B), projek 2 (modal edit penyertaan), projek 3 (wizard), projek 4 (SPBM).
 
 **Ujian pelayar tertunggak (oleh pengguna, tiada kod):** Laporan Sekolah (satu sekolah, perbandingan, ZIP semua sekolah), Aktiviti Luar (tanda program → Dashboard JENIS/panel/lencana → laporan), simpan pencapaian dari UI (semak `kod_sekolah` terisi), claim akaun Google, log masuk/keluar berulang.
+
+---
+
+## Penilaian skop (16 Nov 2026) — ringan → berat
+_Skala: 1 = kurang sejam · 2 = lebih kurang satu sesi · 3 = beberapa sesi · 4 = projek berfasa, perlu ujian pelayar · 5 = sangat besar. **SPBM (projek 4) DITAHAN atas arahan pengguna 16 Nov 2026.**_
+
+| Skop | Kerja | Status / catatan |
+|---|---|---|
+| 1 | Kod mati frontend | ✅ digabung ke `main` |
+| 1 | Idle timer | ✅ cabang `pembetulan/idle-timer` (belum merge) |
+| 1 | Semakan pendua Bulk Excel | ✅ cabang `ciri/semak-pendua-bulk` (belum merge) |
+| 1 | Revoke PAT GitHub | Tindakan pengguna (PAT yang dikongsi dalam sembang 16 Nov juga perlu direvoke) |
+| 1 | Putar kod admin | Perlu pengguna hadir (kod baharu diberi dalam sembang; kod lama akan terhenti) — tidak dibuat semasa pengguna tiada |
+| 1 | `cek_status_akaun` kurangkan medan | Sentuh skrin log masuk + DB — ditunda |
+| 1 | Seragam format No.Tel `pengguna` | Tulis data hidup + Excel guru bergantung format — ditunda |
+| 1 | Padam jadual sandaran nama sekolah | Pengguna tentukan bila yakin (memadam = tidak boleh pulih) |
+| 2 | Had percubaan log masuk | DB + login; risiko kunci akaun — perlu pengguna hadir |
+| 2 | PDF nama aksara Cina | Perlu fon CJK dibenam (saiz besar) — belum dikaji |
+| 2 | Pengerasan `ai-chat` (projek 11) + AI Analitik tapis aktiviti luar | Edge function dideploy automatik pada push ke `main` — dibuat bila pengguna hadir |
+| 3 | Projek 8 — log masuk OTP | Perlu SMTP + keputusan kaedah ikatan akaun (A/B) |
+| 3 | Projek 9 — Laporan Analitik PPD | Menunggu 4 keputusan pengguna |
+| 3 | Projek 5 — ujian pelayar tertunggak | Ujian oleh pengguna |
+| 4 | Projek 10 — Privasi data peserta (KRITIKAL) | Keutamaan tertinggi; reka bentuk + ujian pelayar; cabang WIP wujud |
+| 4 | Projek 2 — modal edit penyertaan (M1–M4) · Projek 3 — wizard (W1–W4) | Perlu ujian pelayar setiap fasa |
+| 5 | Projek 4 — SPBM | **TAHAN** |
+
+**Nota idle timer:** versi lama terbukti log keluar pada ~5 minit jika borang menjadi aktif selepas peristiwa terakhir (had dipilih sekali pada peristiwa terakhir). Punca di lapangan masih boleh juga token tunggal-bagi-setiap-pengguna (`_set_session_token` ditimpa pada setiap login lain) — log 24 jam tiada bukti. Mesej "Sesi tamat kerana tidak aktif" = idle timer; "Sesi tidak sah" = token.
 
 ---
 
