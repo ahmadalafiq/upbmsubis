@@ -123,15 +123,45 @@ function _prosesBulkXlsx(wb){
     return;
   }
 
-  _penyData.pesList = _penyData.pesList.concat(pesBaru);
-  _penyData.guruList = _penyData.guruList.concat(guruBaru);
+  // SEMAKAN PENDUA (16 Nov 2026): No. KP sah yang sudah ada dalam senarai borang ATAU berulang dalam fail
+  // tidak ditambah sebagai baris baharu (elak kiraan penyertaan berganda). Untuk peserta, kategori baharu
+  // digabungkan ke baris sedia ada (seorang murid boleh berada dalam beberapa kategori). Baris tanpa
+  // No. KP sah tidak boleh disemak dan sentiasa ditambah.
+  var dupInfo=[];
+  var _kpSah=function(k){return /^\d{6}-\d{2}-\d{4}$/.test(k||'');};
+  var idxPes={}, idxGuru={};
+  _penyData.pesList.forEach(function(x){var k=normKP(x.kp||'');if(_kpSah(k)&&!idxPes[k])idxPes[k]=x;});
+  _penyData.guruList.forEach(function(x){var k=normKP(x.kp||'');if(_kpSah(k)&&!idxGuru[k])idxGuru[k]=x;});
+  var pesTambah=[], guruTambah=[], pesGabung=0;
+  pesBaru.forEach(function(x){
+    if(_kpSah(x.kp) && idxPes[x.kp]){
+      var ada=idxPes[x.kp], kt=ada.kategori||[], tambahKat=false;
+      x.kategori.forEach(function(k){ if(kt.indexOf(k)<0){ kt=kt.concat([k]); tambahKat=true; } });
+      ada.kategori=kt; if(tambahKat) pesGabung++;
+      dupInfo.push('Peserta "'+x.nama+'" ('+x.kp+') sudah ada — tidak ditambah semula'+(tambahKat?' (kategori digabungkan)':''));
+    } else { pesTambah.push(x); if(_kpSah(x.kp)) idxPes[x.kp]=x; }
+  });
+  guruBaru.forEach(function(x){
+    if(_kpSah(x.kp) && idxGuru[x.kp]){
+      dupInfo.push('Guru "'+x.nama+'" ('+x.kp+') sudah ada — tidak ditambah semula');
+    } else { guruTambah.push(x); if(_kpSah(x.kp)) idxGuru[x.kp]=x; }
+  });
+
+  _penyData.pesList = _penyData.pesList.concat(pesTambah);
+  _penyData.guruList = _penyData.guruList.concat(guruTambah);
   renderMainPesList();
   renderMainGuruList();
 
-  var ringkasan=pesBaru.length+' peserta & '+guruBaru.length+' guru berjaya dimuat naik.';
+  var ringkasan=pesTambah.length+' peserta & '+guruTambah.length+' guru berjaya dimuat naik.';
+  var catatan=[];
   if(errors.length){
-    ringkasan+=' ⚠ '+errors.length+' amaran — sila semak & betulkan dalam senarai sebelum hantar:\n\n• '+errors.slice(0,10).join('\n• ')+(errors.length>10?'\n...dan '+(errors.length-10)+' lagi.':'');
-    alert(ringkasan);
+    catatan.push('⚠ '+errors.length+' amaran — sila semak & betulkan dalam senarai sebelum hantar:\n\n• '+errors.slice(0,10).join('\n• ')+(errors.length>10?'\n...dan '+(errors.length-10)+' lagi.':''));
+  }
+  if(dupInfo.length){
+    catatan.push('ℹ '+dupInfo.length+' baris pendua (No. KP sama) dilangkau'+(pesGabung?', '+pesGabung+' peserta dikemas kini kategori':'')+':\n\n• '+dupInfo.slice(0,10).join('\n• ')+(dupInfo.length>10?'\n...dan '+(dupInfo.length-10)+' lagi.':''));
+  }
+  if(catatan.length){
+    alert(ringkasan+'\n\n'+catatan.join('\n\n'));
   } else {
     toast(ringkasan+' ✓','ok');
   }
