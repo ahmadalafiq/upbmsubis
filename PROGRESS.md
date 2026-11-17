@@ -1,5 +1,5 @@
 # UPBM Subis — Progress Pembaikan
-_Kemas kini terakhir: 16 Nov 2026 — projek 12 (pecah index.html) ditambah. Hanya kerja AKTIF/BELUM SIAP di sini; kerja siap ada dalam `ARKIB.md`._
+_Kemas kini terakhir: 17 Nov 2026 — projek 16 (sekolah menyertai program) dicadangkan. Hanya kerja AKTIF/BELUM SIAP di sini; kerja siap ada dalam `ARKIB.md`._
 
 ---
 
@@ -20,6 +20,7 @@ _Kemas kini terakhir: 16 Nov 2026 — projek 12 (pecah index.html) ditambah. Han
 | 13 | Kod mati frontend (23 fungsi + modal PIN lama) | **SIAP & digabung ke `main`** (diulang pada `js/`; cabang lama `jeda/kod-mati-frontend` dah tak diperlukan) | — |
 | 14 | Idle timer (timeout semasa mengisi penyertaan) | Siap dalam cabang **`pembetulan/idle-timer`**, belum merge. Amaran 60s + TERUSKAN, had dinilai semula ketika semakan; had kekal 5/15 min. Diuji 6 senario (jam palsu) | Uji pratonton Vercel, kemudian merge. Punca sebenar di lapangan belum disahkan (lihat nota di bawah) |
 | 15 | Semakan pendua muat naik Excel (Bulk) | Siap dalam cabang **`ciri/semak-pendua-bulk`**, belum merge. Diuji 6 senario | Uji dengan fail Excel sebenar, kemudian merge |
+| 16 | Sekolah menyertai program (Pengelola tick) + modal amaran login + pencapaian ikut sekolah ditanda | **CADANGAN dikemas kini 17 Nov 2026 — belum dibina.** Perlu backend baharu (1 jadual + RPC). Lihat bahagian 16 | 7 keputusan menunggu pengguna; kemudian T1 (backend) |
 
 **Urutan kerja cadangan:** uji projek 6 & 7 dahulu → 2 → 3 (W1→W4) → 4; projek 8 menunggu keputusan. (Projek 1 siap — lihat ARKIB.) Projek 5 boleh dibuat selari. Kerja yang sudah siap: lihat `ARKIB.md`.
 
@@ -68,6 +69,7 @@ M4 uji 3 peranan (admin, PKK pengelola, guru sekolah sendiri) dari 2 pintu masuk
 ### Reka bentuk dicadang
 **Wizard Program (5 langkah):** 1 Asas (Nama/Bidang/Peringkat) -> 2 Penganjur (Unit/Kod Sekolah; auto-isi utk PKK,
 admin pilih) -> 3 Kategori -> 4 Jadual (Tarikh/Tempat/Status) -> 5 Semak & Hantar (ringkasan).
+_(17 Nov 2026: jika projek 16 diluluskan, wizard Program menjadi 6 langkah — langkah baharu "Sekolah Menyertai" selepas Penganjur. Lihat bahagian 16.)_
 
 **Wizard Penyertaan (5 langkah):** 1 Pilih Program -> 2 Sahkan Sekolah (auto utk guru/PKK) -> 3 Guru Pengiring
 -> 4 Peserta & Kategori (import Excel di sini) -> 5 Semak & Hantar (modal pengesahan jadi langkah akhir inline).
@@ -361,6 +363,97 @@ _Disimpan 26 Okt 2026 atas arahan pengguna ("simpan dulu"). Mulakan sesi seterus
 
 ---
 
+## 16. Sekolah Menyertai Program (Pengelola tick) + Modal Amaran Login
+**Status: CADANGAN SAHAJA (dikemas kini 17 Nov 2026). Tiada perubahan pada kod / Supabase.** Berbeza daripada wizard (projek 3),
+projek ini **memerlukan perubahan backend** (jadual + RPC baharu).
+
+### Permintaan pengguna (17 Nov 2026)
+1. Semasa daftar program, Pengelola boleh **tick sekolah yang menyertai**, ATAU biarkan **sekolah mendaftar sendiri kemudian**.
+2. Bila sekolah sudah ditick, **modal amaran** muncul apabila pengguna sekolah itu login, supaya melengkapkan penyertaan.
+3. Modal amaran yang sama bila **data penyertaan sedia ada tidak lengkap** (format no. telefon, bangsa, no. kad pengenalan, data kosong).
+4. Bahagian **pencapaian**: sekolah Pengelola boleh pilih sekolah berdasarkan yang ditick semasa pendaftaran **atau kemudian hari**.
+
+### Keadaan semasa (disemak — kod & pangkalan data, baca sahaja)
+- **Tiada jadual yang mengaitkan program dengan sekolah.** `programs` hanya ada `pengelola`/`kod_pengelola`. Sekolah "muncul" dalam program
+  hanya apabila ada baris `penyertaan` (`hantar_penyertaan_sekolah` = padam + sisip semua baris sekolah itu bagi program itu).
+- Tulis program: RPC `daftar_program` / `kemaskini_program_cascade` (bertoken). Penyertaan: `hantar_penyertaan_sekolah`. Pencapaian: `replace_pencapaian`.
+- **Pencapaian hari ini hanya untuk sekolah yang sudah ada penyertaan**: `renderPcForm` (`js/04-program-edit-pencapaian.js`) bina senarai sekolah daripada baris
+  penyertaan program; jika kosong → "Tiada penyertaan direkod". Disahkan di DB: 280 baris pencapaian 2026, **0** tanpa penyertaan sekolah itu.
+- Peraturan "lengkap" sedia ada (`semakPeny`, `js/08-penyertaan-bulk.js`): ≥1 guru; guru: KP ≥12 digit, jantina, bangsa, telefon ≥9 digit;
+  peserta: KP ≥12 digit, jantina, bangsa, kategori. Peraturan ini hanya dikuatkuasakan **semasa hantar** — rekod lama tidak disemak semula.
+- Pengguna: 52 PKK, 31 guru, 3 admin (aktif 85). Tiada mekanisme modal/notifikasi selepas login selain skrin claim akaun & Google.
+
+### Saiz masalah data sedia ada (penyertaan 2026: 3,241 baris, 48 sekolah) — kiraan BARIS (lajur guru berulang pada setiap baris peserta)
+| Isu | Baris |
+|---|---|
+| Guru: No. KP kurang 12 digit | 56 |
+| Guru: No. Telefon kurang 9 digit | 37 |
+| Guru: telefon bukan format piawai `+60…` (tetapi ≥9 digit) | 107 |
+| Peserta: No. KP kurang 12 digit | 2 |
+| Bangsa / jantina kosong (peserta & guru) | 0 |
+| **Sekolah dengan sekurang-kurangnya 1 masalah (tanpa kira format telefon)** | **13 daripada 48** |
+Maksud: hari pertama modal "data tidak lengkap" muncul untuk ≈13 sekolah; jika format telefon turut dikira, jauh lebih ramai (lihat keputusan 4).
+Program 2026: 150 AKTIF, 1 DRAFT, 2 TUTUP; 16 program belum ada sebarang penyertaan.
+
+### Reka bentuk dicadang
+**A. Model data (backend baharu)**
+- Jadual `program_sekolah`: `program_id` (FK → `programs.id`, **ON DELETE CASCADE**), `kod_sekolah`, `ditanda_oleh`, `tarikh_tanda`; unik (`program_id`,`kod_sekolah`).
+  RLS hidup, **tiada baca/tulis terus oleh anon** (selari projek 10) — semua melalui RPC.
+- RPC tulis `tetapkan_sekolah_program(p_no_kp, p_token, p_program_id, p_kod_sekolah text[])` — ganti set (tambah/buang). Kebenaran sama seperti edit program:
+  admin, atau PKK yang `kod_sekolah` = `programs.kod_pengelola`. Untuk pendaftaran baharu: tambah parameter pilihan `p_sekolah` (default null) pada `daftar_program`
+  supaya atomik (serasi ke belakang).
+- RPC baca `semakan_selepas_login(p_no_kp, p_token)` — kod sekolah diambil daripada token (bukan input klien); pulangkan **hanya data sekolah pengguna sendiri**:
+  (i) program ditick yang belum dihantar, (ii) program (ditick atau tidak) yang ada penyertaan tetapi tidak lengkap + ringkasan isu. Kiraan isu di server guna peraturan `semakPeny`.
+- RPC baca senarai sekolah ditick bagi satu program (untuk Pengelola/admin; digunakan oleh Edit Program dan Pencapaian).
+
+**B. Antara muka**
+1. **Daftar Program / Edit Program / (langkah wizard W1)** — bahagian "SEKOLAH YANG MENYERTAI": pilihan
+   ○ *Sekolah mendaftar sendiri kemudian* (lalai) · ○ *Saya pilih sekolah sekarang* → senarai semak (carian; "pilih semua SR / SM / semua"; kiraan dipilih).
+   Dalam **Edit Program** senarai sama boleh ditambah/dibuang bila-bila = "kemudian hari".
+2. **Modal amaran selepas login** (guru & PKK sekolah; bukan admin), dua bahagian:
+   - 📌 *Program yang sekolah anda ditugaskan* — nama, tarikh, tempat, pengelola; butang **LENGKAPKAN** → borang penyertaan dengan program & sekolah sudah dipilih.
+   - ⚠ *Data penyertaan tidak lengkap* — per program, ringkasan isu ("Guru: No. KP tidak lengkap (2) · Peserta: bangsa kosong (3)"); butang **BETULKAN** →
+     modal edit penyertaan (projek 2, fasa M1–M4; sebelum siap, buka mod edit sedia ada di tab Penyertaan).
+   - Butang **KEMUDIAN** (lihat keputusan 3). Dipicu sekali selepas login berjaya (selepas `_mulakanSesi`), guna sistem modal bertindan sedia ada (`openMo`).
+3. **Pencapaian** — senarai sekolah dalam `renderPcForm` = sekolah yang ada penyertaan **∪** sekolah ditick. Peserta/guru kekal diambil daripada penyertaan.
+   Sekolah ditick yang belum ada penyertaan dipaparkan dengan label "BELUM ADA PENYERTAAN" (lihat keputusan 5). Pintasan "Tambah sekolah" dalam borang pencapaian menuju Edit Program.
+
+**C. Peraturan**
+- Tick = **penugasan/jemputan, bukan sekatan**: sekolah tidak ditick masih boleh mendaftar sendiri (ikut frasa "sekolah sendiri mendaftar kemudian").
+- Hanya program **AKTIF** tahun semasa mencetus tugasan. Sekolah yang sudah menghantar (≥1 guru + ≥1 peserta) = tugasan selesai, hilang daripada amaran.
+- Padam program → tick turut dipadam (cascade). Buang tick sekolah yang sudah menghantar → dibenarkan; penyertaan **tidak** dipadam (amaran dalam UI).
+- Tiada kesan pada kiraan dashboard (tick tidak dikira sebagai penyertaan).
+
+### Titik risiko
+- **Projek 10 (privasi):** semakan kelengkapan dibuat di server (RPC) supaya tidak bergantung pada klien membaca semua penyertaan (hari ini `getAllDataGS`). Jika projek ini
+  dibuat sebelum projek 10, jangan bina semakan di klien yang akan perlu ditulis semula.
+- **Kebenaran** `tetapkan_sekolah_program` mesti sama ketat dengan edit program (PKK sekolah lain tidak boleh tick untuk program bukan miliknya).
+- **Pencapaian tanpa penyertaan** boleh mencipta rekod yang tidak sepadan dengan laporan/dashboard (skor, Laporan Sekolah) — sebab keputusan 5.
+- **Modal terlalu kerap/banyak** boleh diabaikan pengguna — had paparan & ringkasan padat.
+- Modal bertindan di atas modal sedia ada, **idle timer**, dan **claim akaun Google** (urutan: claim dahulu, kemudian modal amaran).
+
+### Fasa (cadangan)
+| Fasa | Kerja | Risiko |
+|---|---|---|
+| T1 | Backend: jadual + RPC (tulis, baca tugasan, baca sekolah program); ujian dalam transaksi dibatalkan (corak sedia ada) | Sederhana |
+| T2 | Senarai semak sekolah dalam Daftar & Edit Program (atau langkah W1) | Rendah |
+| T3 | Modal login bahagian 1: program ditugaskan belum dihantar | Sederhana |
+| T4 | Modal login bahagian 2: data tidak lengkap (bergantung modal edit penyertaan — projek 2) | Sederhana |
+| T5 | Pencapaian: gabung sekolah ditick | Sederhana |
+| T6 | Ujian 3 peranan (admin, PKK pengelola, guru) + mobile | Rendah |
+Skop keseluruhan: **4 (berat)** — backend baharu + 3 permukaan UI.
+
+### Keputusan diperlukan daripada pengguna
+1. Tick = **jemputan sahaja** (sekolah lain masih boleh daftar sendiri)? _Andaian semasa: ya._
+2. Sekolah Pengelola sendiri **auto-ditick**?
+3. Modal login: boleh ditutup dengan **KEMUDIAN** (muncul semula setiap login) atau **wajib** diselesaikan dahulu? _Cadangan: boleh ditutup._
+4. Telefon bukan format piawai (107 baris): **betulkan automatik** semasa simpan/butang BETULKAN (cadangan), atau kira sebagai tidak lengkap?
+5. Pencapaian untuk sekolah ditick **tanpa penyertaan**: v1 hanya paparan + mesej "belum ada penyertaan" (cadangan, selamat) atau benarkan Pengelola **taip nama & KP manual**?
+6. Penerima modal: **semua pengguna sekolah itu** (guru & PKK) atau PKK sahaja?
+7. Program lepas tarikh / TUTUP: berhenti mencetus tugasan (cadangan: hanya AKTIF).
+
+---
+
 ## Penilaian skop (16 Nov 2026) — ringan → berat
 _Skala: 1 = kurang sejam · 2 = lebih kurang satu sesi · 3 = beberapa sesi · 4 = projek berfasa, perlu ujian pelayar · 5 = sangat besar. **SPBM (projek 4) DITAHAN atas arahan pengguna 16 Nov 2026.**_
 
@@ -382,6 +475,7 @@ _Skala: 1 = kurang sejam · 2 = lebih kurang satu sesi · 3 = beberapa sesi · 4
 | 3 | Projek 5 — ujian pelayar tertunggak | Ujian oleh pengguna |
 | 4 | Projek 10 — Privasi data peserta (KRITIKAL) | Keutamaan tertinggi; reka bentuk + ujian pelayar; cabang WIP wujud |
 | 4 | Projek 2 — modal edit penyertaan (M1–M4) · Projek 3 — wizard (W1–W4) | Perlu ujian pelayar setiap fasa |
+| 4 | **Projek 16 — sekolah menyertai program + modal amaran login** | Cadangan dikemas kini 17 Nov; backend baharu; 7 keputusan menunggu |
 | 5 | Projek 4 — SPBM | **TAHAN** |
 
 **Nota idle timer:** versi lama terbukti log keluar pada ~5 minit jika borang menjadi aktif selepas peristiwa terakhir (had dipilih sekali pada peristiwa terakhir). Punca di lapangan masih boleh juga token tunggal-bagi-setiap-pengguna (`_set_session_token` ditimpa pada setiap login lain) — log 24 jam tiada bukti. Mesej "Sesi tamat kerana tidak aktif" = idle timer; "Sesi tidak sah" = token.
