@@ -357,12 +357,20 @@ async function lihatPeny(pid,nm){
     // Supabase (RUMUSAN yang fetch fresh tetap tepat, tapi DATA tunjuk kosong).
     var r=await run('getPenyertaanByProgramGS',pid);
     var d=(r&&r.data)?r.data:[];
+    // Projek 16: sekolah ditick tetapi belum daftar penyertaan (admin / PKK pengelola sahaja; gagal = diabaikan senyap)
+    var _belum=[];
+    if(typeof psBlokBelumDaftar==='function' && _sesi && (_sesi.role==='admin'||_sesi.role==='pkk')){
+      try{
+        var _rt=await run('getSekolahProgramGS',pid);
+        _belum=((_rt&&_rt.data)||[]).filter(function(t){return !t.ada_penyertaan;});
+      }catch(_e){ _belum=[]; }
+    }
     document.getElementById('lihat-tit').textContent='📋 PENYERTAAN — '+nm;
-    if(!d.length){
+    if(!d.length && !_belum.length){
       document.getElementById('lihat-body').innerHTML='<div class="empty"><div class="ei">📭</div><h3>Tiada penyertaan</h3></div>';
       openMo('mo-lihat'); return;
     }
-    _checkKatMismatch(pid, d);
+    if(d.length) _checkKatMismatch(pid, d);
     var _progKatForLihat=_progKatList((_allProg||[]).filter(function(p){return p['ID']===pid;})[0]);
     // Group by sekolah
     var sekMap={}, sekOrder=[];
@@ -435,6 +443,7 @@ async function lihatPeny(pid,nm){
       list.appendChild(row);
     });
     wrap.appendChild(list);
+    if(_belum.length) wrap.appendChild(psBlokBelumDaftar(_belum));
     document.getElementById('lihat-body').innerHTML='';
     document.getElementById('lihat-body').appendChild(wrap);
     openMo('mo-lihat');

@@ -9,13 +9,13 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _initRealtimeSync:33, esc:91, hlMatch:93, getTPT:111, _normPeringkat:121, mPts:132, cGet:150, cSet:151, cBust:152, onTahunChange:155, initTahunSel:164, run:198, showOv:251, hideOv:252, setBtn:253, _isPenyFormAktif:258, _tunjukDialogTinggal:273, _doShowPage:294, showPage:313, _resetTabFilters:324, togMarkah:356, buildMarkahGrid:362, askConfirm:375
 **Pemboleh ubah:** _realtimeBustTimer:30, _realtimeQueue:31, LOGO_URL:78, LOGO_FULL:79, selId:80, _salinanPayload:81, gCnt:82, eId:83, _pps:84, markahOpen:85, _rk:86, _aP:87, _selTahun:88, MARKAH:100, PER_ORDER:108, TPT_STANDARD:109, TPT_TERBUKA:110, DAYS:112, MTHS:113, PERINGKAT_ALIAS:116, _peringkatWarnings:120, _C:149, RFN:188, _WRITE_FNS:191
 
-## js/03-program-senarai.js — 650 baris, 30 KB
-**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:49, loadProgs:60, populateMonthFilt:109, _setStab:130, _updateStabCounts:138, applyProgFilt:149, clearProgFilt:168, renderProgList:174, progCard:223, tutupRow:310, reqLihat:346, lihatPeny:350, reqPadamSek:446, padamSekPeny:459, _editSekolahDariBullet:474, reqEditSek:489, _openPenyertaanEdit:510, _prefillPenyertaanEdit:563, reqEdit:599, openEdit:609
+## js/03-program-senarai.js — 659 baris, 31 KB
+**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:49, loadProgs:60, populateMonthFilt:109, _setStab:130, _updateStabCounts:138, applyProgFilt:149, clearProgFilt:168, renderProgList:174, progCard:223, tutupRow:310, reqLihat:346, lihatPeny:350, reqPadamSek:455, padamSekPeny:468, _editSekolahDariBullet:483, reqEditSek:498, _openPenyertaanEdit:519, _prefillPenyertaanEdit:572, reqEdit:608, openEdit:618
 **Pemboleh ubah:** _activeStab:129
 
-## js/04-program-edit-pencapaian.js — 535 baris, 29 KB
-**Fungsi:** _onEditChange:3, saveEdit:19, renderPcForm:90, _autoFillBrkKsl:365, _fillBrkFromScores:498
-**Pemboleh ubah:** _editSaved:2, _brkPesList:364
+## js/04-program-edit-pencapaian.js — 546 baris, 30 KB
+**Fungsi:** _onEditChange:3, saveEdit:19, renderPcForm:90, _autoFillBrkKsl:376, _fillBrkFromScores:509
+**Pemboleh ubah:** _editSaved:2, _brkPesList:375
 
 ## js/05-pencapaian-rumusan.js — 545 baris, 27 KB
 **Fungsi:** _chkdBuild:2, _chkdRenderList:48, _chkdFilter:70, _chkdToggle:74, _chkdUpdateTags:107, _chkdGetSel:135, rPGKat:142, updateMarkah:161, _collectPencEntries:178, savePenc:231, _buildPencConfirm:237, doSavePenc:337, reqPadam:383, padamProg:388, reqRum:395, doRumusan:400, buildRum:417
@@ -69,10 +69,10 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** aiTogglePanel:20, aiRenderSugg:38, aiOnKeydown:49, aiAppendMsg:56, aiShowTyping:65, aiBuildContext:82, aiSend:90, _fabPenyCheck:132, fabPenyToggleMenu:156, _fabPenyCloseMenu:160, _fabScrollToLast:164, fabDoAddPes:172, fabDoAddGuru:177
 **Pemboleh ubah:** _aiHist:7, _aiOpened:8, _aiBusy:9, AI_SARANAN_AWAL:11, AI_MESEJ_BELUM_LOGIN:18
 
-## js/19-sekolah-menyertai.js — 202 baris, 12 KB
-**Fungsi:** _psBox:13, _psSenarai:14, psMod:18, psGet:19, psReset:23, _psKemasBil:28, psRender:32, psSetMod:66, psToggle:71, psCari:75, psKumpulan:82, psMuatEdit:97, psSimpanEdit:113, _tgIsuHtml:133, _tgRender:142, semakTugasanSelepasLogin:167, _tgBuka:187
-**Pemboleh ubah:** _pcTicked:8, _psSel:9, _psMode:10, _psEdit:11, _tgData:127, _TG_ISU:128
+## js/19-sekolah-menyertai.js — 218 baris, 13 KB
+**Fungsi:** _psBox:13, _psSenarai:14, psMod:18, psGet:19, psReset:23, _psKemasBil:28, psRender:32, psSetMod:66, psToggle:71, psCari:75, psKumpulan:82, psMuatEdit:97, psSimpanEdit:113, psBlokBelumDaftar:128, _tgIsuHtml:149, _tgRender:158, semakTugasanSelepasLogin:183, _tgBuka:203
+**Pemboleh ubah:** _pcTicked:8, _psSel:9, _psMode:10, _psEdit:11, _tgData:143, _TG_ISU:144
 
 ## laporan-sekolah.js — 798 baris, 45 KB
 
-_Jumlah: 335 fungsi, 97 pemboleh ubah aras atas._
+_Jumlah: 336 fungsi, 97 pemboleh ubah aras atas._

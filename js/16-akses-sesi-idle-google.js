@@ -98,7 +98,7 @@ var _origSemakPeny = typeof semakPeny === 'function' ? semakPeny : null;
 function _patchPadamSekBtns(){
   // Get current program's pengelola kod for PKK check
   var progPengKod = '';
-  if(_curProg) progPengKod = String(_curProg['Kod Pengelola']||'').toUpperCase();
+  if(typeof _curProg!=='undefined' && _curProg) progPengKod = String(_curProg['Kod Pengelola']||'').toUpperCase();
 
   // Helper: dapatkan kod sekolah dari row
   function _getKodFromRow(btn){
