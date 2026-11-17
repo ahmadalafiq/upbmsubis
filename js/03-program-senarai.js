@@ -357,11 +357,12 @@ async function lihatPeny(pid,nm){
     // Supabase (RUMUSAN yang fetch fresh tetap tepat, tapi DATA tunjuk kosong).
     var r=await run('getPenyertaanByProgramGS',pid);
     var d=(r&&r.data)?r.data:[];
-    // Projek 16: sekolah ditick tetapi belum daftar penyertaan (admin / PKK pengelola sahaja; gagal = diabaikan senyap)
+    // Projek 16: sekolah ditick tetapi belum daftar penyertaan. Server tapis ikut peranan:
+    // admin/PKK pengelola = semua sekolah ditick; guru/PKK lain = sekolah sendiri sahaja. Gagal = diabaikan senyap.
     var _belum=[];
-    if(typeof psBlokBelumDaftar==='function' && _sesi && (_sesi.role==='admin'||_sesi.role==='pkk')){
+    if(typeof psBlokBelumDaftar==='function' && _sesi){
       try{
-        var _rt=await run('getSekolahProgramGS',pid);
+        var _rt=await run('getSekolahProgramLihatGS',pid);
         _belum=((_rt&&_rt.data)||[]).filter(function(t){return !t.ada_penyertaan;});
       }catch(_e){ _belum=[]; }
     }

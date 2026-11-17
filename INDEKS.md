@@ -1,16 +1,16 @@
 # INDEKS FUNGSI (dijana automatik — jangan edit tangan)
 Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran keseluruhan.
 
-## js/01-config-dispatcher.js — 459 baris, 21 KB
-**Fungsi:** _mapProgramOut:21, _mapPenyertaanOut:40, _mapPencapaianOut:64, _mapSekolahOut:85, _mapAkaunOut:89, _rowArrToPenyertaanIn:104, _throwIfErr:124, _fetchAllPaged:133, _supaDispatch:148, _uniq:458
+## js/01-config-dispatcher.js — 465 baris, 22 KB
+**Fungsi:** _mapProgramOut:21, _mapPenyertaanOut:40, _mapPencapaianOut:64, _mapSekolahOut:85, _mapAkaunOut:89, _rowArrToPenyertaanIn:104, _throwIfErr:124, _fetchAllPaged:133, _supaDispatch:148, _uniq:464
 **Pemboleh ubah:** SUPABASE_URL:4, SUPABASE_ANON_KEY:5, sb:6, TBL_PROGRAM:14, TBL_PENYERTAAN:15, TBL_PENCAPAIAN:16, TBL_PENGGUNA:17, TBL_SEKOLAH:18
 
 ## js/02-core.js — 385 baris, 18 KB
 **Fungsi:** _initRealtimeSync:33, esc:91, hlMatch:93, getTPT:111, _normPeringkat:121, mPts:132, cGet:150, cSet:151, cBust:152, onTahunChange:155, initTahunSel:164, run:198, showOv:251, hideOv:252, setBtn:253, _isPenyFormAktif:258, _tunjukDialogTinggal:273, _doShowPage:294, showPage:313, _resetTabFilters:324, togMarkah:356, buildMarkahGrid:362, askConfirm:375
 **Pemboleh ubah:** _realtimeBustTimer:30, _realtimeQueue:31, LOGO_URL:78, LOGO_FULL:79, selId:80, _salinanPayload:81, gCnt:82, eId:83, _pps:84, markahOpen:85, _rk:86, _aP:87, _selTahun:88, MARKAH:100, PER_ORDER:108, TPT_STANDARD:109, TPT_TERBUKA:110, DAYS:112, MTHS:113, PERINGKAT_ALIAS:116, _peringkatWarnings:120, _C:149, RFN:188, _WRITE_FNS:191
 
-## js/03-program-senarai.js — 659 baris, 31 KB
-**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:49, loadProgs:60, populateMonthFilt:109, _setStab:130, _updateStabCounts:138, applyProgFilt:149, clearProgFilt:168, renderProgList:174, progCard:223, tutupRow:310, reqLihat:346, lihatPeny:350, reqPadamSek:455, padamSekPeny:468, _editSekolahDariBullet:483, reqEditSek:498, _openPenyertaanEdit:519, _prefillPenyertaanEdit:572, reqEdit:608, openEdit:618
+## js/03-program-senarai.js — 660 baris, 31 KB
+**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:49, loadProgs:60, populateMonthFilt:109, _setStab:130, _updateStabCounts:138, applyProgFilt:149, clearProgFilt:168, renderProgList:174, progCard:223, tutupRow:310, reqLihat:346, lihatPeny:350, reqPadamSek:456, padamSekPeny:469, _editSekolahDariBullet:484, reqEditSek:499, _openPenyertaanEdit:520, _prefillPenyertaanEdit:573, reqEdit:609, openEdit:619
 **Pemboleh ubah:** _activeStab:129
 
 ## js/04-program-edit-pencapaian.js — 546 baris, 30 KB

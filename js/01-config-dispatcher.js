@@ -223,6 +223,12 @@ async function _supaDispatch(fn, payload){
     return {ok:true, data:rSp.data||[]};
   }
 
+  if(fn === 'getSekolahProgramLihatGS'){   // baca sahaja: admin/PKK pengelola = semua; lain-lain = sekolah sendiri
+    var rSl2 = await sb.rpc('senarai_sekolah_program_lihat', {p_no_kp:(_sesi&&_sesi.noKP)||'', p_token:(_sesi&&_sesi.token)||'', p_program_id:String(payload)});
+    _throwIfErr(rSl2.error);
+    return {ok:true, data:rSl2.data||[]};
+  }
+
   if(fn === 'tetapkanSekolahProgramGS'){
     var rTs = await sb.rpc('tetapkan_sekolah_program', {p_no_kp:(_sesi&&_sesi.noKP)||'', p_token:(_sesi&&_sesi.token)||'', p_program_id:payload.programId, p_kod_sekolah:payload.kodSekolah||[]});
     _throwIfErr(rTs.error);
