@@ -27,39 +27,6 @@ function filterByBidang(arr, field){
   return arr;
 }
 
-function filterPnyByBidang(pny, pg){
-  if(_dashBidang==='semua') return pny;
-  var bidangSel = document.getElementById('df-bidang');
-  var bVal = bidangSel ? bidangSel.value.toUpperCase() : '';
-  var allowed;
-  if(_dashBidang==='sukan') allowed = BIDANG_SUKAN;
-  else if(_dashBidang==='koku') allowed = BIDANG_KOKU_LIST;
-  else if(bVal) allowed = [bVal];
-  else return pny;
-  // Build set of program IDs that match bidang
-  var okIds = {};
-  (pg||[]).forEach(function(p){
-    if(allowed.indexOf((p['Bidang']||'').toUpperCase()) >= 0) okIds[p['ID']]=1;
-  });
-  return pny.filter(function(r){ return okIds[r['Program ID']]; });
-}
-
-function filterPncByBidang(pnc, pg){
-  if(_dashBidang==='semua') return pnc;
-  var bidangSel = document.getElementById('df-bidang');
-  var bVal = bidangSel ? bidangSel.value.toUpperCase() : '';
-  var allowed;
-  if(_dashBidang==='sukan') allowed = BIDANG_SUKAN;
-  else if(_dashBidang==='koku') allowed = BIDANG_KOKU_LIST;
-  else if(bVal) allowed = [bVal];
-  else return pnc;
-  var okNms = {};
-  (pg||[]).forEach(function(p){
-    if(allowed.indexOf((p['Bidang']||'').toUpperCase()) >= 0) okNms[p['Nama Program']]=1;
-  });
-  return pnc.filter(function(r){ return okNms[r['Nama Program']]; });
-}
-
 function rebuildDash(){
   // Apply all active filters
   var pg  = _dfFilterProgs(_aPg);

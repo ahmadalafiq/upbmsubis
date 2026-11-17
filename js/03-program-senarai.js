@@ -635,5 +635,4 @@ async function openEdit(p){
     renderPcForm(_curPny,_curPnc,_katRaw4);
   }catch(e){document.getElementById('pc-ld').innerHTML='<span style="color:var(--red);">Gagal: '+e.message+'</span>';}
 }
-function onEKat(){} // kategori kini dari checkbox
 

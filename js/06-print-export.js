@@ -412,67 +412,9 @@ function buildPrintPortal(prog,pny,pnc,isTutup,nSek,nG,nPs,per,printDate){
   document.getElementById('print-portal').innerHTML = out;
 }
 
-// Print-specific dBox (uses rp- classes)
-function rpDBox(tit,counts,full){
-  var rows=Object.entries(counts).filter(function(e){return e[0]&&e[0]!=='—';})
-    .map(function(e){return '<div class="rp-di"><span>'+e[0]+'</span><span>'+e[1]+'</span></div>';}).join('');
-  return '<div class="rp-dbox'+(full?' full':'')+'"><h4>'+tit+'</h4>'+(rows||'<span style="font-size:7.5pt;color:#aaa;">—</span>')+'</div>';
-}
-// Print-specific bangsa×jantina table
-function rpBJ(label,rows,bKey,jKey){
-  var bt={};
-  rows.forEach(function(r){
-    var b=r[bKey]||'LAIN-LAIN',j=r[jKey]||'—';
-    if(!bt[b])bt[b]={};bt[b][j]=(bt[b][j]||0)+1;
-  });
-  if(!Object.keys(bt).length) return '<div class="rp-dbox full"><h4>'+label+'</h4><span style="font-size:7.5pt;color:#aaa;">—</span></div>';
-  var jList=['LELAKI','PEREMPUAN'];
-  Object.values(bt).forEach(function(o){Object.keys(o).forEach(function(j){if(jList.indexOf(j)<0)jList.push(j);});});
-  var tot={grand:0};jList.forEach(function(j){tot[j]=0;});
-  var th='<thead><tr><th style="text-align:left;">Bangsa</th>'
-    +jList.map(function(j){return '<th>'+j+'</th>';}).join('')+'<th>JML</th></tr></thead>';
-  var tb='<tbody>'+Object.keys(bt).sort().map(function(b){
-    var rt=0;
-    var cells=jList.map(function(j){var v=bt[b][j]||0;rt+=v;tot[j]=(tot[j]||0)+v;tot.grand+=v;return '<td>'+(v||'—')+'</td>';}).join('');
-    return '<tr><td>'+b+'</td>'+cells+'<td>'+rt+'</td></tr>';
-  }).join('')+'</tbody>';
-  var tf='<tfoot><tr><td>JUMLAH</td>'
-    +jList.map(function(j){return '<td>'+(tot[j]||'—')+'</td>';}).join('')
-    +'<td>'+tot.grand+'</td></tr></tfoot>';
-  return '<div class="rp-dbox full"><h4>'+label+'</h4><table class="rp-bjt">'+th+tb+tf+'</table></div>';
-}
 function dBox(tit,counts){
   var rows=Object.entries(counts).filter(function(e){return e[0]&&e[0]!=='—';}).map(function(e){return '<div class="ditem"><span>'+e[0]+'</span><span>'+e[1]+'</span></div>';}).join('');
   return '<div class="dbox"><h4>'+tit+'</h4>'+(rows||'<div style="font-size:.66rem;color:var(--g5);">—</div>')+'</div>';
-}
-// Cross-tab bangsa × jantina for a given group (guru/peserta)
-function dBoxBangsaJantina(label,rows,bangsaKey,jantinaKey){
-  var bt={};
-  rows.forEach(function(r){
-    var b=r[bangsaKey]||'LAIN-LAIN', j=r[jantinaKey]||'—';
-    if(!bt[b])bt[b]={};
-    bt[b][j]=(bt[b][j]||0)+1;
-  });
-  var jantinaList=['LELAKI','PEREMPUAN'];
-  // Collect all unique jantina values
-  Object.values(bt).forEach(function(jObj){Object.keys(jObj).forEach(function(j){if(jantinaList.indexOf(j)<0)jantinaList.push(j);});});
-  var thead='<tr><th style="text-align:left;font-size:.58rem;font-weight:800;color:var(--g6);padding:.15rem .3rem;text-transform:uppercase;">Bangsa</th>'
-    +jantinaList.map(function(j){return '<th style="font-size:.58rem;font-weight:800;color:var(--g6);padding:.15rem .3rem;text-align:center;">'+j+'</th>';}).join('')
-    +'<th style="font-size:.58rem;font-weight:800;color:var(--red);padding:.15rem .3rem;text-align:center;">JML</th></tr>';
-  var total={};
-  var tbody=Object.keys(bt).sort().map(function(b){
-    var rowTotal=0;
-    var cells=jantinaList.map(function(j){var v=bt[b][j]||0;rowTotal+=v;total[j]=(total[j]||0)+v;return '<td style="text-align:center;font-size:.68rem;color:var(--g7);padding:.14rem .3rem;">'+(v||'—')+'</td>';}).join('');
-    return '<tr><td style="font-size:.68rem;font-weight:700;color:var(--g8);padding:.14rem .3rem;">'+b+'</td>'+cells+'<td style="text-align:center;font-size:.68rem;font-weight:800;color:var(--red);padding:.14rem .3rem;">'+rowTotal+'</td></tr>';
-  }).join('');
-  var grandTotal=jantinaList.reduce(function(s,j){return s+(total[j]||0);},0);
-  var tfoot='<tr style="border-top:1.5px solid var(--g3);"><td style="font-size:.62rem;font-weight:800;color:var(--g7);padding:.14rem .3rem;">JUMLAH</td>'
-    +jantinaList.map(function(j){return '<td style="text-align:center;font-size:.66rem;font-weight:800;color:var(--g7);padding:.14rem .3rem;">'+(total[j]||'—')+'</td>';}).join('')
-    +'<td style="text-align:center;font-size:.68rem;font-weight:900;color:var(--red);padding:.14rem .3rem;">'+grandTotal+'</td></tr>';
-  return '<div class="dbox" style="grid-column:1/-1;"><h4>'+label+'</h4>'
-    +'<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;border:1px solid var(--g2);border-radius:6px;overflow:hidden;">'
-    +'<thead style="background:var(--g1);">'+thead+'</thead><tbody>'+tbody+'</tbody>'
-    +'<tfoot>'+tfoot+'</tfoot></table></div></div>';
 }
 // Cross-tab bangsa × jantina table
 function dBoxBJ(label,rows,bKey,jKey){

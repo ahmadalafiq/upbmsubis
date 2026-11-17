@@ -137,10 +137,6 @@ function _chkdGetSel(id){
   var el=document.getElementById(id);
   return (el&&el._chkdSel)?el._chkdSel.slice():[];
 }
-function _chkdGetNorm(id){
-  var el=document.getElementById(id);
-  return (el&&el._chkdNorm)?el._chkdNorm:[];
-}
 
 
 function rPGKat(kat,k){

@@ -495,14 +495,6 @@ function normTel(v){
   return s.replace(/\D/g,'');
 }
 
-// Format tel untuk papar (cth: 123456789 → 12-34567-89)
-function telDisplay(v){
-  if(!v) return '';
-  var s = String(v);
-  if(!s.startsWith('+60')) return s;
-  return s; // simpan as-is, papar penuh
-}
-
 // == FORMAT NO KP =============================================================
 // Auto-format: xxxxxx-xx-xxxx | kekalkan format asal | 12 digit sahaja
 function fmtKP(inp){

@@ -553,36 +553,6 @@ function buildPodium(items){
   }
   return wrap;
 }
-function renderPencGrp(bp,keys){
-  return keys.map(function(prog){
-    var en=bp[prog];
-    var byP={};en.forEach(function(e){var p=(e['Peringkat']||'SEKOLAH').toUpperCase();if(!byP[p])byP[p]=[];byP[p].push(e);});
-    var rows='';
-    var perSorted=PER_ORDER.filter(function(p){return byP[p];});
-    Object.keys(byP).forEach(function(p){if(perSorted.indexOf(p)<0)perSorted.push(p);});
-    perSorted.forEach(function(per){
-      var items=byP[per];
-      rows+='<div style="font-size:.58rem;font-weight:800;color:var(--g5);text-transform:uppercase;padding:.18rem 0 .06rem;letter-spacing:.5px;">'+per+'</div>';
-      var seenTempat={};
-      TPT_STANDARD.forEach(function(t){
-        var found=items.filter(function(e){
-          var key=t.l+'|'+(e['Nama Sekolah']||'');
-          if((e['Tempat']||'').toUpperCase()!==t.l) return false;
-          if(seenTempat[key]) return false;
-          seenTempat[key]=1; return true;
-        });
-        if(!found.length) return;
-        var f=found[0];
-        rows+='<div style="display:flex;align-items:flex-start;gap:.42rem;padding:.22rem 0;border-bottom:1px dashed var(--g1);">'
-          +'<span style="font-size:.57rem;font-weight:800;color:var(--red);min-width:78px;">'+f['Tempat']+'</span>'
-          +'<div style="flex:1;"><div style="font-size:.7rem;font-weight:700;color:var(--g8);">'+f['Nama Sekolah']+'</div>'
-          +'<div style="font-size:.62rem;color:var(--g5);">'+(f['Nama Peserta']?'<div style="font-size:.62rem;color:var(--g5);">'+f['Nama Peserta']+'</div>':'')+(f['Nama Guru']?'<div style="font-size:.62rem;color:var(--g4);">'+f['Nama Guru']+'</div>':'')+'</div>'
-          +'<span style="font-size:.64rem;font-weight:800;color:var(--red);">'+(f['Markah']||mPts(per,f['Tempat']))+'pt</span></div>';
-      });
-    });
-    return '<div class="pgrp"><div class="phdr">'+prog+'</div>'+rows+'</div>';
-  }).join('');
-}
 function morePenc(){
   var bp={};_aPnc.forEach(function(p){var k=p['Nama Program']||'';if(!k)return;if(!bp[k])bp[k]=[];bp[k].push(p);});
   var keys=Object.keys(bp);

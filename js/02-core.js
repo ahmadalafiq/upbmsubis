@@ -82,7 +82,7 @@ var _salinanPayload=null,_salinanRows=null; // simpan data hantar terakhir untuk
 var gCnt=0,pCnt=0;
 var eId='',eNm='',eKat='INDIVIDU';
 var _pps={},_gps={},_curPny=[],_curPnc=[];
-var pAct=null,markahOpen=false;
+var markahOpen=false;
 var _rk={sek:{},pes:{},guru:{}};
 var _aP=[],_aPnc=[],_aPg=[],_allProg=[],_allPny=[];
 var _selTahun = new Date().getFullYear(); // tahun aktif, default tahun semasa
@@ -381,26 +381,5 @@ function askConfirm(title, msg, onYes, onNo) {
     if(typeof onNo === 'function') onNo();
   };
   openMo('mo-cfm');
-}
-
-function askPin(tit,desc,cb){
-  document.getElementById('pin-tit').textContent=tit;
-  document.getElementById('pin-desc').textContent=desc;
-  document.getElementById('pin-inp').value='';
-  document.getElementById('pin-err').textContent='';
-  pAct=cb; openMo('mo-pin');
-  setTimeout(function(){document.getElementById('pin-inp').focus();},180);
-}
-async function doPin(){
-  var pin=document.getElementById('pin-inp').value.trim();
-  if(!pin){document.getElementById('pin-err').textContent='Sila masukkan PIN';return;}
-  document.getElementById('pin-err').textContent='';
-  showOv('MENGESAHKAN PIN...');
-  try{
-    var r=await run('verifyPinGS',{pin:pin});
-    hideOv();
-    if(r&&r.ok){closeMo('mo-pin');if(pAct)pAct(r.role,r.kod,pin);pAct=null;}
-    else document.getElementById('pin-err').textContent=(r&&r.msg)||'PIN tidak sah.';
-  }catch(e){hideOv();document.getElementById('pin-err').textContent='Ralat: '+e.message;}
 }
 
