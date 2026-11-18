@@ -204,7 +204,9 @@ async function _supaDispatch(fn, payload){
   if(fn === 'daftarProgramGS'){
     var tar1 = payload.tarikh;
     var thn1 = tar1 ? new Date(tar1).getFullYear() : new Date().getFullYear();
-    var newProgId = (typeof crypto!=='undefined' && crypto.randomUUID) ? crypto.randomUUID() : (Date.now()+'-'+Math.random().toString(36).slice(2));
+    // ID stabil daripada klien (wizard) -> cuba semula selepas timeout selamat (ralat duplicate dikendalikan oleh pemanggil)
+    var newProgId = (payload.id && /^[A-Za-z0-9_-]{8,64}$/.test(String(payload.id))) ? String(payload.id)
+      : ((typeof crypto!=='undefined' && crypto.randomUUID) ? crypto.randomUUID() : (Date.now()+'-'+Math.random().toString(36).slice(2)));
     var rInsP = await sb.rpc('daftar_program', {
       p_no_kp: (_sesi&&_sesi.noKP)||'', p_token: (_sesi&&_sesi.token)||'', p_id: newProgId,
       p_nama: payload.nama, p_pengelola: payload.pengelola,

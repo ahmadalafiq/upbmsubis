@@ -140,7 +140,7 @@ function _patchPadamSekBtns(){
     if(!document.body.classList.contains('loggedin')) return;
     // PEMBETULAN: panjangkan had idle bila borang penyertaan sedang aktif diisi —
     // sesi isi data ramai peserta biasanya ambil masa lebih 5 minit.
-    var formAktif = (typeof _isPenyFormAktif === 'function') && _isPenyFormAktif();
+    var formAktif = ((typeof _isPenyFormAktif === 'function') && _isPenyFormAktif()) || ((typeof wzProgAktif === 'function') && wzProgAktif());
     var ms = formAktif ? IDLE_MS_FORM : IDLE_MS;
     _idleTimer = setTimeout(function(){
       if(document.body.classList.contains('loggedin')){

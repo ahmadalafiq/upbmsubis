@@ -1,17 +1,17 @@
 # INDEKS FUNGSI (dijana automatik — jangan edit tangan)
 Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran keseluruhan.
 
-## js/01-config-dispatcher.js — 465 baris, 22 KB
-**Fungsi:** _mapProgramOut:21, _mapPenyertaanOut:40, _mapPencapaianOut:64, _mapSekolahOut:85, _mapAkaunOut:89, _rowArrToPenyertaanIn:104, _throwIfErr:124, _fetchAllPaged:133, _supaDispatch:148, _uniq:464
+## js/01-config-dispatcher.js — 467 baris, 22 KB
+**Fungsi:** _mapProgramOut:21, _mapPenyertaanOut:40, _mapPencapaianOut:64, _mapSekolahOut:85, _mapAkaunOut:89, _rowArrToPenyertaanIn:104, _throwIfErr:124, _fetchAllPaged:133, _supaDispatch:148, _uniq:466
 **Pemboleh ubah:** SUPABASE_URL:4, SUPABASE_ANON_KEY:5, sb:6, TBL_PROGRAM:14, TBL_PENYERTAAN:15, TBL_PENCAPAIAN:16, TBL_PENGGUNA:17, TBL_SEKOLAH:18
 
 ## js/02-core.js — 385 baris, 18 KB
 **Fungsi:** _initRealtimeSync:33, esc:91, hlMatch:93, getTPT:111, _normPeringkat:121, mPts:132, cGet:150, cSet:151, cBust:152, onTahunChange:155, initTahunSel:164, run:198, showOv:251, hideOv:252, setBtn:253, _isPenyFormAktif:258, _tunjukDialogTinggal:273, _doShowPage:294, showPage:313, _resetTabFilters:324, togMarkah:356, buildMarkahGrid:362, askConfirm:375
 **Pemboleh ubah:** _realtimeBustTimer:30, _realtimeQueue:31, LOGO_URL:78, LOGO_FULL:79, selId:80, _salinanPayload:81, gCnt:82, eId:83, _pps:84, markahOpen:85, _rk:86, _aP:87, _selTahun:88, MARKAH:100, PER_ORDER:108, TPT_STANDARD:109, TPT_TERBUKA:110, DAYS:112, MTHS:113, PERINGKAT_ALIAS:116, _peringkatWarnings:120, _C:149, RFN:188, _WRITE_FNS:191
 
-## js/03-program-senarai.js — 663 baris, 31 KB
-**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:49, loadProgs:62, populateMonthFilt:111, _setStab:132, _updateStabCounts:140, applyProgFilt:151, clearProgFilt:170, renderProgList:176, progCard:225, tutupRow:312, reqLihat:348, lihatPeny:352, reqPadamSek:458, padamSekPeny:471, _editSekolahDariBullet:486, reqEditSek:501, _openPenyertaanEdit:522, _prefillPenyertaanEdit:575, reqEdit:611, openEdit:621
-**Pemboleh ubah:** _activeStab:131
+## js/03-program-senarai.js — 687 baris, 32 KB
+**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:73, loadProgs:86, populateMonthFilt:135, _setStab:156, _updateStabCounts:164, applyProgFilt:175, clearProgFilt:194, renderProgList:200, progCard:249, tutupRow:336, reqLihat:372, lihatPeny:376, reqPadamSek:482, padamSekPeny:495, _editSekolahDariBullet:510, reqEditSek:525, _openPenyertaanEdit:546, _prefillPenyertaanEdit:599, reqEdit:635, openEdit:645
+**Pemboleh ubah:** _activeStab:155
 
 ## js/04-program-edit-pencapaian.js — 546 baris, 30 KB
 **Fungsi:** _onEditChange:3, saveEdit:19, renderPcForm:90, _autoFillBrkKsl:376, _fillBrkFromScores:509
@@ -49,9 +49,9 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** setDashBidang:6, filterByBidang:18, rebuildDash:30, buildSekTiadaRekod:123
 **Pemboleh ubah:** _dashBidang:2, BIDANG_SUKAN:3, BIDANG_KOKU:4
 
-## js/14-auth-login.js — 413 baris, 17 KB
-**Fungsi:** lgTab:6, lgClearMsg:16, lgMsg:23, lgToggleAdmin:28, lgDot:45, lgResetStep:50, lgCariAkaun:60, lgMasuk:135, _mulakanSesi:162, _pfNamaVal:236, _pfMaskKP:237, openProfil:238, _pfOnChange:257, simpanProfil:262, _refreshNavUser:284, _applyRoleUI:297, lgKeluarConfirm:324, lgKeluar:336
-**Pemboleh ubah:** _sesi:3, _pfAsal:235
+## js/14-auth-login.js — 415 baris, 17 KB
+**Fungsi:** lgTab:6, lgClearMsg:16, lgMsg:23, lgToggleAdmin:28, lgDot:45, lgResetStep:50, lgCariAkaun:60, lgMasuk:135, _mulakanSesi:162, _pfNamaVal:237, _pfMaskKP:238, openProfil:239, _pfOnChange:258, simpanProfil:263, _refreshNavUser:285, _applyRoleUI:298, lgKeluarConfirm:325, lgKeluar:337
+**Pemboleh ubah:** _sesi:3, _pfAsal:236
 
 ## js/15-akaun-admin.js — 522 baris, 27 KB
 **Fungsi:** loadAkaun:9, akFilt:23, akFiltRole:33, akFiltSek:39, _populateAkFiltSek:45, akCari:69, akCariClear:75, akToggleGroup:82, _akaunCardHtml:93, renderAkaun:129, _akKemaskini:183, akResetPin:193, akConfirmReset:224, akEditMaklumat:266, onSugEdmSek:300, akSimpanMaklumat:323, bukaSenaraiSekolah:360, _muatSenaraiSekolah:395, sekSeedAwal:408, sekCari:423, _renderSenaraiSekolah:425, sekMulaTambah:448, sekSimpanTambah:455, sekMulaEdit:477, sekSimpanEdit:489, akLulus:508, akNyahaktif:514, akAktifSemula:515, akTukarRole:516
@@ -77,10 +77,10 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** agIsOn:8, agToggle:9, agSync:31, agReset:39
 **Pemboleh ubah:** _AG_KOD:5, _AG_ID:6
 
-## js/21-wizard-program.js — 112 baris, 7 KB
-**Fungsi:** _wzEl:9, _wzFi:10, _wzKumpulan:12, _wzPapar:21, _wzV:42, _wzSemak:44, _wzRingkas:53, wzKe:76, _wzScroll:77, wzNext:78, wzBack:83, wzToggle:84, wzReset:90, wzInit:92
-**Pemboleh ubah:** _WZ_LANGKAH:5, _wz:6, _WZ_PREF:7
+## js/21-wizard-program.js — 195 baris, 11 KB
+**Fungsi:** _wzEl:13, _wzFi:14, _wzV:15, wzProgAktif:16, wzId:17, _wzKumpulan:23, _wzPapar:32, _wzSemak:53, _wzRingkas:62, wzKe:85, _wzScroll:86, wzNext:87, wzBack:93, wzToggle:94, wzMsg:102, wzMsgBuang:103, _wzKosong:106, wzSimpanDraf:109, _wzBacaDraf:123, wzPadamDraf:131, wzHintDraf:132, wzPulihDraf:138, bukaDaftarProgram:151, tutupDaftarProgram:165, wzMulaBaru:166, wzReset:171, wzInit:173
+**Pemboleh ubah:** _WZ_LANGKAH:8, _wz:9, _WZ_PREF:10, _WZ_MEDAN:11
 
 ## laporan-sekolah.js — 798 baris, 45 KB
 
-_Jumlah: 354 fungsi, 102 pemboleh ubah aras atas._
+_Jumlah: 367 fungsi, 103 pemboleh ubah aras atas._

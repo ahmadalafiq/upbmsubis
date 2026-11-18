@@ -273,3 +273,5 @@ input.nc-off{text-transform:none!important;}
 
 /* Wizard Daftar Program (W1) */
 .wz-hide{display:none !important;}
+.wz-launch{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;}
+.wz-launch[style*="display: none"]{display:none !important;}

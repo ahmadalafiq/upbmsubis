@@ -1,14 +1,25 @@
-// == WIZARD DAFTAR PROGRAM (W1) ================================================
-// Lapisan PAPARAN sahaja: semua ID elemen & fungsi sedia ada (daftarProgram, clearPF, handleKatCheck, psRender, agToggle...) kekal.
-// Wizard cuma sorok/tunjuk kumpulan medan (kelas wz-hide) + semakan per langkah. Backend tidak disentuh.
-// Pautan "Guna borang biasa" = jalan balik. Mod Edit Program kekal borang 1 halaman.
+// == WIZARD DAFTAR PROGRAM (W1) — dalam MODAL ===================================
+// Klik "+ DAFTAR PROGRAM" -> modal #mo-daftar-prog (wizard 6 langkah). Lapisan PAPARAN sahaja: semua ID elemen & fungsi sedia ada kekal.
+// Ketahanan tamat masa:
+//  (a) Draf auto-simpan ke sessionStorage (upbm_prog_draft) — kekal selepas log keluar idle, dipulihkan bila modal dibuka semula.
+//  (b) Had idle dipanjangkan (15 min) semasa modal terbuka (lihat js/16).
+//  (c) ID program stabil (wzId) -> "cuba lagi" selamat: jika permintaan sebelum itu sebenarnya berjaya, ralat "duplicate" dianggap berjaya.
+//  (d) Mesej ralat dalam modal (sesi tamat / rangkaian) — borang & draf TIDAK dikosongkan.
 var _WZ_LANGKAH = ['Asas','Penganjur','Sekolah','Kategori','Jadual','Semak'];
-var _wz = {on:true, step:1, inited:false};
-var _WZ_PREF = 'upbm_wz_program';
+var _wz = {on:true, step:1, inited:false, id:'', timer:null, owner:''};
+var _WZ_PREF = 'upbm_wz_program', _WZ_DRAF = 'upbm_prog_draft', _WZ_DRAF_TTL = 24*60*60*1000;
+var _WZ_MEDAN = ['p-nama','p-bidang','p-per','p-pengelola','p-kod','p-tarikh','p-tempat','p-status'];
 
 function _wzEl(id){ return document.getElementById(id); }
 function _wzFi(id){ var e=_wzEl(id); return e ? (e.closest('.fi')||e) : null; }
-// Kumpulan elemen bagi setiap langkah (elemen .fi pembungkus)
+function _wzV(id){ var e=_wzEl(id); return e?String(e.value||'').trim():''; }
+function wzProgAktif(){ var m=_wzEl('mo-daftar-prog'); return !!(m&&m.classList.contains('on')); }
+function wzId(){
+  if(!_wz.id){ _wz.id=(typeof crypto!=='undefined'&&crypto.randomUUID)?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2)); }
+  return _wz.id;
+}
+
+// -- Paparan langkah --------------------------------------------------------
 function _wzKumpulan(){
   return {
     1:[_wzFi('p-nama'),_wzFi('p-bidang'),_wzFi('p-per')],
@@ -39,8 +50,6 @@ function _wzPapar(){
     if(_wz.step===6) _wzRingkas();
   }
 }
-function _wzV(id){ var e=_wzEl(id); return e?String(e.value||'').trim():''; }
-// Semakan ringkas per langkah (logik penuh kekal dalam daftarProgram)
 function _wzSemak(n){
   if(n===1){ if(!_wzV('p-nama')||!_wzV('p-bidang')||!_wzV('p-per')) return 'Sila isi Nama Program, Bidang dan Peringkat.'; }
   if(n===2){ if(!_wzV('p-pengelola')) return (typeof agIsOn==='function'&&agIsOn('p'))?'Sila taip nama agensi luar.':'Sila isi Unit / Nama pengelola.';
@@ -73,40 +82,114 @@ function _wzRingkas(){
   });
   rk.innerHTML=h+'</div>';
 }
-function wzKe(n){ _wz.step=Math.max(1,Math.min(6,n)); _wzPapar(); _wzScroll(); }
-function _wzScroll(){ var c=_wzEl('card-daftar-prog'); if(c&&c.scrollIntoView) try{c.scrollIntoView({block:'start',behavior:'smooth'});}catch(e){} }
+function wzKe(n){ _wz.step=Math.max(1,Math.min(6,n)); _wzPapar(); _wzScroll(); wzSimpanDraf(true); }
+function _wzScroll(){ var b=_wzEl('wz-body'); if(b) b.scrollTop=0; }
 function wzNext(){
+  wzMsgBuang();
   var m=_wzSemak(_wz.step);
   if(m){ if(typeof toast==='function') toast(m,'er'); return; }
   if(_wz.step<6) wzKe(_wz.step+1);
 }
-function wzBack(){ if(_wz.step>1) wzKe(_wz.step-1); }
+function wzBack(){ wzMsgBuang(); if(_wz.step>1) wzKe(_wz.step-1); }
 function wzToggle(on){
   _wz.on=(typeof on==='boolean')?on:!_wz.on;
   try{ localStorage.setItem(_WZ_PREF,_wz.on?'on':'off'); }catch(e){}
   if(_wz.on) _wz.step=1;
   _wzPapar();
 }
-function wzReset(){ _wz.step=1; _wzPapar(); }
+
+// -- Mesej ralat dalam modal -------------------------------------------------
+function wzMsg(t){ var e=_wzEl('wz-err'); if(!e) return; e.textContent='⚠ '+t; e.style.display='block'; }
+function wzMsgBuang(){ var e=_wzEl('wz-err'); if(e) e.style.display='none'; }
+
+// -- Draf (sessionStorage) ----------------------------------------------------
+function _wzKosong(){
+  return !_WZ_MEDAN.some(function(id){ var v=_wzV(id); return v && !(id==='p-status'&&v==='AKTIF'); });
+}
+function wzSimpanDraf(segera){
+  if(!segera){ clearTimeout(_wz.timer); _wz.timer=setTimeout(function(){ wzSimpanDraf(true); },500); return; }
+  clearTimeout(_wz.timer);
+  try{
+    if(!_sesi || _wzKosong()){ sessionStorage.removeItem(_WZ_DRAF); wzHintDraf(); return; }
+    var f={}; _WZ_MEDAN.forEach(function(id){ f[id]=_wzV(id); });
+    var kat=[]; Array.prototype.forEach.call(document.querySelectorAll('#p-kat-wrap input[type=checkbox]'),function(c){ if(c.checked) kat.push(c.value); });
+    var d={v:1,kp:_sesi.noKP||'',id:wzId(),step:_wz.step,f:f,ag:(typeof agIsOn==='function'&&agIsOn('p')),
+           luar:!!(_wzEl('p-luar')&&_wzEl('p-luar').checked),kat:kat,
+           mod:(typeof psMod==='function'?psMod('p'):'KEMUDIAN'),sek:(typeof psGet==='function'?Object.keys(_psSel.p||{}):[]),t:Date.now()};
+    sessionStorage.setItem(_WZ_DRAF,JSON.stringify(d));
+    wzHintDraf();
+  }catch(e){}
+}
+function _wzBacaDraf(){
+  try{
+    var s=sessionStorage.getItem(_WZ_DRAF); if(!s) return null;
+    var d=JSON.parse(s);
+    if(!d||d.v!==1||!_sesi||d.kp!==(_sesi.noKP||'')||(Date.now()-d.t)>_WZ_DRAF_TTL){ sessionStorage.removeItem(_WZ_DRAF); return null; }
+    return d;
+  }catch(e){ return null; }
+}
+function wzPadamDraf(){ try{ sessionStorage.removeItem(_WZ_DRAF); }catch(e){} wzHintDraf(); }
+function wzHintDraf(){
+  var h=_wzEl('wz-hint'); if(!h) return;
+  var d=_wzBacaDraf();
+  if(d){ h.textContent='📝 Draf belum selesai ('+(d.f['p-nama']||'tanpa nama')+') — klik DAFTAR PROGRAM untuk sambung.'; h.style.display='block'; }
+  else h.style.display='none';
+}
+function wzPulihDraf(d){
+  _wz.id=d.id||'';
+  _WZ_MEDAN.forEach(function(id){ var e=_wzEl(id); if(e) e.value=d.f[id]||''; });
+  var cbAg=_wzEl('p-agensi'); if(cbAg){ cbAg.checked=!!d.ag; if(typeof agToggle==='function') agToggle('p');
+    // agToggle mungkin mengosongkan nama/kod — tetapkan semula nilai draf
+    _wzEl('p-pengelola').value=d.f['p-pengelola']||''; _wzEl('p-kod').value=d.f['p-kod']||''; }
+  Array.prototype.forEach.call(document.querySelectorAll('#p-kat-wrap input[type=checkbox]'),function(c){ c.checked=(d.kat||[]).indexOf(c.value)>=0; });
+  var l=_wzEl('p-luar'); if(l) l.checked=!!d.luar;
+  _psSel.p={}; (d.sek||[]).forEach(function(k){ _psSel.p[k]=true; }); _psMode.p=(d.mod==='PILIH')?'PILIH':'KEMUDIAN'; psRender('p');
+  _wz.step=Math.max(1,Math.min(6,d.step||1));
+}
+
+// -- Buka / tutup modal -------------------------------------------------------
+function bukaDaftarProgram(){
+  if(_sesi&&_sesi.role==='guru'){ toast('Guru tidak dibenarkan mendaftar program.','er'); return; }
+  wzMsgBuang();
+  // Pengguna berbeza pada tab yang sama: jangan bocorkan data borang pengguna terdahulu
+  var kpIni=(_sesi&&_sesi.noKP)||'';
+  if(_wz.owner && _wz.owner!==kpIni && typeof clearPF==='function') clearPF();
+  _wz.owner=kpIni;
+  var d=_wzBacaDraf();
+  if(d && !_wz.id){ wzPulihDraf(d); if(typeof toast==='function') toast('Draf dipulihkan — sambung dari langkah '+_wz.step+'.','in'); }
+  else if(d){ /* sudah dalam memori (modal ditutup & dibuka semula) */ }
+  _wzPapar();
+  openMo('mo-daftar-prog');
+  if(typeof _resetIdleTimer==='function') _resetIdleTimer();
+}
+function tutupDaftarProgram(){ wzSimpanDraf(true); closeMo('mo-daftar-prog'); }
+function wzMulaBaru(){
+  if(!_wzKosong() && !confirm('Padam draf dan mula baharu?')) return;
+  if(typeof clearPF==='function') clearPF(); else wzReset();
+}
+// dipanggil oleh clearPF (selepas berjaya daftar / KOSONGKAN)
+function wzReset(){ _wz.step=1; _wz.id=''; wzPadamDraf(); wzMsgBuang(); _wzPapar(); }
 
 function wzInit(){
-  var card=_wzEl('card-daftar-prog'), btn=_wzEl('btn-daftar');
-  if(!card||!btn||_wz.inited) return;
+  var modal=_wzEl('mo-daftar-prog'), btn=_wzEl('btn-daftar'), body=_wzEl('wz-body');
+  if(!modal||!btn||!body||_wz.inited) return;
   _wz.inited=true;
   try{ if(localStorage.getItem(_WZ_PREF)==='off') _wz.on=false; }catch(e){}
-  var rowBtn=btn.parentNode;
+  var rowBtn=btn.parentNode, foot=_wzEl('wz-foot');
   var bar=document.createElement('div'); bar.id='wz-bar'; bar.style.cssText='margin:.2rem 0 .8rem;';
-  var fg=card.querySelector('.fg'); fg.parentNode.insertBefore(bar,fg);
+  body.insertBefore(bar,body.firstChild);
   var rk=document.createElement('div'); rk.id='wz-ringkas'; rk.style.display='none';
-  rowBtn.parentNode.insertBefore(rk,rowBtn);
-  var nav=document.createElement('div'); nav.id='wz-nav'; nav.style.cssText='display:flex;align-items:center;gap:.5rem;margin-top:.7rem;flex-wrap:wrap;';
+  body.appendChild(rk);
+  var nav=document.createElement('div'); nav.id='wz-nav'; nav.style.cssText='display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;';
   nav.innerHTML='<button type="button" class="btn bs" id="wz-back" onclick="wzBack()">◀ KEMBALI</button>'
     +'<button type="button" class="btn bp" id="wz-next" onclick="wzNext()">SETERUSNYA ▶</button>';
-  rowBtn.parentNode.insertBefore(nav,rowBtn);
+  foot.insertBefore(nav,rowBtn);
   var alt=document.createElement('a'); alt.id='wz-alt'; alt.href='#';
-  alt.style.cssText='display:inline-block;margin-top:.6rem;font-size:.66rem;font-weight:700;color:var(--g5);';
+  alt.style.cssText='display:inline-block;margin-top:.5rem;font-size:.66rem;font-weight:700;color:var(--g5);';
   alt.onclick=function(){ wzToggle(); return false; };
-  rowBtn.parentNode.appendChild(alt);
-  _wzPapar();
+  foot.insertBefore(alt,foot.lastElementChild);
+  // auto-simpan draf pada setiap perubahan dalam modal
+  ['input','change','click'].forEach(function(ev){ modal.addEventListener(ev,function(){ wzSimpanDraf(false); },true); });
+  _wzPapar(); wzHintDraf();
 }
 wzInit();

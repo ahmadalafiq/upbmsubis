@@ -6,7 +6,7 @@
 <title>UPBM Subis</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/01-base.css?v=20261117">
-<link rel="stylesheet" href="css/02-components.css?v=20261118">
+<link rel="stylesheet" href="css/02-components.css?v=20261119">
 <link rel="stylesheet" href="css/03-pages.css?v=20261116">
 <link rel="stylesheet" href="css/04-fullscreen-nav-widgets.css?v=20261116">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -221,45 +221,13 @@
 <!-- PAGE: PENGELOLA -->
 <div class="pg on" id="pg-pengelola">
   <div class="ph"><div class="bc">UPBM SUBIS <b>›</b> PENGELOLA</div><h1>Pendaftaran Program</h1><p>Daftar dan urus semua program pertandingan</p></div>
-  <div class="card mb2" id="card-daftar-prog">
-    <div class="ch"><div class="dot"></div>PROGRAM BAHARU</div>
-    <div class="fg">
-      <div class="fi full"><label>Nama Program</label><input type="text" id="p-nama" placeholder="Masukkan nama program..."></div>
-      <div class="fi full"><label>Penganjur</label>
-        <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="p-agensi" onchange="agToggle('p')"> 🏢 Dianjurkan oleh agensi luar</label></div>
-        <div id="p-agensi-info" style="display:none;font-size:.66rem;color:var(--g5);margin-top:.3rem;">Taip nama agensi pada ruang Unit / Nama. Kod Sekolah Penganjur ditetapkan automatik kepada Y044 (PPD SUBIS).</div>
-      </div>
-      <div class="fi" style="position:relative;"><label>Unit / Nama</label>
-        <input type="text" id="p-pengelola" placeholder="Nama pengelola" autocomplete="off" oninput="onSugPengelolaProg(this.value)" onfocus="onSugPengelolaProg(this.value)" onblur="hideSug('sug-p-pengelola')">
-        <div class="sug-drop" id="sug-p-pengelola"></div>
-      </div>
-      <div class="fi" style="position:relative;"><label>Kod Sekolah Penganjur</label>
-        <input type="text" id="p-kod" placeholder="Contoh: Y044" class="nc" autocomplete="off" oninput="onSugKodProg(this.value)" onfocus="onSugKodProg(this.value)" onblur="hideSug('sug-p-kod')">
-        <div class="sug-drop" id="sug-p-kod"></div>
-      </div>
-      <div class="fi"><label>Bidang</label><select id="p-bidang"><option value="">— PILIH —</option><option>SUKAN</option><option>BAHASA</option><option>SENI</option><option>PBB</option><option>STEM</option><option>LAIN-LAIN</option></select></div>
-      <div class="fi full"><label>Kategori Pertandingan</label>
-        <div class="kat-chk-wrap" id="p-kat-wrap">
-          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="INDIVIDU LELAKI" checked> Individu Lelaki</label>
-          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="INDIVIDU PEREMPUAN" checked> Individu Perempuan</label>
-          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="BERKUMPULAN LELAKI"> Berkumpulan Lelaki</label>
-          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="BERKUMPULAN PEREMPUAN"> Berkumpulan Perempuan</label>
-          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="KESELURUHAN"> Keseluruhan</label>
-          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="TERBUKA INDIVIDU"> Terbuka Individu</label>
-          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="TERBUKA BERKUMPULAN"> Terbuka Berkumpulan</label>
-        </div>
-      </div>
-      <div class="fi"><label>Peringkat</label><select id="p-per"><option value="">— PILIH —</option><option>SEKOLAH</option><option>DAERAH</option><option>BAHAGIAN</option><option>NEGERI</option><option>KEBANGSAAN</option><option>ANTARABANGSA</option></select></div>
-      <div class="fi"><label>Tarikh</label><input type="date" id="p-tarikh"></div>
-      <div class="fi"><label>Tempat</label><input type="text" id="p-tempat" placeholder="Lokasi program..."></div>
-      <div class="fi"><label>Status</label><select id="p-status"><option value="DRAFT">DRAFT</option><option value="AKTIF">AKTIF</option><option value="TUTUP">TUTUP</option></select></div>
-      <div class="fi full"><label>Jenis Aktiviti</label>
-        <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="p-luar"> 🌐 Aktiviti Luar</label></div>
-        <div style="font-size:.66rem;color:var(--g5);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
-      </div>
+  <div class="card mb2 wz-launch" id="card-daftar-prog">
+    <div style="flex:1;min-width:200px;">
+      <div class="ch" style="margin-bottom:.2rem;"><div class="dot"></div>PENDAFTARAN PROGRAM</div>
+      <div style="font-size:.7rem;color:var(--g5);">Daftar program baharu dengan panduan langkah demi langkah.</div>
+      <div id="wz-hint" style="display:none;margin-top:.35rem;font-size:.68rem;font-weight:700;color:#b9770e;"></div>
     </div>
-    <div class="fi full" id="p-sek-box" style="margin-top:.6rem;"></div>
-    <div class="mt2 fx gu"><button class="btn bp" id="btn-daftar" onclick="daftarProgram()">+ DAFTAR PROGRAM</button><button class="btn bs" onclick="clearPF()">KOSONGKAN</button></div>
+    <button class="btn bp" id="btn-buka-daftar" onclick="bukaDaftarProgram()">+ DAFTAR PROGRAM</button>
   </div>
   <div class="fx ic jb mb1">
     <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:.84rem;color:var(--g8);">SENARAI PROGRAM</div>
@@ -876,6 +844,58 @@
   </div>
 </div>
 
+<div class="mo" id="mo-daftar-prog">
+  <div class="md" style="max-width:720px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div class="mh" style="padding:1.25rem 1.55rem .6rem;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
+      <span>📝 DAFTAR PROGRAM BAHARU</span>
+      <button type="button" class="btn bs bsm" onclick="tutupDaftarProgram()" title="Tutup (draf disimpan automatik)">✕</button>
+    </div>
+    <div id="wz-body" style="overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding:0 1.55rem .8rem;overscroll-behavior:contain;">
+    <div class="fg">
+      <div class="fi full"><label>Nama Program</label><input type="text" id="p-nama" placeholder="Masukkan nama program..."></div>
+      <div class="fi full"><label>Penganjur</label>
+        <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="p-agensi" onchange="agToggle('p')"> 🏢 Dianjurkan oleh agensi luar</label></div>
+        <div id="p-agensi-info" style="display:none;font-size:.66rem;color:var(--g5);margin-top:.3rem;">Taip nama agensi pada ruang Unit / Nama. Kod Sekolah Penganjur ditetapkan automatik kepada Y044 (PPD SUBIS).</div>
+      </div>
+      <div class="fi" style="position:relative;"><label>Unit / Nama</label>
+        <input type="text" id="p-pengelola" placeholder="Nama pengelola" autocomplete="off" oninput="onSugPengelolaProg(this.value)" onfocus="onSugPengelolaProg(this.value)" onblur="hideSug('sug-p-pengelola')">
+        <div class="sug-drop" id="sug-p-pengelola"></div>
+      </div>
+      <div class="fi" style="position:relative;"><label>Kod Sekolah Penganjur</label>
+        <input type="text" id="p-kod" placeholder="Contoh: Y044" class="nc" autocomplete="off" oninput="onSugKodProg(this.value)" onfocus="onSugKodProg(this.value)" onblur="hideSug('sug-p-kod')">
+        <div class="sug-drop" id="sug-p-kod"></div>
+      </div>
+      <div class="fi"><label>Bidang</label><select id="p-bidang"><option value="">— PILIH —</option><option>SUKAN</option><option>BAHASA</option><option>SENI</option><option>PBB</option><option>STEM</option><option>LAIN-LAIN</option></select></div>
+      <div class="fi full"><label>Kategori Pertandingan</label>
+        <div class="kat-chk-wrap" id="p-kat-wrap">
+          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="INDIVIDU LELAKI" checked> Individu Lelaki</label>
+          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="INDIVIDU PEREMPUAN" checked> Individu Perempuan</label>
+          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="BERKUMPULAN LELAKI"> Berkumpulan Lelaki</label>
+          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="BERKUMPULAN PEREMPUAN"> Berkumpulan Perempuan</label>
+          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="KESELURUHAN"> Keseluruhan</label>
+          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="TERBUKA INDIVIDU"> Terbuka Individu</label>
+          <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="TERBUKA BERKUMPULAN"> Terbuka Berkumpulan</label>
+        </div>
+      </div>
+      <div class="fi"><label>Peringkat</label><select id="p-per"><option value="">— PILIH —</option><option>SEKOLAH</option><option>DAERAH</option><option>BAHAGIAN</option><option>NEGERI</option><option>KEBANGSAAN</option><option>ANTARABANGSA</option></select></div>
+      <div class="fi"><label>Tarikh</label><input type="date" id="p-tarikh"></div>
+      <div class="fi"><label>Tempat</label><input type="text" id="p-tempat" placeholder="Lokasi program..."></div>
+      <div class="fi"><label>Status</label><select id="p-status"><option value="DRAFT">DRAFT</option><option value="AKTIF">AKTIF</option><option value="TUTUP">TUTUP</option></select></div>
+      <div class="fi full"><label>Jenis Aktiviti</label>
+        <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="p-luar"> 🌐 Aktiviti Luar</label></div>
+        <div style="font-size:.66rem;color:var(--g5);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
+      </div>
+    </div>
+    <div class="fi full" id="p-sek-box" style="margin-top:.6rem;"></div>
+    </div>
+    <div id="wz-foot" style="flex-shrink:0;padding:.8rem 1.55rem 1.1rem;border-top:1px solid var(--g2);">
+      <div id="wz-err" class="iwarn" style="display:none;font-size:.72rem;margin-bottom:.6rem;line-height:1.45;"></div>
+    <div class="fx gu" style="flex-wrap:wrap;"><button class="btn bp" id="btn-daftar" onclick="daftarProgram()">+ DAFTAR PROGRAM</button><button class="btn bs" onclick="clearPF()">KOSONGKAN</button></div>
+      <div style="font-size:.62rem;color:var(--g5);margin-top:.5rem;">💾 Draf disimpan automatik dalam pelayar ini. <a href="#" onclick="wzMulaBaru();return false;" style="color:var(--red);font-weight:700;">Mula baharu</a></div>
+    </div>
+  </div>
+</div>
+
 <div class="mo" id="mo-edit">
   <div class="md" style="max-width:860px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
     <div class="mh" style="padding:1.25rem 1.55rem .9rem;flex-shrink:0;">✏️ KEMASKINI PROGRAM</div>
@@ -1116,7 +1136,7 @@
 <script src="js/18-ai-fab.js?v=20261116"></script>
 <script src="js/19-sekolah-menyertai.js?v=20261117"></script>
 <script src="js/20-agensi-luar.js?v=20261118"></script>
-<script src="js/21-wizard-program.js?v=20261118"></script>
+<script src="js/21-wizard-program.js?v=20261119"></script>
 <script src="laporan-sekolah.js"></script>
 </body>
 </html>

@@ -228,6 +228,7 @@ async function _mulakanSesi(data){
   _doShowPage(defaultPg);
 
   // Projek 16: modal amaran (guru & PKK) — program ditugaskan belum dihantar / data tidak lengkap
+  if(typeof wzHintDraf==='function') wzHintDraf();
   if(typeof semakTugasanSelepasLogin==='function') setTimeout(function(){ semakTugasanSelepasLogin(0); }, 1500);
 }
 
@@ -363,7 +364,8 @@ function lgKeluar(idleMode){
     if(idleMode===true){
       try{sessionStorage.removeItem('upbm_sesi');}catch(e){} // kekalkan upbm_peny_draft
     }else{
-      ['upbm_sesi','upbm_peny_draft'].forEach(function(k){ try{sessionStorage.removeItem(k);}catch(e){} });
+      ['upbm_sesi','upbm_peny_draft','upbm_prog_draft'].forEach(function(k){ try{sessionStorage.removeItem(k);}catch(e){} });
+      try{ if(typeof clearPF==='function') clearPF(); }catch(e){}
     }
     ['upbm_sesi','upbm_peny_draft','upbm_sek_extra'].forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
   }catch(e){}

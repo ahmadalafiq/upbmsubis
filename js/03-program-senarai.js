@@ -28,22 +28,46 @@ async function daftarProgram(){
   var katList=getKatChecked('p-kat-wrap');
   var luar=!!(document.getElementById('p-luar')||{}).checked;
   var sekPilih=(typeof psGet==='function')?psGet('p'):[];
+  var pid=(typeof wzId==='function')?wzId():'';
+  if(typeof wzMsgBuang==='function') wzMsgBuang();
   if(!n||!pen||!bid||!per||!tar||!tem){toast('Sila lengkapkan semua medan','er');return;}
   if(!kod){toast('Sila masukkan Kod Sekolah Penganjur','er');return;}
   if(!katList.length){toast('Sila pilih sekurang-kurangnya 1 kategori','er');return;}
   showOv('MENDAFTAR PROGRAM...'); setBtn('btn-daftar',true);
   try{
-    var r=await run('daftarProgramGS',{nama:n,pengelola:pen,kodPengelola:kod,bidang:bid,kategori:katList,peringkat:per,tarikh:tar,tempat:tem,status:sta,aktivitiLuar:luar});
+    var r;
+    try{
+      r=await run('daftarProgramGS',{nama:n,pengelola:pen,kodPengelola:kod,bidang:bid,kategori:katList,peringkat:per,tarikh:tar,tempat:tem,status:sta,aktivitiLuar:luar,id:pid});
+    }catch(e0){
+      // Cuba semula selepas timeout: jika permintaan terdahulu sebenarnya berjaya, ID yang sama -> duplicate = sudah didaftarkan
+      if(pid && /duplicate key|programs_pkey|23505/i.test(String(e0&&e0.message||e0))) r={ok:true,id:pid,dup:true};
+      else throw e0;
+    }
     if(r&&r.ok){
-      toast('Program berjaya didaftarkan','ok');
-      if(sekPilih.length && r.id){
-        try{ await run('tetapkanSekolahProgramGS',{programId:r.id,kodSekolah:sekPilih}); toast(sekPilih.length+' sekolah dijemput menyertai','ok'); }
+      toast(r.dup?'Program sudah didaftarkan sebelum ini ✓':'Program berjaya didaftarkan','ok');
+      var _pid=r.id||pid;
+      if(sekPilih.length && _pid){
+        try{ await run('tetapkanSekolahProgramGS',{programId:_pid,kodSekolah:sekPilih}); toast(sekPilih.length+' sekolah dijemput menyertai','ok'); }
         catch(e2){ toast('Program didaftar, tetapi sekolah gagal ditetapkan: '+e2.message+'. Tetapkan melalui Edit Program.','er'); }
       }
-      clearPF();await loadProgs(true);
+      clearPF(); if(typeof closeMo==='function' && document.getElementById('mo-daftar-prog') && document.getElementById('mo-daftar-prog').classList.contains('on')) closeMo('mo-daftar-prog');
+      await loadProgs(true);
     }
     else toast((r&&r.msg)||'Ralat','er');
-  }catch(e){toast('Ralat: '+e.message,'er');}
+  }catch(e){
+    var m=String((e&&e.message)||e);
+    if(typeof wzSimpanDraf==='function') wzSimpanDraf(true);
+    if(/Sesi tidak sah|log masuk semula/i.test(m)){
+      var t1='Sesi anda telah tamat. Draf disimpan — log masuk semula, kemudian klik DAFTAR PROGRAM untuk sambung.';
+      if(typeof wzMsg==='function') wzMsg(t1); toast(t1,'er');
+    } else if(/Masa tamat|timeout|Failed to fetch|NetworkError|network|Load failed/i.test(m)){
+      var t2='Sambungan tamat masa. Program MUNGKIN sudah didaftarkan — tekan DAFTAR PROGRAM sekali lagi (selamat, tiada pendua). Draf anda disimpan.';
+      if(typeof wzMsg==='function') wzMsg(t2); toast('Sambungan tamat masa. Cuba lagi.','er');
+    } else {
+      if(typeof wzMsg==='function') wzMsg('Ralat: '+m);
+      toast('Ralat: '+m,'er');
+    }
+  }
   finally{hideOv();setBtn('btn-daftar',false);}
 }
 function clearPF(){
