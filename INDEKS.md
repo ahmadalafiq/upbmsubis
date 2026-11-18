@@ -69,9 +69,9 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** aiTogglePanel:20, aiRenderSugg:38, aiOnKeydown:49, aiAppendMsg:56, aiShowTyping:65, aiBuildContext:82, aiSend:90, _fabPenyCheck:132, fabPenyToggleMenu:156, _fabPenyCloseMenu:160, _fabScrollToLast:164, fabDoAddPes:172, fabDoAddGuru:177
 **Pemboleh ubah:** _aiHist:7, _aiOpened:8, _aiBusy:9, AI_SARANAN_AWAL:11, AI_MESEJ_BELUM_LOGIN:18
 
-## js/19-sekolah-menyertai.js — 218 baris, 13 KB
-**Fungsi:** _psBox:13, _psSenarai:14, psMod:18, psGet:19, psReset:23, _psKemasBil:28, psRender:32, psSetMod:66, psToggle:71, psCari:75, psKumpulan:82, psMuatEdit:97, psSimpanEdit:113, psBlokBelumDaftar:128, _tgIsuHtml:149, _tgRender:158, semakTugasanSelepasLogin:183, _tgBuka:203
-**Pemboleh ubah:** _pcTicked:8, _psSel:9, _psMode:10, _psEdit:11, _tgData:143, _TG_ISU:144
+## js/19-sekolah-menyertai.js — 222 baris, 13 KB
+**Fungsi:** _psBox:13, _psSenarai:14, psMod:18, psGet:19, psReset:23, _psKemasBil:28, psRender:32, psSetMod:66, psToggle:71, psCari:75, psKumpulan:82, psMuatEdit:97, psSimpanEdit:113, psBlokBelumDaftar:128, _tgIsuHtml:153, _tgRender:162, semakTugasanSelepasLogin:187, _tgBuka:207
+**Pemboleh ubah:** _pcTicked:8, _psSel:9, _psMode:10, _psEdit:11, _tgData:147, _TG_ISU:148
 
 ## laporan-sekolah.js — 798 baris, 45 KB
 

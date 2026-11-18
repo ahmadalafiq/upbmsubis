@@ -444,7 +444,7 @@ async function lihatPeny(pid,nm){
       list.appendChild(row);
     });
     wrap.appendChild(list);
-    if(_belum.length) wrap.appendChild(psBlokBelumDaftar(_belum));
+    if(_belum.length) wrap.appendChild(psBlokBelumDaftar(_belum,pid));
     document.getElementById('lihat-body').innerHTML='';
     document.getElementById('lihat-body').appendChild(wrap);
     openMo('mo-lihat');

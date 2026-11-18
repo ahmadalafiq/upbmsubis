@@ -125,7 +125,8 @@ async function psSimpanEdit(progId){
 
 // == BUTANG "DATA" (lihatPeny): sekolah ditick yang belum mendaftar penyertaan ==
 // Pulang elemen DOM; dipanggil dari lihatPeny() dengan senarai {kod_sekolah,nama_sekolah,ada_penyertaan:false}
-function psBlokBelumDaftar(arr){
+function psBlokBelumDaftar(arr,pid){
+  var own=String((typeof _sesi!=='undefined'&&_sesi&&_sesi.kodSekolah)||'').toUpperCase().trim();
   var box=document.createElement('div');
   box.style.cssText='margin-top:.8rem;border:1.5px solid #f5d98b;background:#fffdf3;border-radius:var(--r);padding:.55rem .7rem;';
   var h='<div style="font-size:.66rem;font-weight:800;color:#b9770e;text-transform:uppercase;margin-bottom:.35rem;">⚠ Ditick, belum daftar penyertaan ('+arr.length+')</div>';
@@ -133,7 +134,10 @@ function psBlokBelumDaftar(arr){
     h+='<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.28rem 0;border-top:1px solid #f5e6b3;">'
       +'<div style="flex:1;min-width:160px;font-size:.74rem;font-weight:700;color:var(--g8);">🏫 '+esc(t.nama_sekolah||t.kod_sekolah)
       +' <span style="font-size:.62rem;font-weight:600;color:var(--g5);">Kod: '+esc(t.kod_sekolah||'—')+'</span></div>'
-      +'<span style="background:#fff3cd;color:#7a5b00;border-radius:20px;padding:.1rem .5rem;font-size:.62rem;font-weight:700;">Perlu daftar penyertaan</span></div>';
+      +'<span style="background:#fff3cd;color:#7a5b00;border-radius:20px;padding:.1rem .5rem;font-size:.62rem;font-weight:700;">Perlu daftar penyertaan</span>'
+      +((own&&pid&&String(t.kod_sekolah||'').toUpperCase().trim()===own)
+        ?'<button type="button" class="btn bp bsm" data-pid="'+esc(pid)+'" onclick="closeMo(\'mo-lihat\');_tgBuka(this.getAttribute(\'data-pid\'))">DAFTAR PENYERTAAN →</button>':'')
+      +'</div>';
   });
   box.innerHTML=h;
   return box;
