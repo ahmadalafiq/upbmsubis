@@ -100,8 +100,11 @@ function _fmtAccess(info){
 function toast(msg,type){
   type=type||'in';var c=document.getElementById('tc');
   var el=document.createElement('div');el.className='toast '+type;
-  el.innerHTML='<span>'+(type==='ok'?'✓':type==='er'?'✗':'ℹ')+'</span>'+msg;
-  c.appendChild(el);setTimeout(function(){if(el.parentNode)el.remove();},3200);
+  // Teks sahaja (bukan innerHTML): mesej mengandungi nama/data yang ditaip pengguna -> elak XSS
+  var ic=document.createElement('span'); ic.textContent=(type==='ok'?'✓':type==='er'?'✗':'ℹ');
+  el.appendChild(ic); el.appendChild(document.createTextNode(String(msg==null?'':msg)));
+  el.setAttribute('role',type==='er'?'alert':'status');
+  c.appendChild(el);setTimeout(function(){if(el.parentNode)el.remove();},type==='er'?5200:3200);
 }
 
 // == FUNGSI CARIAN ===================================

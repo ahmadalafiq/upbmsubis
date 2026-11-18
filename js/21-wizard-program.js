@@ -41,7 +41,11 @@ function _wzPapar(){
   if(alt) alt.textContent=_wz.on?'Guna borang biasa':'Guna panduan langkah demi langkah';
   if(_wz.on){
     var h='<div style="display:flex;gap:.3rem;margin-bottom:.35rem;">';
-    for(var i=1;i<=6;i++){ h+='<div style="flex:1;height:5px;border-radius:3px;background:'+(i<=_wz.step?'var(--red)':'var(--g2)')+';"></div>'; }
+    for(var i=1;i<=6;i++){
+      var balik=(i<_wz.step);
+      h+='<div'+(balik?' role="button" tabindex="0" onclick="wzKe('+i+')" title="Kembali ke langkah '+i+' — '+_WZ_LANGKAH[i-1]+'" aria-label="Kembali ke langkah '+i+'"':' aria-hidden="true"')
+        +' style="flex:1;height:'+(balik?'8px':'5px')+';border-radius:4px;background:'+(i<=_wz.step?'var(--red)':'var(--g2)')+';'+(balik?'cursor:pointer;':'')+'"></div>';
+    }
     h+='</div><div style="font-size:.72rem;font-weight:800;color:var(--g8);">Langkah '+_wz.step+' / 6 — '+_WZ_LANGKAH[_wz.step-1].toUpperCase()+'</div>';
     if(bar) bar.innerHTML=h;
     var b=_wzEl('wz-back'), nx=_wzEl('wz-next');
@@ -73,10 +77,10 @@ function _wzRingkas(){
     [5,'Tarikh',tar],[5,'Tempat',_wzV('p-tempat')],[5,'Status',_wzV('p-status')]
   ];
   var h='<div style="border:1.5px solid var(--g2);border-radius:var(--r);padding:.5rem .75rem;margin-top:.4rem;">'
-       +'<div style="font-size:.66rem;font-weight:800;color:var(--g5);text-transform:uppercase;margin-bottom:.3rem;">Semak sebelum daftar</div>';
+       +'<div style="font-size:.66rem;font-weight:800;color:var(--g6);text-transform:uppercase;margin-bottom:.3rem;">Semak sebelum daftar</div>';
   rows.forEach(function(r){
     h+='<div style="display:flex;gap:.5rem;align-items:baseline;padding:.2rem 0;border-top:1px solid var(--g1);font-size:.74rem;">'
-      +'<div style="width:130px;flex-shrink:0;color:var(--g5);font-weight:700;">'+esc(r[1])+'</div>'
+      +'<div style="width:130px;flex-shrink:0;color:var(--g6);font-weight:700;">'+esc(r[1])+'</div>'
       +'<div style="flex:1;font-weight:700;color:var(--g8);word-break:break-word;">'+esc(r[2]||'—')+'</div>'
       +'<a href="#" style="font-size:.62rem;font-weight:800;color:var(--red);text-decoration:none;" onclick="wzKe('+r[0]+');return false;">UBAH</a></div>';
   });
@@ -84,10 +88,30 @@ function _wzRingkas(){
 }
 function wzKe(n){ _wz.step=Math.max(1,Math.min(6,n)); _wzPapar(); _wzScroll(); wzSimpanDraf(true); }
 function _wzScroll(){ var b=_wzEl('wz-body'); if(b) b.scrollTop=0; }
+// Medan wajib yang kosong bagi langkah n (untuk penanda inline)
+function _wzIdSalah(n){
+  var ids=[];
+  var map={1:['p-nama','p-bidang','p-per'],2:['p-pengelola','p-kod'],5:['p-tarikh','p-tempat']};
+  (map[n]||[]).forEach(function(id){ if(!_wzV(id)) ids.push(id); });
+  if(n===4 && typeof getKatChecked==='function' && !getKatChecked('p-kat-wrap').length) ids.push('p-kat-wrap');
+  if(n===3 && ids.length===0 && typeof psMod==='function' && psMod('p')==='PILIH' && psGet('p').length===0) ids.push('p-sek-box');
+  return ids;
+}
+function _wzTandaSalah(ids){
+  var first=null;
+  ids.forEach(function(id){
+    var e=_wzEl(id); if(!e) return;
+    var t=(e.tagName==='INPUT'||e.tagName==='SELECT'||e.tagName==='TEXTAREA')?e:e;
+    t.classList.add('inp-err'); if(!first) first=e;
+    var off=function(){ t.classList.remove('inp-err'); t.removeEventListener('input',off); t.removeEventListener('change',off); };
+    t.addEventListener('input',off); t.addEventListener('change',off);
+  });
+  if(first){ try{ (first.focus&&first.tagName!=='DIV')?first.focus():first.scrollIntoView({block:'center'}); }catch(e){} }
+}
 function wzNext(){
   wzMsgBuang();
   var m=_wzSemak(_wz.step);
-  if(m){ if(typeof toast==='function') toast(m,'er'); return; }
+  if(m){ _wzTandaSalah(_wzIdSalah(_wz.step)); if(typeof toast==='function') toast(m,'er'); return; }
   if(_wz.step<6) wzKe(_wz.step+1);
 }
 function wzBack(){ wzMsgBuang(); if(_wz.step>1) wzKe(_wz.step-1); }
@@ -185,11 +209,19 @@ function wzInit(){
     +'<button type="button" class="btn bp" id="wz-next" onclick="wzNext()">SETERUSNYA ▶</button>';
   foot.insertBefore(nav,rowBtn);
   var alt=document.createElement('a'); alt.id='wz-alt'; alt.href='#';
-  alt.style.cssText='display:inline-block;margin-top:.5rem;font-size:.66rem;font-weight:700;color:var(--g5);';
+  alt.style.cssText='display:inline-block;margin-top:.5rem;font-size:.66rem;font-weight:700;color:var(--g6);';
   alt.onclick=function(){ wzToggle(); return false; };
   foot.insertBefore(alt,foot.lastElementChild);
   // auto-simpan draf pada setiap perubahan dalam modal
   ['input','change','click'].forEach(function(ev){ modal.addEventListener(ev,function(){ wzSimpanDraf(false); },true); });
+  // Enter dalam medan teks -> langkah seterusnya (kecuali di langkah 6 / pilihan / butang)
+  modal.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'||!_wz.on||_wz.step>=6) return;
+    var t=e.target; if(!t||t.tagName!=='INPUT'||t.type==='checkbox'||t.type==='radio'||t.type==='button') return;
+    if(t.id&&t.id.indexOf('-sek-cari')>=0) return;   // carian sekolah
+    e.preventDefault(); wzNext();
+  });
+  var er=_wzEl('wz-err'); if(er) er.setAttribute('role','alert');
   _wzPapar(); wzHintDraf();
 }
 wzInit();

@@ -16,7 +16,7 @@ async function loadAkaun(bust, silent){
     renderAkaun();
   }catch(e){
     if(silent){ console.warn('loadAkaun(silent) gagal, diabaikan senyap:', e.message); }
-    else{ document.getElementById('akaun-list').innerHTML='<div class="empty"><div class="ei">⚠</div><h3>Gagal memuatkan: '+e.message+'</h3></div>'; }
+    else{ document.getElementById('akaun-list').innerHTML='<div class="empty"><div class="ei">⚠</div><h3>Gagal memuatkan: '+esc(e.message)+'</h3></div>'; }
   }
 }
 
@@ -208,7 +208,7 @@ function akResetPin(noKP, nama){
     +'PIN Baharu (kosongkan untuk jana rawak 6 digit)</label>'
     +'<input type="text" id="reset-pin-val" placeholder="cth: 123456" maxlength="6" inputmode="numeric"'
     +' style="width:100%;padding:.45rem .65rem;border:1.5px solid var(--g3);border-radius:var(--r);font-size:1.1rem;font-family:monospace;letter-spacing:4px;text-align:center;box-sizing:border-box;">'
-    +'<div style="font-size:.58rem;color:var(--g5);margin-top:.25rem;">Mesti 6 digit angka, atau biarkan kosong untuk jana rawak</div>'
+    +'<div style="font-size:.58rem;color:var(--g6);margin-top:.25rem;">Mesti 6 digit angka, atau biarkan kosong untuk jana rawak</div>'
     +'</div>'
     +'<div id="reset-pin-err" style="display:none;background:#fdf2f2;border:1px solid #f5c6c6;border-radius:var(--r);padding:.4rem .65rem;font-size:.68rem;color:var(--red);margin-bottom:.6rem;"></div>'
     +'<div id="reset-pin-result" style="display:none;"></div>'
@@ -305,7 +305,7 @@ function onSugEdmSek(q){
   var items=_getSekSuggestions().filter(function(s){
     return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
   }).sort(function(a,b){return a.nama.localeCompare(b.nama);}).slice(0,8);
-  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g5);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
+  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g6);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
   drop.innerHTML=items.map(function(s){
     return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+esc(s.nama)+' ('+esc(s.kod)+')</span></div>';
   }).join('');
@@ -401,7 +401,7 @@ async function _muatSenaraiSekolah(){
     if(seedWrap) seedWrap.style.display = _sekolahList.length ? 'none' : 'block';
     _renderSenaraiSekolah();
   }catch(e){
-    el.innerHTML = '<div class="empty"><div class="ei">⚠</div><h3>Gagal muat senarai sekolah</h3><p style="font-size:.68rem;color:var(--g5);">'+esc(e.message)+'</p></div>';
+    el.innerHTML = '<div class="empty"><div class="ei">⚠</div><h3>Gagal muat senarai sekolah</h3><p style="font-size:.68rem;color:var(--g6);">'+esc(e.message)+'</p></div>';
   }
 }
 
@@ -430,7 +430,7 @@ function _renderSenaraiSekolah(){
     return s.kod.toLowerCase().indexOf(q)>-1 || s.nama.toLowerCase().indexOf(q)>-1;
   }).sort(function(a,b){ return a.nama.localeCompare(b.nama); });
   if(!list.length){
-    el.innerHTML = '<div class="empty"><div class="ei">🏫</div><h3>Tiada sekolah dijumpai</h3><p style="font-size:.68rem;color:var(--g5);">Jadual sekolah mungkin masih kosong — guna butang TAMBAH untuk mula, atau muat naik senarai sedia ada.</p></div>';
+    el.innerHTML = '<div class="empty"><div class="ei">🏫</div><h3>Tiada sekolah dijumpai</h3><p style="font-size:.68rem;color:var(--g6);">Jadual sekolah mungkin masih kosong — guna butang TAMBAH untuk mula, atau muat naik senarai sedia ada.</p></div>';
     return;
   }
   el.innerHTML = list.map(function(s){

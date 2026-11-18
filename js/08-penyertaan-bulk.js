@@ -140,7 +140,7 @@ function _prosesBulkXlsx(wb){
 function renderMainPesList(){
   var el=document.getElementById('main-pes-list');
   if(!el)return;
-  if(!_penyData.pesList.length){el.innerHTML='<div style="font-size:.72rem;color:var(--g5);padding:.4rem;">Tiada peserta ditambah. Klik + TAMBAH PESERTA.</div>';return;}
+  if(!_penyData.pesList.length){el.innerHTML='<div style="font-size:.72rem;color:var(--g6);padding:.4rem;">Tiada peserta ditambah. Klik + TAMBAH PESERTA.</div>';return;}
   var kodSek=(document.getElementById('daf-kod')||{}).value||'';
   var syorPes=_getPesSyorFromAP(kodSek);
   // Simpan dalam cache global
@@ -182,7 +182,7 @@ function renderMainPesList(){
       +'<div class="fi"><label>Jantina</label><select id="pjn-'+p.id+'" onchange="savePes(\''+p.id+'\',\'jantina\',this.value);_autoAssignKatByJantina(\''+p.id+'\',this.value);">'+janOpt(p.jantina)+'</select></div>'
       +'<div class="fi"><label>Bangsa</label><select id="pbg-'+p.id+'" onchange="savePes(\''+p.id+'\',\'bangsa\',this.value)">'+bangOpt(p.bangsa)+'</select></div>'
       +'</div>'
-      +(katForChk.length?'<div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem;padding:.4rem;background:var(--g1);border-radius:var(--r);"><span style="font-size:.6rem;font-weight:800;color:var(--g5);margin-right:.2rem;align-self:center;">KATEGORI:</span>'+chkHtml+'</div>':'');
+      +(katForChk.length?'<div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem;padding:.4rem;background:var(--g1);border-radius:var(--r);"><span style="font-size:.6rem;font-weight:800;color:var(--g6);margin-right:.2rem;align-self:center;">KATEGORI:</span>'+chkHtml+'</div>':'');
     el.appendChild(div);
   });
 }
@@ -336,8 +336,8 @@ function semakPeny(){
   guruFilled.forEach(function(g){
     html+='<div style="display:flex;align-items:center;gap:.5rem;padding:.28rem .5rem;border-bottom:1px dashed var(--g1);font-size:.73rem;">'
       +'<span>👨‍🏫</span><strong>'+g.nama+'</strong>'
-      +(g.jantina?'<span style="color:var(--g5);">'+g.jantina+'</span>':'')
-      +(g.bangsa?'<span style="color:var(--g5);">'+g.bangsa+'</span>':'')+'</div>';
+      +(g.jantina?'<span style="color:var(--g6);">'+g.jantina+'</span>':'')
+      +(g.bangsa?'<span style="color:var(--g6);">'+g.bangsa+'</span>':'')+'</div>';
   });
   html+='</div>';
 
@@ -357,7 +357,7 @@ function semakPeny(){
       html+='<div style="padding:.3rem .7rem;font-size:.65rem;color:var(--g6);background:#fff8f0;border-bottom:1px solid #fde8cc;">ℹ️ Semua peserta yang mewakili sekolah dalam kategori keseluruhan</div>';
     }
     if(!pesInKat.length){
-      html+='<div style="padding:.5rem .7rem;font-size:.72rem;color:var(--g5);">— Tiada peserta dalam kategori ini —</div>';
+      html+='<div style="padding:.5rem .7rem;font-size:.72rem;color:var(--g6);">— Tiada peserta dalam kategori ini —</div>';
     } else {
       pesInKat.forEach(function(p,i){
         html+='<div style="display:flex;align-items:center;gap:.5rem;padding:.28rem .7rem;border-bottom:1px dashed var(--g1);font-size:.73rem;background:'+(i%2===0?'#fff':'#fafafa')+'">'

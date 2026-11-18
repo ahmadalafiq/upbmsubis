@@ -168,7 +168,7 @@ function renderPenyList(list){
   var el=document.getElementById('peny-pilih');
   el.innerHTML='';
   var srch=((document.getElementById('peny-srch')||{}).value||'').trim();
-  if(!list.length){el.innerHTML='<div style="padding:1rem;font-size:.74rem;color:var(--g5);">📭 Tiada program'+(srch?' untuk "'+esc(srch)+'"':'')+'</div>';return;}
+  if(!list.length){el.innerHTML='<div style="padding:1rem;font-size:.74rem;color:var(--g6);">📭 Tiada program'+(srch?' untuk "'+esc(srch)+'"':'')+'</div>';return;}
   // Tandakan program yang sudah ada rekod dari sekolah user (jika ada)
   var userKod=(document.getElementById('daf-kod')||{}).value||'';
   var hasRecSet={};
@@ -189,7 +189,7 @@ function renderPenyList(list){
   if(_penyView==='senarai'){
     var tbl=document.createElement('table');
     tbl.style.cssText='width:100%;border-collapse:collapse;font-size:.73rem;';
-    tbl.innerHTML='<thead><tr style="background:var(--g1);position:sticky;top:0;z-index:1;"><th style="padding:.42rem .6rem;text-align:left;font-size:.6rem;font-weight:800;color:var(--g5);">PROGRAM</th><th style="padding:.42rem .6rem;text-align:left;font-size:.6rem;font-weight:800;color:var(--g5);white-space:nowrap;">BIDANG</th><th style="padding:.42rem .6rem;text-align:left;font-size:.6rem;font-weight:800;color:var(--g5);white-space:nowrap;">TARIKH</th><th style="padding:.42rem .6rem;text-align:center;font-size:.6rem;font-weight:800;color:var(--g5);white-space:nowrap;">STATUS</th></tr></thead>';
+    tbl.innerHTML='<thead><tr style="background:var(--g1);position:sticky;top:0;z-index:1;"><th style="padding:.42rem .6rem;text-align:left;font-size:.6rem;font-weight:800;color:var(--g6);">PROGRAM</th><th style="padding:.42rem .6rem;text-align:left;font-size:.6rem;font-weight:800;color:var(--g6);white-space:nowrap;">BIDANG</th><th style="padding:.42rem .6rem;text-align:left;font-size:.6rem;font-weight:800;color:var(--g6);white-space:nowrap;">TARIKH</th><th style="padding:.42rem .6rem;text-align:center;font-size:.6rem;font-weight:800;color:var(--g6);white-space:nowrap;">STATUS</th></tr></thead>';
     var tbody=document.createElement('tbody');
     list.forEach(function(p){
       var hasRec=hasRecSet[p['ID']]||hasRecSet[p['Nama Program']];
@@ -198,8 +198,8 @@ function renderPenyList(list){
       var stBg=p['Status']==='AKTIF'?'#e8f5e9':'#fef9e7';
       var stCl=p['Status']==='AKTIF'?'#27ae60':'#b7770d';
       tr.innerHTML='<td style="padding:.42rem .6rem;font-weight:700;color:var(--g8);">'+hlMatch(esc(p['Nama Program']),srch)+(hasRec?'&nbsp;<span style="font-size:.55rem;background:#e8f5e9;color:#27ae60;border-radius:20px;padding:.08rem .35rem;font-weight:800;">\u2713 ADA REKOD</span>':'')+(isAdmin?'&nbsp;<span style="font-size:.55rem;background:#eef2ff;color:#4338ca;border-radius:20px;padding:.08rem .35rem;font-weight:800;">👥 '+(pnyCountMap[p['ID']]||0)+'</span>':'')+'</td>'
-        +'<td style="padding:.42rem .6rem;color:var(--g5);">'+(p['Bidang']||'\u2014')+'</td>'
-        +'<td style="padding:.42rem .6rem;color:var(--g5);">'+(p['Tarikh']?fd(p['Tarikh']):'\u2014')+'</td>'
+        +'<td style="padding:.42rem .6rem;color:var(--g6);">'+(p['Bidang']||'\u2014')+'</td>'
+        +'<td style="padding:.42rem .6rem;color:var(--g6);">'+(p['Tarikh']?fd(p['Tarikh']):'\u2014')+'</td>'
         +'<td style="padding:.42rem .6rem;text-align:center;"><span style="font-size:.55rem;font-weight:800;padding:.1rem .38rem;border-radius:20px;background:'+stBg+';color:'+stCl+';">'+p['Status']+'</span></td>';
       tr.setAttribute('data-pid', p['ID']);
       (function(pid,pnm,cel){cel.addEventListener('click',function(){
@@ -279,7 +279,7 @@ function pilihProg(id,nm,cardEl){
       });
       var kodList=Object.keys(bySek).sort(function(a,b){return bySek[a].nama.localeCompare(bySek[b].nama);});
       if(kodList.length){
-        aSekEl.innerHTML='<div style="font-size:.62rem;font-weight:800;color:var(--g5);margin-bottom:.35rem;">🏫 SEKOLAH YANG MENYERTAI ('+kodList.length+')</div>'
+        aSekEl.innerHTML='<div style="font-size:.62rem;font-weight:800;color:var(--g6);margin-bottom:.35rem;">🏫 SEKOLAH YANG MENYERTAI ('+kodList.length+')</div>'
           +'<div style="display:flex;flex-wrap:wrap;gap:.35rem;">'
           +kodList.map(function(kd){
             return '<button type="button" class="btn bs bsm" style="border-radius:20px;" onclick="_lihatSekolahDlmProgram(\''+kd+'\',\''+id+'\',\''+esc(nm).replace(/'/g,"\\'")+'\')">'
@@ -322,21 +322,21 @@ function _lihatSekolahDlmProgram(kodSekolah, progId, progNama){
   var pesRows=rows.filter(function(r){return r['Kategori Penyertaan']!=='GURU' && r['Nama Peserta'];});
 
   var html='<div style="margin-bottom:.6rem;font-size:.72rem;display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">'
-    +'<div><b>'+esc(progNama)+'</b><br><span style="color:var(--g5);">'+esc(namaSekolah)+' ('+kodSekolah+')</span></div>'
+    +'<div><b>'+esc(progNama)+'</b><br><span style="color:var(--g6);">'+esc(namaSekolah)+' ('+kodSekolah+')</span></div>'
     +'<button type="button" class="btn bp bsm" style="white-space:nowrap;" onclick="_editSekolahDariBullet(\''+progId+'\',\''+esc(progNama).replace(/'/g,"\\'")+'\',\''+esc(namaSekolah).replace(/'/g,"\\'")+'\',\''+kodSekolah+'\')">✏️ EDIT</button>'
     +'</div>';
   if(guruList.length){
-    html+='<div style="font-size:.65rem;font-weight:800;color:var(--g5);margin:.4rem 0 .2rem;">👨‍🏫 GURU PENGIRING</div>'
+    html+='<div style="font-size:.65rem;font-weight:800;color:var(--g6);margin:.4rem 0 .2rem;">👨‍🏫 GURU PENGIRING</div>'
       +'<ul style="margin:0 0 .5rem 1.1rem;padding:0;font-size:.72rem;">'+guruList.map(function(g){return '<li>'+esc(g)+'</li>';}).join('')+'</ul>';
   }
-  html+='<div style="font-size:.65rem;font-weight:800;color:var(--g5);margin:.4rem 0 .2rem;">🧑‍🎓 PESERTA ('+pesRows.length+')</div>';
+  html+='<div style="font-size:.65rem;font-weight:800;color:var(--g6);margin:.4rem 0 .2rem;">🧑‍🎓 PESERTA ('+pesRows.length+')</div>';
   if(pesRows.length){
     html+='<table style="width:100%;border-collapse:collapse;font-size:.71rem;">'
       +'<thead><tr style="background:var(--g1);"><th style="text-align:left;padding:.3rem .4rem;">Nama</th><th style="text-align:left;padding:.3rem .4rem;">Kategori</th></tr></thead><tbody>'
-      +pesRows.map(function(r){return '<tr style="border-bottom:1px solid var(--g2);"><td style="padding:.3rem .4rem;">'+esc(r['Nama Peserta'])+'</td><td style="padding:.3rem .4rem;color:var(--g5);">'+esc(r['Kategori Penyertaan'])+'</td></tr>';}).join('')
+      +pesRows.map(function(r){return '<tr style="border-bottom:1px solid var(--g2);"><td style="padding:.3rem .4rem;">'+esc(r['Nama Peserta'])+'</td><td style="padding:.3rem .4rem;color:var(--g6);">'+esc(r['Kategori Penyertaan'])+'</td></tr>';}).join('')
       +'</tbody></table>';
   } else {
-    html+='<p style="font-size:.71rem;color:var(--g5);">Tiada peserta direkodkan.</p>';
+    html+='<p style="font-size:.71rem;color:var(--g6);">Tiada peserta direkodkan.</p>';
   }
 
   document.getElementById('srch-q').textContent = namaSekolah;
@@ -410,7 +410,7 @@ var _syorPesCache = {};
 function renderMainGuruList(){
   var el=document.getElementById('main-guru-list');
   if(!el)return;
-  if(!_penyData.guruList.length){el.innerHTML='<div style="font-size:.72rem;color:var(--g5);padding:.4rem;">Tiada guru ditambah. Klik + TAMBAH GURU.</div>';return;}
+  if(!_penyData.guruList.length){el.innerHTML='<div style="font-size:.72rem;color:var(--g6);padding:.4rem;">Tiada guru ditambah. Klik + TAMBAH GURU.</div>';return;}
   var kodSek=(document.getElementById('daf-kod')||{}).value||'';
   var syorGuru=_getGuruSyorFromAP(kodSek);
   // Simpan dalam cache global — indexed by kp||nama
@@ -441,7 +441,7 @@ function renderMainGuruList(){
       +'<div class="fi"><label>No. KP</label><input type="text" class="nc" id="gkp-'+g.id+'" value="'+esc(g.kp)+'" placeholder="000000-00-0000" maxlength="14" inputmode="numeric" autocomplete="off" oninput="fmtKP(this);saveGuru(\''+g.id+'\',\'kp\',this.value)" onchange="saveGuru(\''+g.id+'\',\'kp\',this.value)"></div>'
       +'<div class="fi"><label>Bangsa</label><select id="gbg-'+g.id+'" onchange="saveGuru(\''+g.id+'\',\'bangsa\',this.value)">'+bangOpt(g.bangsa)+'</select></div>'
       +'<div class="fi"><label>Jantina</label><select id="gjn-'+g.id+'" onchange="saveGuru(\''+g.id+'\',\'jantina\',this.value)">'+janOpt(g.jantina)+'</select></div>'
-      +'<div class="fi"><label>No. Tel</label><div style="display:flex;align-items:center;background:var(--g1);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;"><span style="padding:0 .5rem;font-size:.78rem;font-weight:700;color:var(--g5);border-right:1.5px solid var(--bd);white-space:nowrap;line-height:2.2rem;">+60</span><input type="tel" id="gtel-'+g.id+'" class="nc" style="border:none;border-radius:0;background:transparent;flex:1;min-width:0;" value="'+esc(normTel(g.tel))+'" placeholder="1X-XXXXXXXX" maxlength="11" inputmode="numeric" oninput="fmtTel(this)" onchange="saveGuru(\''+g.id+'\',\'tel\',\'+60\'+this.value.replace(/\\D/g,\'\'))"></div></div>'
+      +'<div class="fi"><label>No. Tel</label><div style="display:flex;align-items:center;background:var(--g1);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;"><span style="padding:0 .5rem;font-size:.78rem;font-weight:700;color:var(--g6);border-right:1.5px solid var(--bd);white-space:nowrap;line-height:2.2rem;">+60</span><input type="tel" id="gtel-'+g.id+'" class="nc" style="border:none;border-radius:0;background:transparent;flex:1;min-width:0;" value="'+esc(normTel(g.tel))+'" placeholder="1X-XXXXXXXX" maxlength="11" inputmode="numeric" oninput="fmtTel(this)" onchange="saveGuru(\''+g.id+'\',\'tel\',\'+60\'+this.value.replace(/\\D/g,\'\'))"></div></div>'
       +'</div>';
     el.appendChild(div);
   });

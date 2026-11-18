@@ -201,7 +201,7 @@ function renderPcForm(pny,pnc,katRaw){
       +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">'
       +'<div style="font-family:Montserrat,sans-serif;font-size:.72rem;font-weight:900;color:var(--red);">🏆 KESELURUHAN</div>'
       +'<div style="display:flex;align-items:center;gap:.4rem;">'
-      +'<span style="font-size:.62rem;color:var(--g5);font-weight:700;">Kira daripada:</span>'
+      +'<span style="font-size:.62rem;color:var(--g6);font-weight:700;">Kira daripada:</span>'
       +'<select id="ksl-sumber" style="font-size:.62rem;padding:.18rem .5rem;border-radius:5px;border:1.5px solid var(--g3);background:#fff;font-weight:700;cursor:pointer;" onchange="_autoFillBrkKsl()">'
       +'<option value="IND_BRK" selected>Individu + Kumpulan</option>'
       +'<option value="BRK">Kumpulan sahaja</option>'

@@ -1,0 +1,31 @@
+/* == UX / KEBOLEHCAPAIAN (audit pra-main) ====================================== */
+/* Fokus papan kekunci jelas (butang, pautan, elemen role=button) */
+:focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:4px;}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}  /* sudah ada gaya fokus sendiri */
+[role="button"]{cursor:pointer;}
+.btn:active:not(:disabled){transform:translateY(1px);}
+.btn:disabled{cursor:not-allowed;opacity:.6;}
+/* Kurangkan gerakan bagi pengguna yang memintanya (putaran memuatkan dikekalkan) */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important;}
+  .sp,.sbig{animation:spin 1.2s linear infinite !important;}
+}
+/* Modal: guna dvh supaya tidak terpotong oleh bar alamat pelayar mudah alih */
+@supports (height:1dvh){ .md{max-height:90dvh;} }
+/* Teks inline terlalu kecil -> lantai boleh dibaca pada skrin sentuh / telefon */
+@media (pointer:coarse),(max-width:640px){
+  [style*="font-size:.5"],[style*="font-size:.6rem"],[style*="font-size:.62rem"],[style*="font-size:.63rem"],[style*="font-size:.65rem"],[style*="font-size:.66rem"]{font-size:.72rem !important;}
+  input,select,textarea{font-size:16px !important;}   /* elak zum automatik iOS pada medan borang */
+}
+/* Medan tidak sah (inline) */
+.inp-err{border-color:var(--red) !important;box-shadow:0 0 0 3px rgba(192,57,43,.15) !important;}
+.inp-err-msg{font-size:.7rem;font-weight:700;color:var(--red);margin-top:.2rem;}
+/* Jalur luar talian */
+#ux-offline{position:fixed;left:0;right:0;top:0;z-index:100000;background:#8a5a00;color:#fff;text-align:center;font-size:.76rem;font-weight:700;padding:.45rem .8rem;padding-top:calc(.45rem + env(safe-area-inset-top,0px));display:none;}
+#ux-offline.on{display:block;}
+/* Pintasan papan kekunci: langkau ke kandungan */
+.ux-skip{position:fixed;left:.6rem;top:-3rem;z-index:100001;background:#fff;color:var(--red);font-weight:800;padding:.5rem .9rem;border-radius:var(--r);box-shadow:var(--sm);transition:top .15s;}
+.ux-skip:focus{top:.6rem;}
+/* Kemas: jadual lebar boleh dilungsur dalam modal */
+.md-max-body table,.md table{max-width:100%;}
+.md-max-body .tw,.md .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}

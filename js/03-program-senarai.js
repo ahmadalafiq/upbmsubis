@@ -410,7 +410,7 @@ async function lihatPeny(pid,nm){
       sekMap[sk].rows.push(p);
     });
     var wrap=document.createElement('div');
-    wrap.innerHTML='<div style="font-size:.7rem;color:var(--g5);font-weight:600;margin-bottom:.65rem;">'+sekOrder.length+' sekolah &bull; '+(function(){var u={};d.forEach(function(p){var k=p['No KP Peserta']||p['Nama Peserta'];if(k&&p['Nama Peserta'])u[k]=1;});return Object.keys(u).length;}())+'  peserta unik &bull; '+d.length+' rekod</div>';
+    wrap.innerHTML='<div style="font-size:.7rem;color:var(--g6);font-weight:600;margin-bottom:.65rem;">'+sekOrder.length+' sekolah &bull; '+(function(){var u={};d.forEach(function(p){var k=p['No KP Peserta']||p['Nama Peserta'];if(k&&p['Nama Peserta'])u[k]=1;});return Object.keys(u).length;}())+'  peserta unik &bull; '+d.length+' rekod</div>';
     var list=document.createElement('div'); list.className='sek-list';
     sekOrder.forEach(function(sk){
       var info=sekMap[sk];
@@ -432,21 +432,21 @@ async function lihatPeny(pid,nm){
         return '<div style="display:flex;align-items:center;gap:.5rem;padding:.22rem 0;border-bottom:1px solid var(--g1);">'
           +'<span style="font-size:.8rem;">🧑‍🎓</span>'
           +'<div style="flex:1;"><div style="font-size:.72rem;font-weight:700;color:var(--g8);">'+(p['Nama Peserta']||'—')+'</div>'
-          +'<div style="font-size:.62rem;color:var(--g5);">'+(p['Jantina Peserta']||'')+(p['Bangsa Peserta']?' &bull; '+p['Bangsa Peserta']:'')+'</div></div>'
+          +'<div style="font-size:.62rem;color:var(--g6);">'+(p['Jantina Peserta']||'')+(p['Bangsa Peserta']?' &bull; '+p['Bangsa Peserta']:'')+'</div></div>'
           +'</div>';
       }).join('');
       var guruHtml=Object.values(uGuru).map(function(g){
         return '<div style="display:flex;align-items:center;gap:.5rem;padding:.22rem 0;border-bottom:1px solid var(--g1);">'
           +'<span style="font-size:.8rem;">👨‍🏫</span>'
           +'<div style="flex:1;"><div style="font-size:.72rem;font-weight:700;color:var(--g8);">'+(g['Nama Guru']||'—')+'</div>'
-          +'<div style="font-size:.62rem;color:var(--g5);">'+(g['Jantina Guru']||'')+(g['Bangsa Guru']?' &bull; '+g['Bangsa Guru']:'')+'</div></div>'
+          +'<div style="font-size:.62rem;color:var(--g6);">'+(g['Jantina Guru']||'')+(g['Bangsa Guru']?' &bull; '+g['Bangsa Guru']:'')+'</div></div>'
           +'</div>';
       }).join('');
       body.innerHTML='<div style="margin-bottom:.5rem;">'
-        +'<div style="font-size:.62rem;font-weight:800;color:var(--g5);text-transform:uppercase;margin-bottom:.25rem;">GURU ('+Object.keys(uGuru).length+')</div>'
+        +'<div style="font-size:.62rem;font-weight:800;color:var(--g6);text-transform:uppercase;margin-bottom:.25rem;">GURU ('+Object.keys(uGuru).length+')</div>'
         +guruHtml+'</div>'
         +'<div style="margin-bottom:.7rem;">'
-        +'<div style="font-size:.62rem;font-weight:800;color:var(--g5);text-transform:uppercase;margin-bottom:.25rem;">PESERTA ('+Object.keys(uPes).length+')</div>'
+        +'<div style="font-size:.62rem;font-weight:800;color:var(--g6);text-transform:uppercase;margin-bottom:.25rem;">PESERTA ('+Object.keys(uPes).length+')</div>'
         +pesHtml+'</div>'
         +'<div class="sek-btn-row">'
         +'<button class="btn-edit-sek">✏️ EDIT PENYERTAAN</button>'
@@ -671,6 +671,6 @@ async function openEdit(p){
     var _prog4Pnc=(_aPg||[]).find(function(p){return p['ID']===eId;})||{};
     var _katRaw4=_prog4Pnc['Kategori']||eKat||'INDIVIDU LELAKI,INDIVIDU PEREMPUAN';
     renderPcForm(_curPny,_curPnc,_katRaw4);
-  }catch(e){document.getElementById('pc-ld').innerHTML='<span style="color:var(--red);">Gagal: '+e.message+'</span>';}
+  }catch(e){document.getElementById('pc-ld').innerHTML='<span style="color:var(--red);">Gagal: '+esc(e.message)+'</span>';}
 }
 

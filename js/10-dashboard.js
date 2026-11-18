@@ -389,7 +389,7 @@ function showDet(nm,type){
       }
       // Subskrip kecil markah Pelibatan di bawah dpt — hanya bila program ada tempat pencapaian DAN markah pelibatan berasingan
       var pelSub=x.pelibatan
-        ?'<div style="font-size:.56rem;color:var(--g5);font-weight:700;margin-top:.12rem;">+'+x.pelibatan.pts+' '+x.pelibatan.tempat+'</div>'
+        ?'<div style="font-size:.56rem;color:var(--g6);font-weight:700;margin-top:.12rem;">+'+x.pelibatan.pts+' '+x.pelibatan.tempat+'</div>'
         :'';
       return '<div class="di"><div class="dk">'+x.tempat+'</div>'
         +'<div class="db"><div class="dpg">'+x.prog+'</div>'
@@ -489,7 +489,7 @@ function buildPodium(items){
         var base=document.createElement('div'); base.className='podium-base';
         if(e2){
           var detHtml=(e2['Nama Peserta']?'<div class="podium-sub" style="margin-top:.15rem;">'+e2['Nama Peserta']+'</div>':'')
-            +(e2['Nama Guru']?'<div class="podium-sub" style="font-size:.55rem;color:var(--g5);">'+e2['Nama Guru']+'</div>':'');
+            +(e2['Nama Guru']?'<div class="podium-sub" style="font-size:.55rem;color:var(--g6);">'+e2['Nama Guru']+'</div>':'');
           base.innerHTML='<div class="podium-pos">'+slot.tk.replace('TEMPAT ','')+'</div>'
             +'<div class="podium-nm">'+(e2['Nama Sekolah']||'—')+'</div>'
             +'<div class="podium-det" style="overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .25s;">'+detHtml+'</div>'
@@ -526,7 +526,7 @@ function buildPodium(items){
           row.style.cursor='pointer'; row.setAttribute('role','button'); row.setAttribute('tabindex','0');
           row.style.webkitTapHighlightColor='transparent';
           var pesertaHtml=e2['Nama Peserta']?'<div class="podium-rest-sub" style="display:none;">'+e2['Nama Peserta']+'</div>':'';
-          var guruHtml=e2['Nama Guru']?'<div class="podium-rest-sub" style="display:none;color:var(--g5);">'+e2['Nama Guru']+'</div>':'';
+          var guruHtml=e2['Nama Guru']?'<div class="podium-rest-sub" style="display:none;color:var(--g6);">'+e2['Nama Guru']+'</div>':'';
           row.innerHTML='<span class="podium-rest-pos">'+tk.replace('TEMPAT ','')+'</span>'
             +'<div style="flex:1;"><div class="podium-rest-nm">'+(e2['Nama Sekolah']||'—')+'</div>'
             +pesertaHtml+guruHtml
@@ -603,7 +603,7 @@ function renderBarList(data){
   var mx=data.length?data[0][1]:1;
   if(!data.length){el.innerHTML='<div class="empty"><div class="ei">📊</div><h3>Tiada data</h3></div>';return;}
   el.innerHTML='<div class="bcc">'+data.map(function(e,i){
-    return '<div class="br"><div class="bl" title="'+e[0]+'"><span style="font-size:.6rem;color:var(--g5);margin-right:.3rem;">'+(i+1)+'.</span>'+e[0].slice(0,22)+(e[0].length>22?'…':'')+'</div>'
+    return '<div class="br"><div class="bl" title="'+e[0]+'"><span style="font-size:.6rem;color:var(--g6);margin-right:.3rem;">'+(i+1)+'.</span>'+e[0].slice(0,22)+(e[0].length>22?'…':'')+'</div>'
       +'<div class="bt"><div class="bf" style="width:'+(e[1]/mx*100).toFixed(1)+'%;background:var(--red);"></div></div>'
       +'<div class="bv">'+e[1]+'</div></div>';
   }).join('')+'</div>';

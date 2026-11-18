@@ -142,7 +142,7 @@ function fsStatKad(statId, title) {
   var val = el ? el.textContent : '—';
   var html = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:1.2rem;">'
     + '<div style="font-family:Montserrat,sans-serif;font-size:8rem;font-weight:900;color:var(--g9);line-height:1;" id="fs-num-'+statId+'">'+val+'</div>'
-    + '<div style="font-family:Montserrat,sans-serif;font-size:1.1rem;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:2px;">'+info.title+'</div>'
+    + '<div style="font-family:Montserrat,sans-serif;font-size:1.1rem;font-weight:700;color:var(--g6);text-transform:uppercase;letter-spacing:2px;">'+info.title+'</div>'
     + '</div>';
   openFullscreen(info.title, info.badge, html);
 }
@@ -393,7 +393,7 @@ function _withJenis(j, fn) { var o = _dashJenis; _dashJenis = j; try { return fn
 function buildPanelLuar() {
   var el = document.getElementById('dash-luar'); if (!el) return;
   var head = '<div class="ch"><div class="dot"></div>🌐 AKTIVITI LUAR &amp; SKOR KOMPREHENSIF</div>';
-  var note = function(t) { el.innerHTML = '<div class="card mb2">' + head + '<div class="cbody" style="padding:.7rem 1rem;font-size:.74rem;color:var(--g5);line-height:1.5;">' + t + '</div></div>'; };
+  var note = function(t) { el.innerHTML = '<div class="card mb2">' + head + '<div class="cbody" style="padding:.7rem 1rem;font-size:.74rem;color:var(--g6);line-height:1.5;">' + t + '</div></div>'; };
   if (!(_aPg || []).some(function(p) { return p['Aktiviti Luar'] === true; })) {
     note('Tiada program ditanda sebagai <b>Aktiviti Luar</b>. Tandakan melalui ✏ EDIT program → <b>🌐 Aktiviti Luar</b>. Ranking di bawah ialah markah <b>Teras</b>.');
     return;
@@ -420,7 +420,7 @@ function buildPanelLuar() {
     + 'Sekolah yang tidak menyertai ditunjuk “—” dan tidak dikenakan penalti dalam Skor Teras.';
   var td = 'padding:.22rem .4rem;border-bottom:1px solid var(--g2);';
   var body = rows.map(function(r, i) {
-    return '<tr style="' + (r.ada ? '' : 'color:var(--g5);') + '">'
+    return '<tr style="' + (r.ada ? '' : 'color:var(--g6);') + '">'
       + '<td style="' + td + 'text-align:center;">' + (i + 1) + '</td>'
       + '<td style="' + td + 'font-weight:' + (r.ada ? '800' : '500') + ';">' + esc(r.nm) + '</td>'
       + '<td style="' + td + 'text-align:center;">' + (r.ada ? r.nProg : '—') + '</td>'
@@ -437,7 +437,7 @@ function buildPanelLuar() {
     + kpi('🏅', 'ib', nPenc, 'Pencapaian Luar')
     + kpi('⭐', 'io', markahLuar, 'Markah Luar')
     + '</div>'
-    + '<div style="font-size:.64rem;color:var(--g5);margin-bottom:.45rem;line-height:1.5;">' + dasar + '</div>'
+    + '<div style="font-size:.64rem;color:var(--g6);margin-bottom:.45rem;line-height:1.5;">' + dasar + '</div>'
     + '<div style="max-height:360px;overflow:auto;border:1px solid var(--g2);border-radius:8px;">'
     + '<table style="width:100%;border-collapse:collapse;font-size:.7rem;"><thead><tr>'
     + ['#', 'Sekolah', 'Aktiviti Luar', 'Pencapaian Luar', 'Markah Teras', 'Markah Luar', 'Skor Komprehensif'].map(function(h) { return '<th style="' + th + '">' + h + '</th>'; }).join('')

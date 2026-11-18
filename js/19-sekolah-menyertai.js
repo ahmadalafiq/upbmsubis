@@ -38,7 +38,7 @@ function psRender(pre){
       +'<label class="kat-chk"><input type="radio" name="p-sek-mod" value="PILIH"'+(_psMode.p==='PILIH'?' checked':'')+' onchange="psSetMod(\'p\',this.value)"> Saya pilih sekolah sekarang</label>'
       +'</div>';
   } else {
-    h+='<div style="font-size:.66rem;color:var(--g5);margin-bottom:.4rem;">Tanda sekolah yang dijemput menyertai program ini. Biarkan kosong jika sekolah mendaftar sendiri. Sekolah yang tidak ditanda masih boleh mendaftar sendiri.</div>';
+    h+='<div style="font-size:.66rem;color:var(--g6);margin-bottom:.4rem;">Tanda sekolah yang dijemput menyertai program ini. Biarkan kosong jika sekolah mendaftar sendiri. Sekolah yang tidak ditanda masih boleh mendaftar sendiri.</div>';
   }
   var tunjuk=(pre==='e')||_psMode.p==='PILIH';
   h+='<div id="'+pre+'-sek-panel" style="display:'+(tunjuk?'block':'none')+';">';
@@ -97,7 +97,7 @@ function psKumpulan(pre,g){
 async function psMuatEdit(progId){
   _psSel.e={}; _psEdit={loaded:false,progId:progId,asal:''}; _pcTicked=[];
   var box=_psBox('e');
-  if(box) box.innerHTML='<label>🏫 Sekolah yang menyertai</label><div style="font-size:.72rem;color:var(--g5);">Memuatkan...</div>';
+  if(box) box.innerHTML='<label>🏫 Sekolah yang menyertai</label><div style="font-size:.72rem;color:var(--g6);">Memuatkan...</div>';
   try{
     var r=await run('getSekolahProgramGS',progId);
     var d=(r&&r.data)||[];
@@ -129,11 +129,11 @@ function psBlokBelumDaftar(arr,pid){
   var own=String((typeof _sesi!=='undefined'&&_sesi&&_sesi.kodSekolah)||'').toUpperCase().trim();
   var box=document.createElement('div');
   box.style.cssText='margin-top:.8rem;border:1.5px solid #f5d98b;background:#fffdf3;border-radius:var(--r);padding:.55rem .7rem;';
-  var h='<div style="font-size:.66rem;font-weight:800;color:#b9770e;text-transform:uppercase;margin-bottom:.35rem;">⚠ Ditick, belum daftar penyertaan ('+arr.length+')</div>';
+  var h='<div style="font-size:.66rem;font-weight:800;color:#8a5a00;text-transform:uppercase;margin-bottom:.35rem;">⚠ Ditick, belum daftar penyertaan ('+arr.length+')</div>';
   arr.forEach(function(t){
     h+='<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.28rem 0;border-top:1px solid #f5e6b3;">'
       +'<div style="flex:1;min-width:160px;font-size:.74rem;font-weight:700;color:var(--g8);">🏫 '+esc(t.nama_sekolah||t.kod_sekolah)
-      +' <span style="font-size:.62rem;font-weight:600;color:var(--g5);">Kod: '+esc(t.kod_sekolah||'—')+'</span></div>'
+      +' <span style="font-size:.62rem;font-weight:600;color:var(--g6);">Kod: '+esc(t.kod_sekolah||'—')+'</span></div>'
       +'<span style="background:#fff3cd;color:#7a5b00;border-radius:20px;padding:.1rem .5rem;font-size:.62rem;font-weight:700;">Perlu daftar penyertaan</span>'
       +((own&&pid&&String(t.kod_sekolah||'').toUpperCase().trim()===own)
         ?'<button type="button" class="btn bp bsm" data-pid="'+esc(pid)+'" onclick="closeMo(\'mo-lihat\');_tgBuka(this.getAttribute(\'data-pid\'))">DAFTAR PENYERTAAN →</button>':'')
@@ -173,12 +173,12 @@ function _tgRender(d){
     });
   }
   if(tl.length){
-    h+='<div style="font-family:Montserrat,sans-serif;font-size:.72rem;font-weight:900;color:#b9770e;margin:.8rem 0 .4rem;">⚠ DATA PENYERTAAN TIDAK LENGKAP ('+tl.length+' program)</div>';
+    h+='<div style="font-family:Montserrat,sans-serif;font-size:.72rem;font-weight:900;color:#8a5a00;margin:.8rem 0 .4rem;">⚠ DATA PENYERTAAN TIDAK LENGKAP ('+tl.length+' program)</div>';
     tl.forEach(function(p){
       h+='<div style="border:1.5px solid #f5d98b;background:#fffdf3;border-radius:var(--r);padding:.6rem .75rem;margin-bottom:.5rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">'
         +'<div style="flex:1;min-width:200px;"><div style="font-weight:800;font-size:.8rem;">'+esc(p.nama_program)+'</div>'
         +'<div style="margin-top:.2rem;">'+_tgIsuHtml(p.isu||{})+'</div>'
-        +(p.tel_format>0?'<div style="font-size:.62rem;color:var(--g5);margin-top:.15rem;">'+p.tel_format+' nombor telefon akan diseragamkan automatik apabila anda simpan.</div>':'')+'</div>'
+        +(p.tel_format>0?'<div style="font-size:.62rem;color:var(--g6);margin-top:.15rem;">'+p.tel_format+' nombor telefon akan diseragamkan automatik apabila anda simpan.</div>':'')+'</div>'
         +'<button type="button" class="btn bp bsm" data-pid="'+esc(p.program_id)+'" onclick="_tgBuka(this.getAttribute(\'data-pid\'))">BETULKAN →</button></div>';
     });
   }

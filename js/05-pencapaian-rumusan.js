@@ -268,14 +268,14 @@ function _buildPencConfirm(col){
     html+='<div style="margin-bottom:.75rem;border:1.5px solid '+c+';border-radius:var(--r);overflow:hidden;">'
       +'<div style="background:'+c+';color:#fff;padding:.38rem .7rem;font-family:Montserrat,sans-serif;font-size:.72rem;font-weight:900;">'+kat+' ('+sekCount+' rekod)</div>';
     if(!displayItems.length){
-      html+='<div style="padding:.5rem .7rem;font-size:.72rem;color:var(--g5);">— Tiada rekod —</div>';
+      html+='<div style="padding:.5rem .7rem;font-size:.72rem;color:var(--g6);">— Tiada rekod —</div>';
     } else {
       displayItems.forEach(function(e,i){
         html+='<div style="padding:.35rem .7rem;border-bottom:1px dashed var(--g1);font-size:.72rem;background:'+(i%2===0?'#fff':bg)+'">'
           +'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;">'
           +'<span style="font-family:Montserrat,sans-serif;font-size:.58rem;font-weight:900;color:'+c+';min-width:60px;">'+e.tempat+'</span>'
           +'<strong style="flex:1;min-width:90px;">'+e.sekolah+'</strong>'
-          +(e.guru?'<span style="color:var(--g5);font-size:.65rem;">👨‍🏫 '+e.guru+'</span>':'')
+          +(e.guru?'<span style="color:var(--g6);font-size:.65rem;">👨‍🏫 '+e.guru+'</span>':'')
           +'<span style="color:var(--red);font-weight:800;font-size:.68rem;white-space:nowrap;">+'+e.markah+' mata</span>'
           +'</div>'
           +(e.pesertaList&&e.pesertaList.length
@@ -494,7 +494,7 @@ function buildRum(prog,pny,pnc,isTutup){
           +'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;">'
           +'<span style="font-family:Montserrat,sans-serif;font-size:.58rem;font-weight:900;color:'+c+';min-width:60px;">'+e.tempat+'</span>'
           +'<strong style="flex:1;min-width:90px;">'+e.sekolah+'</strong>'
-          +(e.guru?'<span style="color:var(--g5);font-size:.65rem;">👨‍🏫 '+e.guru+'</span>':'')
+          +(e.guru?'<span style="color:var(--g6);font-size:.65rem;">👨‍🏫 '+e.guru+'</span>':'')
           +'<span style="color:var(--red);font-weight:800;font-size:.68rem;white-space:nowrap;">+'+e.markah+' mata</span>'
           +'</div>'
           +(e.pesertaList&&e.pesertaList.length

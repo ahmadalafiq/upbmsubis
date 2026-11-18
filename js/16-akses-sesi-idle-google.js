@@ -311,7 +311,7 @@ function onSugClaimSek(q){
   var items=_getSekSuggestions().filter(function(s){
     return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
   }).sort(function(a,b){return a.nama.localeCompare(b.nama);}).slice(0,8);
-  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g5);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
+  if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g6);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
   drop.innerHTML=items.map(function(s){
     return '<div class="sug-item" data-sug-kod="'+encodeURIComponent(s.kod)+'" data-sug-sek="'+encodeURIComponent(s.nama)+'"><span class="sug-item-ico">🏫</span><span>'+esc(s.nama)+' ('+esc(s.kod)+')</span></div>';
   }).join('');

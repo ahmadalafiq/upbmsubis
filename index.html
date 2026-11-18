@@ -3,12 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#c0392b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://pztuvriqjgfwczkuguky.supabase.co" crossorigin>
 <title>UPBM Subis</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/01-base.css?v=20261120">
-<link rel="stylesheet" href="css/02-components.css?v=20261121">
-<link rel="stylesheet" href="css/03-pages.css?v=20261116">
-<link rel="stylesheet" href="css/04-fullscreen-nav-widgets.css?v=20261116">
+<link rel="stylesheet" href="css/01-base.css?v=20261122">
+<link rel="stylesheet" href="css/02-components.css?v=20261122">
+<link rel="stylesheet" href="css/03-pages.css?v=20261122">
+<link rel="stylesheet" href="css/04-fullscreen-nav-widgets.css?v=20261122">
+<link rel="stylesheet" href="css/05-ux.css?v=20261122">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -35,7 +40,7 @@
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="">
           Log Masuk dengan Google
         </button>
-        <div style="text-align:center;font-size:.65rem;color:var(--g5);margin:.6rem 0;">— ATAU —</div>
+        <div style="text-align:center;font-size:.65rem;color:var(--g6);margin:.6rem 0;">— ATAU —</div>
       </div>
 
       <!-- == PANEL LOGIN == -->
@@ -106,7 +111,7 @@
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" alt="">
             Daftar dengan Google
           </button>
-          <p style="font-size:.68rem;color:var(--g5);margin-top:1rem;">
+          <p style="font-size:.68rem;color:var(--g6);margin-top:1rem;">
             Sudah ada akaun No.KP+PIN sedia ada? Log masuk Google akan minta anda sahkan &amp; ikat akaun tu secara automatik.
           </p>
         </div>
@@ -224,7 +229,7 @@
   <div class="card mb2 wz-launch" id="card-daftar-prog">
     <div style="flex:1;min-width:200px;">
       <div class="ch" style="margin-bottom:.2rem;"><div class="dot"></div>PENDAFTARAN PROGRAM</div>
-      <div style="font-size:.7rem;color:var(--g5);">Daftar program baharu dengan panduan langkah demi langkah.</div>
+      <div style="font-size:.7rem;color:var(--g6);">Daftar program baharu dengan panduan langkah demi langkah.</div>
       <div id="wz-hint" style="display:none;margin-top:.35rem;font-size:.68rem;font-weight:700;color:#b9770e;"></div>
     </div>
     <button class="btn bp" id="btn-buka-daftar" onclick="bukaDaftarProgram()">+ DAFTAR PROGRAM</button>
@@ -399,7 +404,7 @@
   <div class="ph" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
     <div><div class="bc">UPBM SUBIS <b>›</b> DASHBOARD</div><h1>Analisis &amp; Laporan</h1><p>Statistik program, penyertaan dan pencapaian</p></div>
     <div style="display:flex;gap:.45rem;align-items:center;flex-wrap:wrap;">
-      <span id="dash-ts" style="font-size:.62rem;color:var(--g5);font-weight:600;"></span>
+      <span id="dash-ts" style="font-size:.62rem;color:var(--g6);font-weight:600;"></span>
       <button class="btn bp bsm" onclick="openLaporanSekolah()" title="Laporan penyertaan & pencapaian sekolah (PDF)">📄 LAPORAN SEKOLAH</button>
       <button class="btn bs bsm" onclick="printDashRingkasan()" title="Cetak ringkasan dashboard">🖨 CETAK RINGKASAN</button>
       <!-- P3: Butang fullscreen page-level dibuang — fullscreen hanya pada widget -->
@@ -468,7 +473,7 @@
     </div>
     <!-- Status pills -->
     <div class="status-pills">
-      <span style="font-size:.62rem;font-weight:700;color:var(--g5);text-transform:uppercase;letter-spacing:.4px;margin-right:.2rem;">STATUS:</span>
+      <span style="font-size:.62rem;font-weight:700;color:var(--g6);text-transform:uppercase;letter-spacing:.4px;margin-right:.2rem;">STATUS:</span>
       <span class="status-pill sp-all on" id="spill-all" onclick="setStatusPill('all')"><span class="status-pill-dot"></span>SEMUA</span>
       <span class="status-pill sp-aktif" id="spill-aktif" onclick="setStatusPill('aktif')"><span class="status-pill-dot"></span>AKTIF</span>
       <span class="status-pill sp-draft" id="spill-draft" onclick="setStatusPill('draft')"><span class="status-pill-dot"></span>DRAFT</span>
@@ -663,7 +668,7 @@
       <div class="fx ic gu" style="cursor:pointer;" onclick="_togDashSection('dash-prog-body','dash-prog-cbtn')"><div class="dot"></div>📋 SENARAI PROGRAM</div>
       <div class="fx gu">
         <button class="cbtn" id="dash-prog-cbtn" onclick="_togDashSection('dash-prog-body','dash-prog-cbtn')">▼ BUKA</button>
-        <button class="ch-fs-btn" onclick="fsProgTable()" title="Paparan penuh" style="position:static;font-size:.72rem;padding:.18rem .45rem;color:var(--g5);border:1px solid var(--g3);border-radius:5px;">⛶</button>
+        <button class="ch-fs-btn" onclick="fsProgTable()" title="Paparan penuh" style="position:static;font-size:.72rem;padding:.18rem .45rem;color:var(--g6);border:1px solid var(--g3);border-radius:5px;">⛶</button>
       </div>
     </div>
     <div class="cbody cls" id="dash-prog-body" style="max-height:600px;">
@@ -691,7 +696,7 @@
         <tbody id="dash-tb"></tbody></table>
       </div>
       <div id="dash-tb-nav" class="tb-nav-hidden" style="align-items:center;justify-content:space-between;gap:.5rem;padding:.55rem 0 .2rem;flex-wrap:wrap;">
-        <div style="font-size:.68rem;color:var(--g5);font-weight:600;" id="dash-tb-info"></div>
+        <div style="font-size:.68rem;color:var(--g6);font-weight:600;" id="dash-tb-info"></div>
         <div style="display:flex;gap:.4rem;">
           <button class="btn bs bsm" id="dash-tb-prev" onclick="tableNav(-1)">◀ SEBELUM</button>
           <button class="btn bs bsm" id="dash-tb-next" onclick="tableNav(1)">SETERUSNYA ▶</button>
@@ -755,7 +760,7 @@
 <div class="mo" id="mo-claim">
   <div class="md" style="max-width:440px;">
     <div class="mh">🔗 AKAUN GOOGLE</div>
-    <p style="font-size:.72rem;color:var(--g5);margin:0 0 .6rem;">Akaun Google anda (<b id="claim-emel"></b>) belum diikat ke mana-mana akaun UPBM Subis.</p>
+    <p style="font-size:.72rem;color:var(--g6);margin:0 0 .6rem;">Akaun Google anda (<b id="claim-emel"></b>) belum diikat ke mana-mana akaun UPBM Subis.</p>
 
     <!-- MOD SEDIA ADA: sahkan No.KP + PIN akaun sedia ada -->
     <div id="claim-mod-sedia">
@@ -824,20 +829,20 @@
 <div class="mo" id="mo-profil">
   <div class="md" style="max-width:460px;">
     <div class="mh">👤 PROFIL SAYA</div>
-    <div id="pf-ld" style="display:none;padding:1rem 0;font-size:.78rem;color:var(--g5);">Memuatkan profil...</div>
+    <div id="pf-ld" style="display:none;padding:1rem 0;font-size:.78rem;color:var(--g6);">Memuatkan profil...</div>
     <div id="pf-body" style="display:none;">
       <div class="fi" style="margin-bottom:.7rem;"><label>Nama</label>
         <input type="text" id="pf-nama" class="nc" maxlength="100" autocomplete="name" oninput="_pfOnChange()" onkeydown="if(event.key==='Enter')simpanProfil()" style="text-transform:uppercase;width:100%;"></div>
       <div class="fi" style="margin-bottom:.7rem;"><label>No. Tel</label>
         <div style="display:flex;align-items:center;background:var(--g1);border:1.5px solid var(--bd);border-radius:var(--r);overflow:hidden;">
-          <span style="padding:0 .5rem;font-size:.78rem;font-weight:700;color:var(--g5);border-right:1.5px solid var(--bd);white-space:nowrap;line-height:2.2rem;">+60</span>
+          <span style="padding:0 .5rem;font-size:.78rem;font-weight:700;color:var(--g6);border-right:1.5px solid var(--bd);white-space:nowrap;line-height:2.2rem;">+60</span>
           <input type="tel" id="pf-tel" class="nc" inputmode="numeric" placeholder="123456789" oninput="_pfOnChange()" onkeydown="if(event.key==='Enter')simpanProfil()" style="border:none;border-radius:0;background:transparent;flex:1;min-width:0;"></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .8rem;font-size:.74rem;margin-bottom:.4rem;">
-        <div><div style="font-size:.58rem;font-weight:800;color:var(--g5);">NO. KP</div><div id="pf-kp" style="font-weight:700;">—</div></div>
-        <div><div style="font-size:.58rem;font-weight:800;color:var(--g5);">PERANAN</div><div id="pf-role" style="font-weight:700;">—</div></div>
-        <div style="grid-column:1/-1;"><div style="font-size:.58rem;font-weight:800;color:var(--g5);">SEKOLAH</div><div id="pf-sek" style="font-weight:700;">—</div></div>
+        <div><div style="font-size:.58rem;font-weight:800;color:var(--g6);">NO. KP</div><div id="pf-kp" style="font-weight:700;">—</div></div>
+        <div><div style="font-size:.58rem;font-weight:800;color:var(--g6);">PERANAN</div><div id="pf-role" style="font-weight:700;">—</div></div>
+        <div style="grid-column:1/-1;"><div style="font-size:.58rem;font-weight:800;color:var(--g6);">SEKOLAH</div><div id="pf-sek" style="font-weight:700;">—</div></div>
       </div>
-      <div style="font-size:.64rem;color:var(--g5);line-height:1.5;">Nama sekolah dan peranan hanya boleh ditukar oleh admin. Hubungi admin PPD jika perlu.</div>
+      <div style="font-size:.64rem;color:var(--g6);line-height:1.5;">Nama sekolah dan peranan hanya boleh ditukar oleh admin. Hubungi admin PPD jika perlu.</div>
       <div id="pf-err" style="color:var(--red);font-size:.72rem;min-height:1.1rem;margin-top:.4rem;"></div>
     </div>
     <div class="mt2 fx gu"><button class="btn bp" id="pf-simpan" onclick="simpanProfil()" disabled>SIMPAN</button><button class="btn bs" onclick="closeMo('mo-profil')">BATAL</button></div>
@@ -867,7 +872,7 @@
       <div class="fi full"><label>Nama Program</label><input type="text" id="p-nama" placeholder="Masukkan nama program..."></div>
       <div class="fi full"><label>Penganjur</label>
         <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="p-agensi" onchange="agToggle('p')"> 🏢 Dianjurkan oleh agensi luar</label></div>
-        <div id="p-agensi-info" style="display:none;font-size:.66rem;color:var(--g5);margin-top:.3rem;">Taip nama agensi pada ruang Unit / Nama. Kod Sekolah Penganjur ditetapkan automatik kepada Y044 (PPD SUBIS).</div>
+        <div id="p-agensi-info" style="display:none;font-size:.66rem;color:var(--g6);margin-top:.3rem;">Taip nama agensi pada ruang Unit / Nama. Kod Sekolah Penganjur ditetapkan automatik kepada Y044 (PPD SUBIS).</div>
       </div>
       <div class="fi" style="position:relative;"><label>Unit / Nama</label>
         <input type="text" id="p-pengelola" placeholder="Nama pengelola" autocomplete="off" oninput="onSugPengelolaProg(this.value)" onfocus="onSugPengelolaProg(this.value)" onblur="hideSug('sug-p-pengelola')">
@@ -895,7 +900,7 @@
       <div class="fi"><label>Status</label><select id="p-status"><option value="DRAFT">DRAFT</option><option value="AKTIF">AKTIF</option><option value="TUTUP">TUTUP</option></select></div>
       <div class="fi full"><label>Jenis Aktiviti</label>
         <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="p-luar"> 🌐 Aktiviti Luar</label></div>
-        <div style="font-size:.66rem;color:var(--g5);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
+        <div style="font-size:.66rem;color:var(--g6);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
       </div>
     </div>
     <div class="fi full" id="p-sek-box" style="margin-top:.6rem;"></div>
@@ -903,7 +908,7 @@
     <div id="wz-foot" class="md-max-foot">
       <div id="wz-err" class="iwarn" style="display:none;font-size:.72rem;margin-bottom:.6rem;line-height:1.45;"></div>
     <div class="fx gu" style="flex-wrap:wrap;"><button class="btn bp" id="btn-daftar" onclick="daftarProgram()">+ DAFTAR PROGRAM</button><button class="btn bs" onclick="clearPF()">KOSONGKAN</button></div>
-      <div style="font-size:.62rem;color:var(--g5);margin-top:.5rem;">💾 Draf disimpan automatik dalam pelayar ini. <a href="#" onclick="wzMulaBaru();return false;" style="color:var(--red);font-weight:700;">Mula baharu</a></div>
+      <div style="font-size:.62rem;color:var(--g6);margin-top:.5rem;">💾 Draf disimpan automatik dalam pelayar ini. <a href="#" onclick="wzMulaBaru();return false;" style="color:var(--red);font-weight:700;">Mula baharu</a></div>
     </div>
   </div>
 </div>
@@ -917,7 +922,7 @@
       <div class="fi full"><label>Nama Program</label><input type="text" id="e-nama" onchange="_onEditChange();"></div>
       <div class="fi full"><label>Penganjur</label>
         <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="e-agensi" onchange="agToggle('e')"> 🏢 Dianjurkan oleh agensi luar</label></div>
-        <div id="e-agensi-info" style="display:none;font-size:.66rem;color:var(--g5);margin-top:.3rem;">Taip nama agensi pada ruang Unit / Nama. Kod Sekolah Penganjur ditetapkan automatik kepada Y044 (PPD SUBIS).</div>
+        <div id="e-agensi-info" style="display:none;font-size:.66rem;color:var(--g6);margin-top:.3rem;">Taip nama agensi pada ruang Unit / Nama. Kod Sekolah Penganjur ditetapkan automatik kepada Y044 (PPD SUBIS).</div>
       </div>
       <div class="fi"><label>Unit / Nama</label><input type="text" id="e-pen" onchange="_onEditChange();"></div>
       <div class="fi"><label>Kod Sekolah Penganjur</label><input type="text" id="e-kod" class="nc" onchange="_onEditChange();"></div>
@@ -939,7 +944,7 @@
       <div class="fi"><label>Status</label><select id="e-status" onchange="_onEditChange();"><option>AKTIF</option><option>DRAFT</option><option>TUTUP</option></select></div>
       <div class="fi full"><label>Jenis Aktiviti</label>
         <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="e-luar" onchange="_onEditChange();"> 🌐 Aktiviti Luar</label></div>
-        <div style="font-size:.66rem;color:var(--g5);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
+        <div style="font-size:.66rem;color:var(--g6);margin-top:.3rem;">Tandakan jika program ini aktiviti luar (tidak semua sekolah menyertai).</div>
       </div>
       <div class="fi full" id="e-sek-box"></div>
     </div>
@@ -1129,7 +1134,7 @@
 
 <script src="js/01-config-dispatcher.js?v=20261116"></script>
 <script src="js/02-core.js?v=20261116"></script>
-<script src="js/03-program-senarai.js?v=20261116"></script>
+<script src="js/03-program-senarai.js?v=20261122"></script>
 <script src="js/04-program-edit-pencapaian.js?v=20261116"></script>
 <script src="js/05-pencapaian-rumusan.js?v=20261116"></script>
 <script src="js/06-print-export.js?v=20261116"></script>
@@ -1137,18 +1142,19 @@
 <script src="js/08-penyertaan-bulk.js?v=20261116"></script>
 <script src="js/09-penyertaan-pdf.js?v=20261116"></script>
 <script src="js/10-dashboard.js?v=20261116"></script>
-<script src="js/11-modal-carian.js?v=20261116"></script>
+<script src="js/11-modal-carian.js?v=20261122"></script>
 <script src="js/12-sekolah.js?v=20261116"></script>
 <script src="js/13-dashboard-filter.js?v=20261116"></script>
 <script src="js/14-auth-login.js?v=20261116"></script>
-<script src="js/15-akaun-admin.js?v=20261116"></script>
+<script src="js/15-akaun-admin.js?v=20261122"></script>
 <script src="js/16-akses-sesi-idle-google.js?v=20261116"></script>
 <script src="js/17-dashboard-analitik-fullscreen.js?v=20261116"></script>
 <script src="js/18-ai-fab.js?v=20261116"></script>
-<script src="js/19-sekolah-menyertai.js?v=20261117"></script>
+<script src="js/19-sekolah-menyertai.js?v=20261122"></script>
 <script src="js/20-agensi-luar.js?v=20261118"></script>
 <script src="js/21-wizard-program.js?v=20261119"></script>
 <script src="js/22-modal-penyertaan.js?v=20261120"></script>
+<script src="js/23-ux-aksesibiliti.js?v=20261122"></script>
 <script src="laporan-sekolah.js"></script>
 </body>
 </html>

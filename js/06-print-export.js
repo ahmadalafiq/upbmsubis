@@ -414,7 +414,7 @@ function buildPrintPortal(prog,pny,pnc,isTutup,nSek,nG,nPs,per,printDate){
 
 function dBox(tit,counts){
   var rows=Object.entries(counts).filter(function(e){return e[0]&&e[0]!=='—';}).map(function(e){return '<div class="ditem"><span>'+e[0]+'</span><span>'+e[1]+'</span></div>';}).join('');
-  return '<div class="dbox"><h4>'+tit+'</h4>'+(rows||'<div style="font-size:.66rem;color:var(--g5);">—</div>')+'</div>';
+  return '<div class="dbox"><h4>'+tit+'</h4>'+(rows||'<div style="font-size:.66rem;color:var(--g6);">—</div>')+'</div>';
 }
 // Cross-tab bangsa × jantina table
 function dBoxBJ(label,rows,bKey,jKey){
@@ -424,7 +424,7 @@ function dBoxBJ(label,rows,bKey,jKey){
     if(!bt[b])bt[b]={};
     bt[b][j]=(bt[b][j]||0)+1;
   });
-  if(!Object.keys(bt).length) return '<div class="dbox" style="grid-column:1/-1;"><h4>'+label+'</h4><div style="font-size:.66rem;color:var(--g5);">—</div></div>';
+  if(!Object.keys(bt).length) return '<div class="dbox" style="grid-column:1/-1;"><h4>'+label+'</h4><div style="font-size:.66rem;color:var(--g6);">—</div></div>';
   var jList=['LELAKI','PEREMPUAN'];
   Object.values(bt).forEach(function(o){Object.keys(o).forEach(function(j){if(jList.indexOf(j)<0)jList.push(j);});});
   var th='<tr><th style="text-align:left;padding:.18rem .35rem;font-size:.6rem;font-weight:800;color:var(--g6);text-transform:uppercase;background:var(--g1);">Bangsa</th>'

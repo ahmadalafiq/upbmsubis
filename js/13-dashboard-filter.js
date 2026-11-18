@@ -150,7 +150,7 @@ function buildSekTiadaRekod(py, pg){
   }
 
   if(!tiada.length){
-    wrap.innerHTML='<div style="text-align:center;padding:1.2rem;font-size:.78rem;color:var(--g5);">✅ Semua sekolah telah mempunyai rekod dalam sistem.</div>';
+    wrap.innerHTML='<div style="text-align:center;padding:1.2rem;font-size:.78rem;color:var(--g6);">✅ Semua sekolah telah mempunyai rekod dalam sistem.</div>';
     return;
   }
 
@@ -171,7 +171,7 @@ function buildSekTiadaRekod(py, pg){
       +list.map(function(s){
         return '<div style="background:#fff;border:1.5px solid var(--g2);border-radius:8px;padding:.45rem .65rem;display:flex;flex-direction:column;gap:.1rem;">'
           +'<div style="font-size:.72rem;font-weight:700;color:var(--g8);">'+s.nama+'</div>'
-          +'<div style="font-size:.6rem;color:var(--g5);font-weight:600;">'+s.kod+'</div>'
+          +'<div style="font-size:.6rem;color:var(--g6);font-weight:600;">'+s.kod+'</div>'
           +'</div>';
       }).join('')
       +'</div></div>';
