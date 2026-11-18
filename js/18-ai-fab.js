@@ -108,18 +108,29 @@ async function aiSend(){
   aiShowTyping(true);
   try{
     // Panggil Supabase Edge Function 'ai-chat' (proksi Gemini API selamat).
+    // Sesi (noKP + token) dihantar supaya pelayan mengesahkan pengguna & peranan sebelum menjawab / membaca data.
     var res = await sb.functions.invoke('ai-chat', {
-      body: { message: msg, history: _aiHist.slice(-10), context: aiBuildContext() }
+      body: { message: msg, history: _aiHist.slice(-10), context: aiBuildContext(), noKP: _sesi.noKP, token: _sesi.token }
     });
     aiShowTyping(false);
-    if(res.error) throw new Error(res.error.message || 'Ralat sambungan AI');
+    if(res.error){
+      var kod=''; try{ var jr = await res.error.context.json(); kod = (jr && jr.code) || ''; }catch(_e){}
+      var er = new Error(res.error.message || 'Ralat sambungan AI'); er.kod = kod; throw er;
+    }
     var jwp = (res.data && res.data.reply) ? res.data.reply : 'Maaf, saya tidak pasti jawapannya buat masa ini.';
     aiAppendMsg('bot', jwp);
     _aiHist.push({role:'model', text: jwp});
   }catch(e){
     aiShowTyping(false);
-    aiAppendMsg('err', '⚠ Pembantu AI belum tersedia sepenuhnya. (Edge Function "ai-chat" belum dideploy atau ralat rangkaian.) Sila cuba lagi kemudian.');
-    console.warn('AI chat error:', e.message);
+    var AI_RALAT = {
+      AI_SESI:  'Sesi anda telah tamat. Sila log masuk semula untuk menggunakan Pembantu AI.',
+      AI_SIBUK: 'Pembantu AI sedang sibuk kerana permintaan tinggi pada penyedia AI. Sila cuba lagi sebentar lagi.',
+      AI_HAD:   'Terlalu banyak soalan dalam masa singkat. Tunggu seminit sebelum bertanya semula.',
+      AI_MINTA: 'Mesej tidak sah atau terlalu panjang (maksimum 1000 aksara).',
+      AI_KONFIG:'Pembantu AI belum dikonfigurasi sepenuhnya di pelayan. Sila hubungi admin.'
+    };
+    aiAppendMsg('err', '⚠ ' + (AI_RALAT[e && e.kod] || 'Tidak dapat menghubungi Pembantu AI. Semak sambungan internet dan cuba lagi.'));
+    console.warn('AI chat error:', e.kod || '', e.message);
   }finally{
     _aiBusy = false;
     document.getElementById('ai-send-btn').disabled = false;

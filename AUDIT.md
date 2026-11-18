@@ -17,12 +17,21 @@ Skop: kod frontend (index.html, css/, js/), Supabase (advisors), UX/kebolehcapai
 | 11 | Head: tiada `theme-color`/preconnect | Ditambah |
 | 12 | Pintasan "Langkau ke kandungan", toast `aria-live` | Ditambah |
 
-## Dikesan, BELUM diubah (perlu keputusan)
-1. **TINGGI — data peribadi boleh dibaca tanpa log masuk.** `analitik_murid_terbaik` & `analitik_guru_terbaik` (SECURITY DEFINER) dipanggil melalui kunci `anon` awam dan memulangkan **nama murid/guru + sekolah + markah**, `p_limit` tanpa had. Hanya edge function `ai-chat` yang memakainya, tetapi ia memakai kunci `anon`, jadi `REVOKE` terus akan merosakkan Pembantu AI. Cadangan: tukar `ai-chat` guna `SUPABASE_SERVICE_ROLE_KEY` (secret edge function), kemudian `REVOKE EXECUTE ... FROM anon, authenticated` pada semua `analitik_*`; sementara itu had `p_limit` ≤ 20.
-2. **SEDERHANA — `cek_status_akaun(p_no_kp)`** boleh dipanggil tanpa token → boleh menyemak sama ada sesuatu No. KP berdaftar (enumerasi). Pertimbangkan had kadar / mesej seragam.
-3. Fungsi SECURITY DEFINER lain boleh dipanggil `anon` mengikut reka bentuk (pengesahan dalaman melalui `_sahkan_token`) — dimaklumkan advisor (33), bukan kerosakan. Jadual `pengguna`, `program_sekolah`, `app_secrets` RLS aktif tanpa polisi = tolak semua; akses hanya melalui RPC (betul).
-4. Prestasi: ~600 KB JS/CSS tidak diminify, 27 skrip serentak. Cadangan: langkah bina (esbuild) + header cache/CSP di `vercel.json`.
-5. `PROGRESS.md` menyatakan idea had panggilan alat AI (senarai putih, had saiz) — belum dilaksanakan.
+## Dikesan & DIBETULKAN (susulan audit)
+| # | Isu | Tindakan |
+|---|-----|----------|
+| A | **KRITIKAL — PIN 6 digit boleh diteka tanpa had.** `login_pengguna`, `login_admin` (kod induk) dan `claim_akaun_google` tiada had percubaan; sesiapa dengan kunci `anon` awam boleh menjalankan brute-force | Migrasi `20261118_keselamatan_log_masuk.sql` (**telah dilaksanakan di production**): kunci 15 minit selepas 5 percubaan gagal per No. KP (admin: 5 per KP + 20 global); berjaya = reset. Diuji dalam transaksi yang di-rollback |
+| B | **TINGGI — `cek_status_akaun` memulangkan NAMA PENUH + sekolah** bagi sebarang No. KP tanpa log masuk (penerangan awal "hanya enumerasi" tidak tepat) | Nama bertopeng (`AHMAD A*** B***`), sekolah dibuang, had 30 permintaan/minit/IP. Skrin log masuk kekal berfungsi (data penuh datang selepas PIN sah) |
+| C | **TINGGI — `analitik_murid_terbaik` / `analitik_guru_terbaik` boleh dibaca tanpa log masuk** (nama murid/guru + markah, `p_limit` tanpa had) | `p_limit` dihadkan 20 (dilaksanakan). `ai-chat` ditulis semula: sesi wajib disahkan, kunci SERVICE ROLE, alat nama individu = admin/PKK sahaja, senarai putih nama alat + kawalan argumen, had input & kadar, cuba semula Gemini 503. **Langkah akhir `REVOKE` anon (`20261119_revoke_analitik_anon.sql`) dijalankan SELEPAS merge + deploy** supaya Pembantu AI lama tidak terputus |
+| D | `ai-chat` menerima nama RPC daripada Gemini tanpa semakan (injeksi path jika kunci service dipakai) | Senarai putih ketat (diuji: `../admin_senarai_akaun` ditolak) |
+| E | Mesej ralat AI salah ("belum dideploy") walaupun puncanya Gemini 503 | Kod ralat `AI_SESI/AI_SIBUK/AI_HAD/AI_MINTA/AI_KONFIG` + mesej betul |
+| F | JS/CSS tanpa minify (gzip 156 KB) | `npm run build` (esbuild) -> `dist/`: gzip ≈ 108 KB (−28%), versi cache = hash kandungan, sandaran salin-asal jika minify gagal. `vercel.json`: cache 10 min + SWR, `nosniff`, `Referrer-Policy`, `Permissions-Policy` |
+
+## Belum diubah (keputusan / reka bentuk)
+1. Fungsi SECURITY DEFINER lain boleh dipanggil `anon` mengikut reka bentuk (pengesahan dalaman `_sahkan_token`). Jadual `pengguna`, `program_sekolah`, `app_secrets` RLS aktif tanpa polisi = tolak semua (betul).
+2. CSP ketat tidak ditambah (borang guna `onclick` inline, dan tapak mungkin dibenamkan dalam Google Sites). `X-Frame-Options` sengaja tiada.
+3. Kod induk admin kekal rahsia kongsi dalam `app_secrets` (kini ada kunci, tetapi pertimbangkan tukar berkala).
+4. Kunci percubaan boleh dipakai untuk mengunci akaun mangsa (DoS 15 minit). Admin boleh kosongkan dengan `delete from login_cuba where kunci = 'kp:<No.KP>'`.
 
 ## Ujian
-jsdom: Akaun 1, projek-16 23, wizard/draf/timeout/UX 34, modal penyertaan 26 — semua lulus, tiada ralat konsol. Sintaks 24 fail JS lulus. Tiada ID pendua.
+jsdom (sumber DAN dist minify, keputusan sama): Akaun, projek-16 23, wizard/draf/timeout/UX 34, modal penyertaan 26, AI frontend 7. Deno: `ai-chat` 19 semakan (sesi, peranan, senarai putih, had, cuba semula, kadar). SQL (rollback): kunci, reset, topeng, had kadar, kunci admin. Tiada ID pendua.

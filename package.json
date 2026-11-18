@@ -1,0 +1,8 @@
+{
+  "name": "upbmsubis",
+  "private": true,
+  "version": "1.0.0",
+  "description": "UPBM Subis — sumber ditulis dalam js/ & css/; binaan menghasilkan dist/ (minify) untuk Vercel.",
+  "scripts": { "build": "node tools/bina.mjs" },
+  "devDependencies": { "esbuild": "0.28.2" }
+}

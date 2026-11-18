@@ -55,3 +55,8 @@ Dipecahkan daripada satu fail 600 KB (16 Nov 2026, tag git `pra-pecah` = versi a
 4. Semakan sebelum deploy: `node --check js/*.js`. Untuk ubah suai besar, banding dengan versi lama:
    `node tools/bandingkan-jsdom.js <folder-lama> <folder-baharu>` (perlu `npm i jsdom@22.1.0`) — mesti sama bilangan fungsi global & 0 ralat.
 5. Uji dalam pelayar sebenar **dan** dalam Google Sites sebelum merge ke `main`.
+
+## Binaan & penempatan
+- Sumber: `js/`, `css/`, `index.html`. `npm run build` (esbuild) -> `dist/` (minify + cap versi hash). Vercel membina menurut `vercel.json`.
+- Fail pangkalan data: `supabase/migrations/` (pelaksanaan manual melalui Supabase). `20261119_revoke_analitik_anon.sql` = langkah SELEPAS deploy edge function.
+- Edge function `ai-chat`: auto-deploy oleh GitHub Action semasa push ke `main`. Ujian logik: Deno + fetch tiruan (lihat AUDIT.md).
