@@ -9,9 +9,9 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _initRealtimeSync:33, esc:91, hlMatch:93, getTPT:111, _normPeringkat:121, mPts:132, cGet:150, cSet:151, cBust:152, onTahunChange:155, initTahunSel:164, run:198, showOv:251, hideOv:252, setBtn:253, _isPenyFormAktif:258, _tunjukDialogTinggal:273, _doShowPage:294, showPage:313, _resetTabFilters:324, togMarkah:356, buildMarkahGrid:362, askConfirm:375
 **Pemboleh ubah:** _realtimeBustTimer:30, _realtimeQueue:31, LOGO_URL:78, LOGO_FULL:79, selId:80, _salinanPayload:81, gCnt:82, eId:83, _pps:84, markahOpen:85, _rk:86, _aP:87, _selTahun:88, MARKAH:100, PER_ORDER:108, TPT_STANDARD:109, TPT_TERBUKA:110, DAYS:112, MTHS:113, PERINGKAT_ALIAS:116, _peringkatWarnings:120, _C:149, RFN:188, _WRITE_FNS:191
 
-## js/03-program-senarai.js — 660 baris, 31 KB
-**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:49, loadProgs:60, populateMonthFilt:109, _setStab:130, _updateStabCounts:138, applyProgFilt:149, clearProgFilt:168, renderProgList:174, progCard:223, tutupRow:310, reqLihat:346, lihatPeny:350, reqPadamSek:456, padamSekPeny:469, _editSekolahDariBullet:484, reqEditSek:499, _openPenyertaanEdit:520, _prefillPenyertaanEdit:573, reqEdit:609, openEdit:619
-**Pemboleh ubah:** _activeStab:129
+## js/03-program-senarai.js — 663 baris, 31 KB
+**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:49, loadProgs:62, populateMonthFilt:111, _setStab:132, _updateStabCounts:140, applyProgFilt:151, clearProgFilt:170, renderProgList:176, progCard:225, tutupRow:312, reqLihat:348, lihatPeny:352, reqPadamSek:458, padamSekPeny:471, _editSekolahDariBullet:486, reqEditSek:501, _openPenyertaanEdit:522, _prefillPenyertaanEdit:575, reqEdit:611, openEdit:621
+**Pemboleh ubah:** _activeStab:131
 
 ## js/04-program-edit-pencapaian.js — 546 baris, 30 KB
 **Fungsi:** _onEditChange:3, saveEdit:19, renderPcForm:90, _autoFillBrkKsl:376, _fillBrkFromScores:509
@@ -41,8 +41,8 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** openMo:7, closeMo:28, _openDynMo:45, _closeDynMo:52, gv:63, cntBy:64, uniqGuru:65, uniqPes:66, fd:67, _trackAccess:68, _fmtAccess:83, toast:90, printSdet:103, filterMore:114, clearMoreSrch:143, filterMorep:153, clearMorepSrch:177
 **Pemboleh ubah:** _zTop:2, _moOpenCount:5, _moFocusStack:6, _moreData:112, _morepBp:150, _morepKeys:151
 
-## js/12-sekolah.js — 311 baris, 14 KB
-**Fungsi:** loadSekolahMaster:65, _buildSekKodMap:84, _jenisSekolah:91, _filterSkorByJenis:101, _renderRkType:118, _setRkJenis:125, onSugSekPeny:136, pickSekPeny:153, _syncDafSekDisplay:161, onSekSelect:170, _getSekSuggestions:222, _getNamaSekolahByKod:246, hideSug:257, onSugKodProg:265, onSugPengelolaProg:282, pickSugProg:299, _populateDafSekDropdown:309, onDafSekSelect:310
+## js/12-sekolah.js — 313 baris, 14 KB
+**Fungsi:** loadSekolahMaster:65, _buildSekKodMap:84, _jenisSekolah:91, _filterSkorByJenis:101, _renderRkType:118, _setRkJenis:125, onSugSekPeny:136, pickSekPeny:153, _syncDafSekDisplay:161, onSekSelect:170, _getSekSuggestions:222, _getNamaSekolahByKod:246, hideSug:257, onSugKodProg:265, onSugPengelolaProg:283, pickSugProg:301, _populateDafSekDropdown:311, onDafSekSelect:312
 **Pemboleh ubah:** _SEKOLAH_STATIK:2, _sekExtraDb:55, _sekolahMasterLoaded:64, _sekKodMap:83, _rkJenisFilter:110, _rkFull:111, _rkElMap:112
 
 ## js/13-dashboard-filter.js — 189 baris, 8 KB
@@ -73,6 +73,14 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _psBox:13, _psSenarai:14, psMod:18, psGet:19, psReset:23, _psKemasBil:28, psRender:32, psSetMod:66, psToggle:71, psCari:75, psKumpulan:82, psMuatEdit:97, psSimpanEdit:113, psBlokBelumDaftar:128, _tgIsuHtml:153, _tgRender:162, semakTugasanSelepasLogin:187, _tgBuka:207
 **Pemboleh ubah:** _pcTicked:8, _psSel:9, _psMode:10, _psEdit:11, _tgData:147, _TG_ISU:148
 
+## js/20-agensi-luar.js — 42 baris, 3 KB
+**Fungsi:** agIsOn:8, agToggle:9, agSync:31, agReset:39
+**Pemboleh ubah:** _AG_KOD:5, _AG_ID:6
+
+## js/21-wizard-program.js — 112 baris, 7 KB
+**Fungsi:** _wzEl:9, _wzFi:10, _wzKumpulan:12, _wzPapar:21, _wzV:42, _wzSemak:44, _wzRingkas:53, wzKe:76, _wzScroll:77, wzNext:78, wzBack:83, wzToggle:84, wzReset:90, wzInit:92
+**Pemboleh ubah:** _WZ_LANGKAH:5, _wz:6, _WZ_PREF:7
+
 ## laporan-sekolah.js — 798 baris, 45 KB
 
-_Jumlah: 336 fungsi, 97 pemboleh ubah aras atas._
+_Jumlah: 354 fungsi, 102 pemboleh ubah aras atas._

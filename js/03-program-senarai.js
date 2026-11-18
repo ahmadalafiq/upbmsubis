@@ -51,6 +51,8 @@ function clearPF(){
   document.getElementById('p-status').value='AKTIF';
   var _pl=document.getElementById('p-luar'); if(_pl) _pl.checked=false;
   if(typeof psReset==='function') psReset('p');
+  if(typeof agReset==='function') agReset('p');
+  if(typeof wzReset==='function') wzReset();
   // Reset kategori checkboxes to default (Individu L + P)
   document.querySelectorAll('#p-kat-wrap input[type=checkbox]').forEach(function(cb){
     cb.checked=(cb.value==='INDIVIDU LELAKI'||cb.value==='INDIVIDU PEREMPUAN');
@@ -635,6 +637,7 @@ async function openEdit(p){
   document.getElementById('e-nama').value=p['Nama Program'];
   document.getElementById('e-pen').value=p['Pengelola'];
   document.getElementById('e-kod').value=p['Kod Pengelola']||'';
+  if(typeof agSync==='function') agSync('e');
   document.getElementById('e-bidang').value=p['Bidang'];
   // e-kat removed (now uses checkboxes)
   document.getElementById('e-per').value=p['Peringkat']||'SEKOLAH';

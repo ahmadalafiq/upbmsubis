@@ -6,7 +6,7 @@
 <title>UPBM Subis</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/01-base.css?v=20261117">
-<link rel="stylesheet" href="css/02-components.css?v=20261116">
+<link rel="stylesheet" href="css/02-components.css?v=20261118">
 <link rel="stylesheet" href="css/03-pages.css?v=20261116">
 <link rel="stylesheet" href="css/04-fullscreen-nav-widgets.css?v=20261116">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -225,6 +225,10 @@
     <div class="ch"><div class="dot"></div>PROGRAM BAHARU</div>
     <div class="fg">
       <div class="fi full"><label>Nama Program</label><input type="text" id="p-nama" placeholder="Masukkan nama program..."></div>
+      <div class="fi full"><label>Penganjur</label>
+        <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="p-agensi" onchange="agToggle('p')"> 🏢 Dianjurkan oleh agensi luar</label></div>
+        <div id="p-agensi-info" style="display:none;font-size:.66rem;color:var(--g5);margin-top:.3rem;">Taip nama agensi pada ruang Unit / Nama. Kod Sekolah Penganjur ditetapkan automatik kepada Y044 (PPD SUBIS).</div>
+      </div>
       <div class="fi" style="position:relative;"><label>Unit / Nama</label>
         <input type="text" id="p-pengelola" placeholder="Nama pengelola" autocomplete="off" oninput="onSugPengelolaProg(this.value)" onfocus="onSugPengelolaProg(this.value)" onblur="hideSug('sug-p-pengelola')">
         <div class="sug-drop" id="sug-p-pengelola"></div>
@@ -879,6 +883,10 @@
     <input type="hidden" id="e-id">
     <div class="fg">
       <div class="fi full"><label>Nama Program</label><input type="text" id="e-nama" onchange="_onEditChange();"></div>
+      <div class="fi full"><label>Penganjur</label>
+        <div class="kat-chk-wrap"><label class="kat-chk"><input type="checkbox" id="e-agensi" onchange="agToggle('e')"> 🏢 Dianjurkan oleh agensi luar</label></div>
+        <div id="e-agensi-info" style="display:none;font-size:.66rem;color:var(--g5);margin-top:.3rem;">Taip nama agensi pada ruang Unit / Nama. Kod Sekolah Penganjur ditetapkan automatik kepada Y044 (PPD SUBIS).</div>
+      </div>
       <div class="fi"><label>Unit / Nama</label><input type="text" id="e-pen" onchange="_onEditChange();"></div>
       <div class="fi"><label>Kod Sekolah Penganjur</label><input type="text" id="e-kod" class="nc" onchange="_onEditChange();"></div>
       <div class="fi"><label>Bidang</label><select id="e-bidang" onchange="_onEditChange();"><option>SUKAN</option><option>BAHASA</option><option>SENI</option><option>PBB</option><option>STEM</option><option>LAIN-LAIN</option></select></div>
@@ -1107,6 +1115,8 @@
 <script src="js/17-dashboard-analitik-fullscreen.js?v=20261116"></script>
 <script src="js/18-ai-fab.js?v=20261116"></script>
 <script src="js/19-sekolah-menyertai.js?v=20261117"></script>
+<script src="js/20-agensi-luar.js?v=20261118"></script>
+<script src="js/21-wizard-program.js?v=20261118"></script>
 <script src="laporan-sekolah.js"></script>
 </body>
 </html>

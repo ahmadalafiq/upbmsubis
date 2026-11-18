@@ -270,3 +270,6 @@ input.nc-off{text-transform:none!important;}
   background:#fff;outline:none;cursor:pointer;transition:border-color .14s;}
 .peny-filt select:focus{border-color:var(--red);}
 
+
+/* Wizard Daftar Program (W1) */
+.wz-hide{display:none !important;}

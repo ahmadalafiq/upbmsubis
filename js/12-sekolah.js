@@ -263,6 +263,7 @@ function hideSug(id){
 // duplikat akibat variasi ejaan. Medan kekal teks bebas (bukan dropdown ketat)
 // sebab sesetengah penganjur bukan sekolah (cth: PPD SUBIS).
 function onSugKodProg(q){
+  if(typeof agIsOn==='function'&&agIsOn('p')) return;
   var drop=document.getElementById('sug-p-kod'); if(!drop)return;
   var v=(q||'').trim();
   if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
@@ -280,6 +281,7 @@ function onSugKodProg(q){
   drop.classList.add('on');
 }
 function onSugPengelolaProg(q){
+  if(typeof agIsOn==='function'&&agIsOn('p')) return;
   var drop=document.getElementById('sug-p-pengelola'); if(!drop)return;
   var v=(q||'').trim();
   if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
