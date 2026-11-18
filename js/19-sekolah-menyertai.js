@@ -206,17 +206,16 @@ async function semakTugasanSelepasLogin(percubaan){
 // Buka borang penyertaan (program + sekolah sendiri sudah dipilih; data sedia ada dipra-isi oleh aliran sedia ada)
 async function _tgBuka(pid){
   closeMo('mo-tugasan');
-  showOv('MEMBUKA BORANG PENYERTAAN...');
+  // Modal DAFTAR PENYERTAAN dibuka di atas halaman semasa (tiada tukar halaman)
+  penyModalMuat('Membuka borang penyertaan...', false);
   try{
-    _doShowPage('peserta');
     await new Promise(function(resolve){ loadProgsForPeny(false, resolve); });
     var prog=(_progForPny||[]).find(function(p){return p['ID']===pid;});
-    if(!prog){ hideOv(); toast('Program tidak ditemui dalam senarai penyertaan. Sila pilih program secara manual.','er'); return; }
+    if(!prog){ penyModalTutup(true); toast('Program tidak ditemui dalam senarai penyertaan. Sila pilih program secara manual.','er'); return; }
     var card=null;
     Array.prototype.forEach.call(document.querySelectorAll('.psc'),function(c){ if(c.getAttribute('data-pid')===pid) card=c; });
     pilihProg(prog['ID'],prog['Nama Program'],card);
-    hideOv();
-  }catch(e){ hideOv(); toast('Ralat membuka borang: '+(e&&e.message||e),'er'); }
+  }catch(e){ penyModalTutup(true); toast('Ralat membuka borang: '+(e&&e.message||e),'er'); }
 }
 // Pemula: bina widget Daftar Program (senarai sekolah dibina bila mod "pilih" dipilih)
 psRender('p');

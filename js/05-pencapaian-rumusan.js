@@ -398,10 +398,12 @@ function reqRum(id,status){
   doRumusan(id,status);
 }
 async function doRumusan(pid,status){
-  showOv('MEMUATKAN RUMUSAN...');
+  // Modal dibuka serta-merta; penunjuk memuatkan dalam badan modal
+  var _rb=document.getElementById('rum-body'); if(_rb) _rb.innerHTML=ldInline('Memuatkan rumusan...');
+  openMoOnce('mo-rum');
   try{
     var r=await run('getRumusanGS',pid);
-    if(!r||!r.ok){toast((r&&r.msg)||'Gagal','er');return;}
+    if(!r||!r.ok){toast((r&&r.msg)||'Gagal','er'); closeMo('mo-rum'); return;}
     // Cari data program dari senarai tempatan
     var prog=(_allProg||[]).find(function(p){return p['ID']===pid;});
     if(!prog){
@@ -411,8 +413,7 @@ async function doRumusan(pid,status){
       _allProg=(rd&&rd.programs)||_allProg||[];
     }
     buildRum(prog,r.penyertaan||[],r.pencapaian||[],status==='TUTUP');
-  }catch(e){toast('Ralat: '+e.message,'er');}
-  finally{hideOv();}
+  }catch(e){toast('Ralat: '+e.message,'er'); closeMo('mo-rum');}
 }
 function buildRum(prog,pny,pnc,isTutup){
   // == Deduplicate ==========================================
@@ -540,6 +541,6 @@ function buildRum(prog,pny,pnc,isTutup){
   // == Build dedicated print portal (separate from modal) ==
   buildPrintPortal(prog,pny,pnc,isTutup,nSek,nG,nPs,per,printDate);
 
-  openMo('mo-rum');
+  openMoOnce('mo-rum');
 }
 

@@ -457,15 +457,14 @@ async function hantarPeny(){
     ?{programId:selId,programNama:selNm,kodSekolah:editKod,namaSekolah:sk,rows:allRows}
     :{programId:selId,programNama:selNm,kodSekolah:kod,namaSekolah:sk,rows:allRows};
 
-  showOv(isEdit?'MENGEMASKINI...':'MENGHANTAR...');
-  setBtn('btn-hantar',true);
+  btnBusy('btn-hantar',true,isEdit?'Mengemaskini...':'Menghantar...');
   try{
     var r=await run(fn,payload);
     if(r&&r.ok){
       toast(r.msg||'Penyertaan berjaya dihantar','ok');
       closeMo('mo-pengesahan');
       resetPeny();
-      hideOv(); setBtn('btn-hantar',false);
+      btnBusy('btn-hantar',false);
       // Papar modal salinan penyertaan untuk cetak/simpan PDF
       _salinanPayload=payload; _salinanRows=allRows; // simpan untuk muatTurunSalinan()
       buildSalinanPortal(payload, allRows);
@@ -475,6 +474,6 @@ async function hantarPeny(){
       toast((r&&r.msg)||'Ralat semasa menghantar','er');
     }
   }catch(e){toast('Ralat: '+e.message,'er');}
-  finally{hideOv();setBtn('btn-hantar',false);}
+  finally{btnBusy('btn-hantar',false);}
 }
 

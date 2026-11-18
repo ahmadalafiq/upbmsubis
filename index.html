@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>UPBM Subis</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/01-base.css?v=20261117">
-<link rel="stylesheet" href="css/02-components.css?v=20261119">
+<link rel="stylesheet" href="css/01-base.css?v=20261120">
+<link rel="stylesheet" href="css/02-components.css?v=20261121">
 <link rel="stylesheet" href="css/03-pages.css?v=20261116">
 <link rel="stylesheet" href="css/04-fullscreen-nav-widgets.css?v=20261116">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -117,7 +117,7 @@
   </div>
 </div>
 
-<div class="ov" id="ov"><div class="sbig"></div><p id="ov-msg">SILA TUNGGU SEBENTAR...</p></div>
+<div class="ov" id="ov"><div class="ov-pill"><div class="sbig"></div><p id="ov-msg">SILA TUNGGU SEBENTAR...</p></div></div>
 
 <!-- UP ARROW -->
 <button class="up-arrow" id="up-arrow-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Ke atas">▲</button>
@@ -844,13 +844,25 @@
   </div>
 </div>
 
+<div class="mo" id="mo-peny">
+  <div class="md md-max">
+    <div class="md-max-head">
+      <span class="mh" id="peny-modal-judul" style="margin:0;">📝 DAFTAR PENYERTAAN</span>
+      <button type="button" class="btn bs bsm" onclick="penyModalTutupUser()" title="Tutup">✕ TUTUP</button>
+    </div>
+    <div id="peny-modal-body" class="md-max-body">
+      <div id="peny-modal-ld" class="ld-inline" style="display:none;"><div class="sp"></div><span id="peny-modal-ld-msg">Memuatkan...</span></div>
+    </div>
+  </div>
+</div>
+
 <div class="mo" id="mo-daftar-prog">
-  <div class="md" style="max-width:720px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
-    <div class="mh" style="padding:1.25rem 1.55rem .6rem;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:.5rem;">
-      <span>📝 DAFTAR PROGRAM BAHARU</span>
+  <div class="md md-max">
+    <div class="md-max-head">
+      <span class="mh" style="margin:0;">📝 DAFTAR PROGRAM BAHARU</span>
       <button type="button" class="btn bs bsm" onclick="tutupDaftarProgram()" title="Tutup (draf disimpan automatik)">✕</button>
     </div>
-    <div id="wz-body" style="overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding:0 1.55rem .8rem;overscroll-behavior:contain;">
+    <div id="wz-body" class="md-max-body">
     <div class="fg">
       <div class="fi full"><label>Nama Program</label><input type="text" id="p-nama" placeholder="Masukkan nama program..."></div>
       <div class="fi full"><label>Penganjur</label>
@@ -888,7 +900,7 @@
     </div>
     <div class="fi full" id="p-sek-box" style="margin-top:.6rem;"></div>
     </div>
-    <div id="wz-foot" style="flex-shrink:0;padding:.8rem 1.55rem 1.1rem;border-top:1px solid var(--g2);">
+    <div id="wz-foot" class="md-max-foot">
       <div id="wz-err" class="iwarn" style="display:none;font-size:.72rem;margin-bottom:.6rem;line-height:1.45;"></div>
     <div class="fx gu" style="flex-wrap:wrap;"><button class="btn bp" id="btn-daftar" onclick="daftarProgram()">+ DAFTAR PROGRAM</button><button class="btn bs" onclick="clearPF()">KOSONGKAN</button></div>
       <div style="font-size:.62rem;color:var(--g5);margin-top:.5rem;">💾 Draf disimpan automatik dalam pelayar ini. <a href="#" onclick="wzMulaBaru();return false;" style="color:var(--red);font-weight:700;">Mula baharu</a></div>
@@ -897,7 +909,7 @@
 </div>
 
 <div class="mo" id="mo-edit">
-  <div class="md" style="max-width:860px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+  <div class="md md-max">
     <div class="mh" style="padding:1.25rem 1.55rem .9rem;flex-shrink:0;">✏️ KEMASKINI PROGRAM</div>
     <div style="overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding:0 1.55rem;overscroll-behavior:contain;">
     <input type="hidden" id="e-id">
@@ -946,10 +958,9 @@
 
 <!-- MODAL: LIHAT PENYERTAAN -->
 <div class="mo" id="mo-lihat">
-  <div class="md" style="max-width:600px;">
-    <div class="mh" id="lihat-tit">📋 DATA PENYERTAAN</div>
-    <div id="lihat-body" style="max-height:65vh;overflow-y:auto;"></div>
-    <div class="mt2"><button class="btn bs bsm" onclick="closeMo('mo-lihat')">TUTUP</button></div>
+  <div class="md md-max">
+    <div class="md-max-head"><span class="mh" id="lihat-tit" style="margin:0;">📋 DATA PENYERTAAN</span><button class="btn bs bsm" onclick="closeMo('mo-lihat')">✕ TUTUP</button></div>
+    <div id="lihat-body" class="md-max-body"></div>
   </div>
 </div>
 
@@ -1137,6 +1148,7 @@
 <script src="js/19-sekolah-menyertai.js?v=20261117"></script>
 <script src="js/20-agensi-luar.js?v=20261118"></script>
 <script src="js/21-wizard-program.js?v=20261119"></script>
+<script src="js/22-modal-penyertaan.js?v=20261120"></script>
 <script src="laporan-sekolah.js"></script>
 </body>
 </html>

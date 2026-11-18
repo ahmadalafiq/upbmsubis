@@ -25,6 +25,16 @@ function openMo(id){
   _moOpenCount++;
   document.body.classList.add('modal-open');
 }
+// Buka modal hanya jika belum terbuka (elak pengiraan _moOpenCount berganda)
+function openMoOnce(id){ var el=document.getElementById(id); if(el&&!el.classList.contains('on')) openMo(id); }
+// Penunjuk memuatkan dalam bekas (pada tempat data akan dipaparkan)
+function ldInline(msg){ return '<div class="ld-inline"><div class="sp"></div><span>'+(msg||'Memuatkan...')+'</span></div>'; }
+// Butang sibuk: nyahaktif + putar kecil dalam butang (ganti overlay tengah skrin)
+function btnBusy(id,on,txt){
+  var b=typeof id==='string'?document.getElementById(id):id; if(!b) return;
+  if(on){ if(!b.dataset.asal) b.dataset.asal=b.innerHTML; b.disabled=true; b.classList.add('btn-busy'); b.innerHTML='<span class="sp"></span>'+(txt||'Sila tunggu...'); }
+  else { b.disabled=false; b.classList.remove('btn-busy'); if(b.dataset.asal){ b.innerHTML=b.dataset.asal; delete b.dataset.asal; } }
+}
 function closeMo(id){
   var el=document.getElementById(id);
   if(!el)return;

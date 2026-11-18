@@ -33,7 +33,7 @@ async function daftarProgram(){
   if(!n||!pen||!bid||!per||!tar||!tem){toast('Sila lengkapkan semua medan','er');return;}
   if(!kod){toast('Sila masukkan Kod Sekolah Penganjur','er');return;}
   if(!katList.length){toast('Sila pilih sekurang-kurangnya 1 kategori','er');return;}
-  showOv('MENDAFTAR PROGRAM...'); setBtn('btn-daftar',true);
+  btnBusy('btn-daftar',true,'Mendaftar...');
   try{
     var r;
     try{
@@ -68,7 +68,7 @@ async function daftarProgram(){
       toast('Ralat: '+m,'er');
     }
   }
-  finally{hideOv();setBtn('btn-daftar',false);}
+  finally{btnBusy('btn-daftar',false);}
 }
 function clearPF(){
   ['p-nama','p-pengelola','p-kod','p-bidang','p-per','p-tarikh','p-tempat'].forEach(function(id){document.getElementById(id).value='';});
@@ -374,7 +374,10 @@ function reqLihat(id,nm){
   lihatPeny(id,nm);
 }
 async function lihatPeny(pid,nm){
-  showOv('MEMUATKAN...');
+  // Buka modal serta-merta; penunjuk memuatkan berada DALAM modal (bukan overlay tengah skrin)
+  document.getElementById('lihat-tit').textContent='📋 PENYERTAAN — '+nm;
+  document.getElementById('lihat-body').innerHTML=ldInline('Memuatkan data penyertaan...');
+  openMoOnce('mo-lihat');
   try{
     // P: Sentiasa fetch fresh terus dari server (sama macam getRumusanGS).
     // SEBAB: cache _aP global boleh jadi stale/tidak lengkap (contohnya selepas
@@ -395,7 +398,7 @@ async function lihatPeny(pid,nm){
     document.getElementById('lihat-tit').textContent='📋 PENYERTAAN — '+nm;
     if(!d.length && !_belum.length){
       document.getElementById('lihat-body').innerHTML='<div class="empty"><div class="ei">📭</div><h3>Tiada penyertaan</h3></div>';
-      openMo('mo-lihat'); return;
+      return;
     }
     if(d.length) _checkKatMismatch(pid, d);
     var _progKatForLihat=_progKatList((_allProg||[]).filter(function(p){return p['ID']===pid;})[0]);
@@ -473,10 +476,11 @@ async function lihatPeny(pid,nm){
     if(_belum.length) wrap.appendChild(psBlokBelumDaftar(_belum,pid));
     document.getElementById('lihat-body').innerHTML='';
     document.getElementById('lihat-body').appendChild(wrap);
-    openMo('mo-lihat');
     setTimeout(_patchPadamSekBtns, 50);
-  }catch(e){toast('Gagal: '+e.message,'er'); showPcErr(pid, 'Gagal memuatkan data: '+e.message);}
-  finally{hideOv();}
+  }catch(e){
+    toast('Gagal: '+e.message,'er'); showPcErr(pid, 'Gagal memuatkan data: '+e.message);
+    var _lb=document.getElementById('lihat-body'); if(_lb) _lb.innerHTML='<div class="iwarn" style="font-size:.74rem;">⚠ Gagal memuatkan data: '+esc(e.message)+'</div>';
+  }
 }
 
 function reqPadamSek(progId,progNm,sekNm,kodSek){
@@ -493,7 +497,7 @@ function reqPadamSek(progId,progNm,sekNm,kodSek){
 }
 
 async function padamSekPeny(progId,progNm,sekNm,kodSek){
-  showOv('MEMADAM PENYERTAAN...');
+  var _lbp=document.getElementById('lihat-body'); if(_lbp) _lbp.innerHTML=ldInline('Memadam penyertaan...');
   try{
     // Use kemaskiniPenyertaanSekolahGS with rows=[] to wipe sekolah entries
     var r=await run('kemaskiniPenyertaanSekolahGS',{programId:progId,kodSekolah:kodSek,rows:[]});
@@ -502,7 +506,7 @@ async function padamSekPeny(progId,progNm,sekNm,kodSek){
       closeMo('mo-lihat');
     }else toast((r&&r.msg)||'Ralat','er');
   }catch(e){toast('Ralat: '+e.message,'er');}
-  finally{hideOv();}
+  
 }
 
 // Khas ADMIN: butang EDIT dalam modal lihat sekolah (dari bullet tab Penyertaan) —
@@ -544,29 +548,27 @@ function reqEditSek(progId,progNm,sekNm,kodSek){
 }
 
 async function _openPenyertaanEdit(prog, kodSek, sekNm){
-  showOv('MEMUATKAN DATA PENYERTAAN...');
+  // Modal EDIT PENYERTAAN: dibuka serta-merta, penunjuk memuatkan dalam modal; halaman semasa TIDAK ditukar
+  penyModalMuat('Memuatkan data penyertaan...', true);
   try{
-    // 1. Pindah ke tab peserta dahulu (tanpa loadProgsForPeny — kita urus sendiri)
-    _doShowPage('peserta');
-
-    // 2. Muatkan semua data dengan callback — pastikan _aP & _progForPny sedia
+    // 1. Muatkan senarai program penyertaan (_aP & _progForPny) tanpa menukar halaman
     await new Promise(function(resolve){
       loadProgsForPeny(false, resolve);
     });
 
-    // 3. Pastikan prog ini ada dalam _progForPny walaupun bukan AKTIF
+    // 2. Pastikan prog ini ada dalam _progForPny walaupun bukan AKTIF
     if(!_progForPny) _progForPny = [];
     if(!_progForPny.find(function(p){ return p['ID']===prog['ID']; })){
       _progForPny.push(prog);
     }
 
-    // 4. Cari data penyertaan sekolah ini dari _aP (sudah dimuatkan)
+    // 3. Cari data penyertaan sekolah ini dari _aP (sudah dimuatkan)
     var existing = _aP.filter(function(x){
       return x['Program ID']===prog['ID'] &&
              String(x['Kod Sekolah']||'').toUpperCase()===String(kodSek||'').toUpperCase();
     });
 
-    // 5. Jika tiada dalam cache, fetch terus
+    // 4. Jika tiada dalam cache, fetch terus
     if(!existing.length){
       var r = await run('getPenyertaanByProgramGS', prog['ID']);
       var all = (r&&r.data)?r.data:[];
@@ -581,17 +583,17 @@ async function _openPenyertaanEdit(prog, kodSek, sekNm){
       }
     }
 
-    hideOv();
     if(!existing.length){
+      penyModalTutup(true);
       toast('Tiada data penyertaan untuk sekolah ini.','in');
       return;
     }
 
-    // 6. Jalankan prefill — data sudah sedia
+    // 5. Jalankan prefill — data sudah sedia
     _prefillPenyertaanEdit(prog, kodSek, sekNm, existing);
 
   }catch(e){
-    hideOv();
+    penyModalTutup(true);
     toast('Ralat: '+e.message,'er');
   }
 }
@@ -618,16 +620,7 @@ function _prefillPenyertaanEdit(prog, kodSek, sekNm, rows){
     // Langkah 3: onSekSelect akan detect rekod, aktif Mod Kemaskini, prefill & buka borang
     onSekSelect(kodSek);
 
-    // Scroll ke borang
-    setTimeout(function(){
-      var fw = document.getElementById('peny-form-wrap');
-      if(fw && fw.style.display !== 'none'){
-        fw.scrollIntoView({behavior:'smooth', block:'start'});
-      } else {
-        var sbEl = document.getElementById('sbox-sekolah');
-        if(sbEl) sbEl.scrollIntoView({behavior:'smooth', block:'nearest'});
-      }
-    }, 300);
+    if(typeof penyModalJudul==='function') penyModalJudul();
   }, 200);
 }
 
@@ -644,11 +637,6 @@ function reqEdit(p){
 }
 async function openEdit(p){
   // PEMBETULAN SEDERHANA #1: Pastikan _aP sudah dimuatkan sebelum buka modal edit
-  if(!_aP||!_aP.length){
-    showOv('MEMUATKAN DATA...');
-    try{ await loadProgsForPeny(false); }catch(e){}
-    hideOv();
-  }
   eId=p['ID'];eNm=p['Nama Program'];
   var _katRaw=p['Kategori']||'INDIVIDU LELAKI,INDIVIDU PEREMPUAN';
   var _katList=_katRaw.split(',').map(function(k){return k.trim().toUpperCase();});
@@ -672,6 +660,7 @@ async function openEdit(p){
   document.getElementById('pc-ld').style.display='flex';
   document.getElementById('pc-form').style.display='none';
   openMo('mo-edit');
+  if(!_aP||!_aP.length){ try{ await loadProgsForPeny(false); }catch(e){} }
   var _psP=(typeof psMuatEdit==='function'&&_sesi&&(_sesi.role==='admin'||_sesi.role==='pkk'))?psMuatEdit(p['ID']):null;
   if(!_psP){ _pcTicked=[]; var _eb=document.getElementById('e-sek-box'); if(_eb) _eb.innerHTML=''; }
   try{

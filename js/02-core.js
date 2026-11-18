@@ -45,7 +45,7 @@ function _initRealtimeSync() {
 
     // Tangguh sepenuhnya (bukan buang) jika borang/modal aktif — proses lepas ditutup
     if (document.getElementById('ov').classList.contains('on') ||
-        (document.querySelector('.pg.on')||{}).id==='pg-peserta' && _isPenyFormAktif() ||
+        _isPenyFormAktif() && ((document.querySelector('.pg.on')||{}).id==='pg-peserta' || (document.getElementById('mo-peny')||{classList:{contains:function(){return false;}}}).classList.contains('on')) ||
         (document.querySelector('.pg.on')||{}).id==='pg-pengelola' && document.getElementById('mo-edit').classList.contains('on')) {
       _realtimeQueue = batch.concat(_realtimeQueue);
       clearTimeout(_realtimeBustTimer);
@@ -256,6 +256,9 @@ function setBtn(id,d){var b=document.getElementById(id);if(b)b.disabled=d;}
 
 // Semak sama ada borang penyertaan sedang aktif diisi
 function _isPenyFormAktif(){
+  // Modal penyertaan (daftar/edit) terbuka dengan borang dipaparkan = aktif, walau halaman semasa bukan Penyertaan
+  var _mp=document.getElementById('mo-peny'), _fw=document.getElementById('peny-form-wrap');
+  if(_mp&&_mp.classList.contains('on')&&_fw&&_fw.style.display!=='none') return true;
   // Borang aktif jika: (1) tab peserta sedang aktif, (2) program dipilih, (3) sekolah dipilih, (4) borang dipapar
   var pgPeserta = document.getElementById('pg-peserta');
   if(!pgPeserta || !pgPeserta.classList.contains('on')) return false;

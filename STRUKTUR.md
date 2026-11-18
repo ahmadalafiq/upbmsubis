@@ -43,6 +43,7 @@ Dipecahkan daripada satu fail 600 KB (16 Nov 2026, tag git `pra-pecah` = versi a
 | `19-sekolah-menyertai` | projek 16: widget "Sekolah yang menyertai" (Daftar/Edit Program), modal amaran selepas login (`semakTugasanSelepasLogin`), `_pcTicked` untuk Pencapaian | tick sekolah, modal tugasan |
 | `20-agensi-luar` | tick "Dianjurkan oleh agensi luar" (Daftar & Edit Program): kod auto Y044 (PPD SUBIS) | agensi luar |
 | `21-wizard-program` | W1: wizard 6 langkah Daftar Program dalam MODAL (`mo-daftar-prog`); draf auto-simpan, ID stabil, mesej timeout | wizard program, draf |
+| `22-modal-penyertaan` | modal DAFTAR / EDIT PENYERTAAN (`mo-peny`): borang dialih ke modal, tanpa tukar halaman; pembalut `pilihProg`/`resetPeny` | modal penyertaan |
 | `laporan-sekolah.js` | Laporan Sekolah + perbandingan sesi (dimuat terakhir; kekal di akar) | laporan |
 
 **Dashboard merentas 3 fail:** `10` (data/skor), `13` (rebuild/penapis), `17` (kad statistik, carta, penapis lanjutan).

@@ -5,20 +5,20 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _mapProgramOut:21, _mapPenyertaanOut:40, _mapPencapaianOut:64, _mapSekolahOut:85, _mapAkaunOut:89, _rowArrToPenyertaanIn:104, _throwIfErr:124, _fetchAllPaged:133, _supaDispatch:148, _uniq:466
 **Pemboleh ubah:** SUPABASE_URL:4, SUPABASE_ANON_KEY:5, sb:6, TBL_PROGRAM:14, TBL_PENYERTAAN:15, TBL_PENCAPAIAN:16, TBL_PENGGUNA:17, TBL_SEKOLAH:18
 
-## js/02-core.js — 385 baris, 18 KB
-**Fungsi:** _initRealtimeSync:33, esc:91, hlMatch:93, getTPT:111, _normPeringkat:121, mPts:132, cGet:150, cSet:151, cBust:152, onTahunChange:155, initTahunSel:164, run:198, showOv:251, hideOv:252, setBtn:253, _isPenyFormAktif:258, _tunjukDialogTinggal:273, _doShowPage:294, showPage:313, _resetTabFilters:324, togMarkah:356, buildMarkahGrid:362, askConfirm:375
+## js/02-core.js — 388 baris, 18 KB
+**Fungsi:** _initRealtimeSync:33, esc:91, hlMatch:93, getTPT:111, _normPeringkat:121, mPts:132, cGet:150, cSet:151, cBust:152, onTahunChange:155, initTahunSel:164, run:198, showOv:251, hideOv:252, setBtn:253, _isPenyFormAktif:258, _tunjukDialogTinggal:276, _doShowPage:297, showPage:316, _resetTabFilters:327, togMarkah:359, buildMarkahGrid:365, askConfirm:378
 **Pemboleh ubah:** _realtimeBustTimer:30, _realtimeQueue:31, LOGO_URL:78, LOGO_FULL:79, selId:80, _salinanPayload:81, gCnt:82, eId:83, _pps:84, markahOpen:85, _rk:86, _aP:87, _selTahun:88, MARKAH:100, PER_ORDER:108, TPT_STANDARD:109, TPT_TERBUKA:110, DAYS:112, MTHS:113, PERINGKAT_ALIAS:116, _peringkatWarnings:120, _C:149, RFN:188, _WRITE_FNS:191
 
-## js/03-program-senarai.js — 687 baris, 32 KB
-**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:73, loadProgs:86, populateMonthFilt:135, _setStab:156, _updateStabCounts:164, applyProgFilt:175, clearProgFilt:194, renderProgList:200, progCard:249, tutupRow:336, reqLihat:372, lihatPeny:376, reqPadamSek:482, padamSekPeny:495, _editSekolahDariBullet:510, reqEditSek:525, _openPenyertaanEdit:546, _prefillPenyertaanEdit:599, reqEdit:635, openEdit:645
+## js/03-program-senarai.js — 676 baris, 32 KB
+**Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:73, loadProgs:86, populateMonthFilt:135, _setStab:156, _updateStabCounts:164, applyProgFilt:175, clearProgFilt:194, renderProgList:200, progCard:249, tutupRow:336, reqLihat:372, lihatPeny:376, reqPadamSek:486, padamSekPeny:499, _editSekolahDariBullet:514, reqEditSek:529, _openPenyertaanEdit:550, _prefillPenyertaanEdit:601, reqEdit:628, openEdit:638
 **Pemboleh ubah:** _activeStab:155
 
 ## js/04-program-edit-pencapaian.js — 546 baris, 30 KB
 **Fungsi:** _onEditChange:3, saveEdit:19, renderPcForm:90, _autoFillBrkKsl:376, _fillBrkFromScores:509
 **Pemboleh ubah:** _editSaved:2, _brkPesList:375
 
-## js/05-pencapaian-rumusan.js — 545 baris, 27 KB
-**Fungsi:** _chkdBuild:2, _chkdRenderList:48, _chkdFilter:70, _chkdToggle:74, _chkdUpdateTags:107, _chkdGetSel:135, rPGKat:142, updateMarkah:161, _collectPencEntries:178, savePenc:231, _buildPencConfirm:237, doSavePenc:337, reqPadam:383, padamProg:388, reqRum:395, doRumusan:400, buildRum:417
+## js/05-pencapaian-rumusan.js — 546 baris, 27 KB
+**Fungsi:** _chkdBuild:2, _chkdRenderList:48, _chkdFilter:70, _chkdToggle:74, _chkdUpdateTags:107, _chkdGetSel:135, rPGKat:142, updateMarkah:161, _collectPencEntries:178, savePenc:231, _buildPencConfirm:237, doSavePenc:337, reqPadam:383, padamProg:388, reqRum:395, doRumusan:400, buildRum:418
 
 ## js/06-print-export.js — 695 baris, 48 KB
 **Fungsi:** buildPrintPortal:3, dBox:415, dBoxBJ:420, printRum:446, _numTeks:456, _csvCell:465, _xlTeksSheets:472, _xlTeksLajur:482, _kpSel:492, expCSV:496, reqXlsx:533, expXlsx:538, _buildXlsxWorkbook:562
@@ -27,7 +27,7 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _penyAutoSave:9, _startPenyAutoSave:21, _stopPenyAutoSave:25, _checkPenyDraft:30, _draftSambung:60, _draftReset:64, _draftBuang:71, _restorePenyDraft:77, loadProgsForPeny:106, setPenyView:141, applyPenyFilt:151, renderPenyList:167, pilihProg:232, _lihatSekolahDlmProgram:307, _buildKatLegend:347, addMainGuru:357, removeMainGuru:365, _getGuruSyorFromAP:370, _getPesSyorFromAP:388, renderMainGuruList:410, pickGuruFromSyor:450, _fmtTel60:463, fmtTel:480, normTel:487, fmtKP:500, normKP:522, saveGuru:529, addMainPes:538, _autoAssignKatByJantina:547, removeMainPes:567
 **Pemboleh ubah:** _progForPny:5, _penyAutoSaveTimer:8, _penyView:139, _syorGuruCache:407, _syorPesCache:408
 
-## js/08-penyertaan-bulk.js — 480 baris, 23 KB
+## js/08-penyertaan-bulk.js — 479 baris, 23 KB
 **Fungsi:** muatTurunTemplatXlsx:2, onXlsxFileSelected:41, _prosesBulkXlsx:58, renderMainPesList:140, pickPesFromSyor:190, savePes:202, saveKatPes:210, bangOpt:237, janOpt:241, semakPeny:246, _syncFormValues:384, hantarPeny:419
 
 ## js/09-penyertaan-pdf.js — 588 baris, 26 KB
@@ -37,9 +37,9 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** printDashRingkasan:4, _togDashSection:50, _updateDashTimestamp:59, loadDash:66, _tempatRank:98, _pelibatanDedupKey:120, getSkor:124, _hasPenc:264, _pencBadge:270, _isSekType:276, buildRank:277, moreRank:304, showDet:337, buildPenc:405, renderPencNameList:423, showPencDet:438, buildPodium:445, morePenc:556, uniByProg:574, uniSek:579, openBarList:590, renderBarList:601, filterBarList:611, clearBarListSrch:620, buildBar:624, renderBar:630, filtTable:649, renderTable:655, tableNav:656, _renderTablePage:661
 **Pemboleh ubah:** PELIBATAN_DEDUP_SCOPE:111, LUAR_POLISI:117, LUAR_FAKTOR_PELIBATAN:118, _dashJenis:119, _barData:584, _barListData:589, _tbData:654
 
-## js/11-modal-carian.js — 182 baris, 8 KB
-**Fungsi:** openMo:7, closeMo:28, _openDynMo:45, _closeDynMo:52, gv:63, cntBy:64, uniqGuru:65, uniqPes:66, fd:67, _trackAccess:68, _fmtAccess:83, toast:90, printSdet:103, filterMore:114, clearMoreSrch:143, filterMorep:153, clearMorepSrch:177
-**Pemboleh ubah:** _zTop:2, _moOpenCount:5, _moFocusStack:6, _moreData:112, _morepBp:150, _morepKeys:151
+## js/11-modal-carian.js — 192 baris, 8 KB
+**Fungsi:** openMo:7, openMoOnce:29, ldInline:31, btnBusy:33, closeMo:38, _openDynMo:55, _closeDynMo:62, gv:73, cntBy:74, uniqGuru:75, uniqPes:76, fd:77, _trackAccess:78, _fmtAccess:93, toast:100, printSdet:113, filterMore:124, clearMoreSrch:153, filterMorep:163, clearMorepSrch:187
+**Pemboleh ubah:** _zTop:2, _moOpenCount:5, _moFocusStack:6, _moreData:122, _morepBp:160, _morepKeys:161
 
 ## js/12-sekolah.js — 313 baris, 14 KB
 **Fungsi:** loadSekolahMaster:65, _buildSekKodMap:84, _jenisSekolah:91, _filterSkorByJenis:101, _renderRkType:118, _setRkJenis:125, onSugSekPeny:136, pickSekPeny:153, _syncDafSekDisplay:161, onSekSelect:170, _getSekSuggestions:222, _getNamaSekolahByKod:246, hideSug:257, onSugKodProg:265, onSugPengelolaProg:283, pickSugProg:301, _populateDafSekDropdown:311, onDafSekSelect:312
@@ -69,7 +69,7 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** aiTogglePanel:20, aiRenderSugg:38, aiOnKeydown:49, aiAppendMsg:56, aiShowTyping:65, aiBuildContext:82, aiSend:90, _fabPenyCheck:132, fabPenyToggleMenu:156, _fabPenyCloseMenu:160, _fabScrollToLast:164, fabDoAddPes:172, fabDoAddGuru:177
 **Pemboleh ubah:** _aiHist:7, _aiOpened:8, _aiBusy:9, AI_SARANAN_AWAL:11, AI_MESEJ_BELUM_LOGIN:18
 
-## js/19-sekolah-menyertai.js — 222 baris, 13 KB
+## js/19-sekolah-menyertai.js — 221 baris, 13 KB
 **Fungsi:** _psBox:13, _psSenarai:14, psMod:18, psGet:19, psReset:23, _psKemasBil:28, psRender:32, psSetMod:66, psToggle:71, psCari:75, psKumpulan:82, psMuatEdit:97, psSimpanEdit:113, psBlokBelumDaftar:128, _tgIsuHtml:153, _tgRender:162, semakTugasanSelepasLogin:187, _tgBuka:207
 **Pemboleh ubah:** _pcTicked:8, _psSel:9, _psMode:10, _psEdit:11, _tgData:147, _TG_ISU:148
 
@@ -81,6 +81,10 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _wzEl:13, _wzFi:14, _wzV:15, wzProgAktif:16, wzId:17, _wzKumpulan:23, _wzPapar:32, _wzSemak:53, _wzRingkas:62, wzKe:85, _wzScroll:86, wzNext:87, wzBack:93, wzToggle:94, wzMsg:102, wzMsgBuang:103, _wzKosong:106, wzSimpanDraf:109, _wzBacaDraf:123, wzPadamDraf:131, wzHintDraf:132, wzPulihDraf:138, bukaDaftarProgram:151, tutupDaftarProgram:165, wzMulaBaru:166, wzReset:171, wzInit:173
 **Pemboleh ubah:** _WZ_LANGKAH:8, _wz:9, _WZ_PREF:10, _WZ_MEDAN:11
 
+## js/22-modal-penyertaan.js — 76 baris, 4 KB
+**Fungsi:** penyModalAktif:7, penyModalJudul:8, penyModalMuat:14, penyModalBuka:22, penyModalTutup:31, penyModalTutupUser:38, penyModalInit:48
+**Pemboleh ubah:** _penyModalInited:5
+
 ## laporan-sekolah.js — 798 baris, 45 KB
 
-_Jumlah: 367 fungsi, 103 pemboleh ubah aras atas._
+_Jumlah: 377 fungsi, 104 pemboleh ubah aras atas._
