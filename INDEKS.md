@@ -1,13 +1,13 @@
 # INDEKS FUNGSI (dijana automatik — jangan edit tangan)
 Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran keseluruhan.
 
-## js/01-config-dispatcher.js — 467 baris, 22 KB
-**Fungsi:** _mapProgramOut:21, _mapPenyertaanOut:40, _mapPencapaianOut:64, _mapSekolahOut:85, _mapAkaunOut:89, _rowArrToPenyertaanIn:104, _throwIfErr:124, _fetchAllPaged:133, _supaDispatch:148, _uniq:466
+## js/01-config-dispatcher.js — 479 baris, 23 KB
+**Fungsi:** _mapProgramOut:21, _mapPenyertaanOut:40, _mapPencapaianOut:64, _mapSekolahOut:85, _mapAkaunOut:89, _rowArrToPenyertaanIn:104, _throwIfErr:124, _fetchAllPaged:133, _supaDispatch:148, _uniq:478
 **Pemboleh ubah:** SUPABASE_URL:4, SUPABASE_ANON_KEY:5, sb:6, TBL_PROGRAM:14, TBL_PENYERTAAN:15, TBL_PENCAPAIAN:16, TBL_PENGGUNA:17, TBL_SEKOLAH:18
 
-## js/02-core.js — 388 baris, 18 KB
-**Fungsi:** _initRealtimeSync:33, esc:91, hlMatch:93, getTPT:111, _normPeringkat:121, mPts:132, cGet:150, cSet:151, cBust:152, onTahunChange:155, initTahunSel:164, run:198, showOv:251, hideOv:252, setBtn:253, _isPenyFormAktif:258, _tunjukDialogTinggal:276, _doShowPage:297, showPage:316, _resetTabFilters:327, togMarkah:359, buildMarkahGrid:365, askConfirm:378
-**Pemboleh ubah:** _realtimeBustTimer:30, _realtimeQueue:31, LOGO_URL:78, LOGO_FULL:79, selId:80, _salinanPayload:81, gCnt:82, eId:83, _pps:84, markahOpen:85, _rk:86, _aP:87, _selTahun:88, MARKAH:100, PER_ORDER:108, TPT_STANDARD:109, TPT_TERBUKA:110, DAYS:112, MTHS:113, PERINGKAT_ALIAS:116, _peringkatWarnings:120, _C:149, RFN:188, _WRITE_FNS:191
+## js/02-core.js — 392 baris, 18 KB
+**Fungsi:** _initRealtimeSync:33, esc:91, hlMatch:93, getTPT:111, _normPeringkat:121, mPts:132, cGet:150, cSet:151, cBust:152, onTahunChange:155, initTahunSel:165, run:199, showOv:252, hideOv:253, setBtn:254, _isPenyFormAktif:259, _tunjukDialogTinggal:277, _doShowPage:298, showPage:320, _resetTabFilters:331, togMarkah:363, buildMarkahGrid:369, askConfirm:382
+**Pemboleh ubah:** _realtimeBustTimer:30, _realtimeQueue:31, LOGO_URL:78, LOGO_FULL:79, selId:80, _salinanPayload:81, gCnt:82, eId:83, _pps:84, markahOpen:85, _rk:86, _aP:87, _selTahun:88, MARKAH:100, PER_ORDER:108, TPT_STANDARD:109, TPT_TERBUKA:110, DAYS:112, MTHS:113, PERINGKAT_ALIAS:116, _peringkatWarnings:120, _C:149, RFN:189, _WRITE_FNS:192
 
 ## js/03-program-senarai.js — 676 baris, 32 KB
 **Fungsi:** getKatChecked:2, handleKatCheck:6, daftarProgram:22, clearPF:73, loadProgs:86, populateMonthFilt:135, _setStab:156, _updateStabCounts:164, applyProgFilt:175, clearProgFilt:194, renderProgList:200, progCard:249, tutupRow:336, reqLihat:372, lihatPeny:376, reqPadamSek:486, padamSekPeny:499, _editSekolahDariBullet:514, reqEditSek:529, _openPenyertaanEdit:550, _prefillPenyertaanEdit:601, reqEdit:628, openEdit:638
@@ -49,8 +49,8 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** setDashBidang:6, filterByBidang:18, rebuildDash:30, buildSekTiadaRekod:123
 **Pemboleh ubah:** _dashBidang:2, BIDANG_SUKAN:3, BIDANG_KOKU:4
 
-## js/14-auth-login.js — 415 baris, 17 KB
-**Fungsi:** lgTab:6, lgClearMsg:16, lgMsg:23, lgToggleAdmin:28, lgDot:45, lgResetStep:50, lgCariAkaun:60, lgMasuk:135, _mulakanSesi:162, _pfNamaVal:237, _pfMaskKP:238, openProfil:239, _pfOnChange:258, simpanProfil:263, _refreshNavUser:285, _applyRoleUI:298, lgKeluarConfirm:325, lgKeluar:337
+## js/14-auth-login.js — 417 baris, 18 KB
+**Fungsi:** lgTab:6, lgClearMsg:16, lgMsg:23, lgToggleAdmin:28, lgDot:45, lgResetStep:50, lgCariAkaun:60, lgMasuk:135, _mulakanSesi:162, _pfNamaVal:237, _pfMaskKP:238, openProfil:239, _pfOnChange:258, simpanProfil:263, _refreshNavUser:285, _applyRoleUI:298, lgKeluarConfirm:327, lgKeluar:339
 **Pemboleh ubah:** _sesi:3, _pfAsal:236
 
 ## js/15-akaun-admin.js — 522 baris, 27 KB
@@ -61,9 +61,9 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _checkPenyAkses:2, canPadamSek:12, showPcErr:28, hidePcErr:36, _progKatList:41, _getKatAsing:45, _checkKatMismatch:57, _initSesiDariStorage:73, _patchPadamSekBtns:98, loginGoogle:177, _initGoogleAuth:221, _semakSesiGoogle:234, claimAkaunGoogle:275, _toggleClaimMod:293, onSugClaimSek:306, pickClaimSek:323, daftarAkaunGoogleBaru:331, _initApp:353
 **Pemboleh ubah:** _SESI_TTL_MS:72, _origSemakPeny:94, _gSemakBusy:233
 
-## js/17-dashboard-analitik-fullscreen.js — 853 baris, 37 KB
-**Fungsi:** bnavSet:2, patchBnavAkaun:11, animateCounter:20, setView:45, openFullscreen:77, closeFullscreen:108, fsStatKad:131, fsProgSenarai:151, fsDashboard:158, _addFsButtonsToStatKad:170, _updateSekolahFilter:225, setStatusPill:242, applyDashFilters:252, resetDashFilters:284, _dfFilterProgs:324, _dfFilterPny:359, _dfFilterPnc:380, _withJenis:392, buildPanelLuar:393, buildChartBidang:448, buildChartDonut:476, buildChartTrend:519, buildChartJantina:591, buildProgTable:656, fsChart:702, fsProgTable:716, toggleNativeFullscreen:728, _onFsChange:783
-**Pemboleh ubah:** _fsActive:74, _fsPrevFocus:75, _origLoadDash:193, _origMulakanSesi:205, _dashStatus:219, _dashPeringkat:220, _dashBulan:221, _dashSekolah:222, BIDANG_KOKU_LIST:322, _nativeFsElId:726
+## js/17-dashboard-analitik-fullscreen.js — 854 baris, 37 KB
+**Fungsi:** bnavSet:2, patchBnavAkaun:11, animateCounter:21, setView:46, openFullscreen:78, closeFullscreen:109, fsStatKad:132, fsProgSenarai:152, fsDashboard:159, _addFsButtonsToStatKad:171, _updateSekolahFilter:226, setStatusPill:243, applyDashFilters:253, resetDashFilters:285, _dfFilterProgs:325, _dfFilterPny:360, _dfFilterPnc:381, _withJenis:393, buildPanelLuar:394, buildChartBidang:449, buildChartDonut:477, buildChartTrend:520, buildChartJantina:592, buildProgTable:657, fsChart:703, fsProgTable:717, toggleNativeFullscreen:729, _onFsChange:784
+**Pemboleh ubah:** _fsActive:75, _fsPrevFocus:76, _origLoadDash:194, _origMulakanSesi:206, _dashStatus:220, _dashPeringkat:221, _dashBulan:222, _dashSekolah:223, BIDANG_KOKU_LIST:323, _nativeFsElId:727
 
 ## js/18-ai-fab.js — 203 baris, 8 KB
 **Fungsi:** aiTogglePanel:20, aiRenderSugg:38, aiOnKeydown:49, aiAppendMsg:56, aiShowTyping:65, aiBuildContext:82, aiSend:90, _fabPenyCheck:143, fabPenyToggleMenu:167, _fabPenyCloseMenu:171, _fabScrollToLast:175, fabDoAddPes:183, fabDoAddGuru:188
@@ -87,6 +87,10 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 
 ## js/23-ux-aksesibiliti.js — 102 baris, 6 KB
 
+## js/24-anugerah.js — 222 baris, 21 KB
+**Fungsi:** _agAdmin:17, _agTahun:18, _agFmt:19, _agPrefix:20, loadAnugerah:23, _agInp:41, _agBaris:42, _agRenderRubrik:47, _agPasang:81, _agKemasMod:82, _agKemasJumlah:87, _agN:94, _agBacaForm:95, _agSahJumlah:109, agPratonton:115, agSimpan:116, agLalai:125, agMuatTersimpan:126, _agBadge:129, _agMedal:133, _agRenderSemua:134, _agNota:148, agTab:160, agFilt:161, agCari:162, _agTblTop:164, _agRenderIsi:174, agEksport:203
+**Pemboleh ubah:** _ag:5, AG_LALAI:6, AG_LABEL:14, AG_TAB:15
+
 ## laporan-sekolah.js — 798 baris, 45 KB
 
-_Jumlah: 379 fungsi, 104 pemboleh ubah aras atas._
+_Jumlah: 407 fungsi, 108 pemboleh ubah aras atas._

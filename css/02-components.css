@@ -287,3 +287,22 @@ input.nc-off{text-transform:none!important;}
 .btn-busy .sp{display:inline-block;vertical-align:-3px;margin-right:.4rem;width:13px;height:13px;border-width:2px;}
 /* Modal penyertaan: sembunyikan borang semasa memuatkan (hanya penunjuk dalam modal kelihatan) */
 .peny-muat > *:not(#peny-modal-ld){display:none !important;}
+
+/* == Halaman Anugerah (admin) == */
+.ag-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:.9rem;}
+.ag-box{border:1.5px solid var(--g2);border-radius:var(--r);padding:.7rem .85rem;background:#fff;}
+.ag-h{font-weight:800;font-size:.78rem;margin-bottom:.4rem;}
+.ag-h2{font-size:.66rem;font-weight:800;text-transform:uppercase;color:var(--g6);margin:.6rem 0 .2rem;}
+.ag-nota{font-size:.66rem;color:var(--g6);margin-top:.4rem;line-height:1.45;}
+.ag-box input[type=number],.ag-box select{padding:.3rem .4rem;font-size:.78rem;}
+.ag-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem;margin-bottom:.8rem;}
+.ag-card{border:1.5px solid var(--g2);border-radius:var(--r);padding:.6rem .8rem;background:#fff;text-align:center;}
+.ag-num{font-family:'Montserrat',sans-serif;font-size:1.7rem;font-weight:900;line-height:1.1;margin:.2rem 0;}
+.ag-sub{font-size:.64rem;color:var(--g6);font-weight:700;}
+.ag-tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 .7rem;}
+.ag-tab{border:1.5px solid var(--g2);background:#fff;border-radius:20px;padding:.4rem .85rem;font-size:.72rem;font-weight:800;cursor:pointer;color:var(--g7);}
+.ag-tab.on{background:var(--red);border-color:var(--red);color:#fff;}
+.ag-tbl{width:100%;border-collapse:collapse;font-size:.76rem;}
+.ag-tbl th{text-align:left;font-size:.64rem;text-transform:uppercase;color:var(--g6);padding:.4rem .5rem;border-bottom:2px solid var(--g2);white-space:nowrap;}
+.ag-tbl td{padding:.42rem .5rem;border-bottom:1px solid var(--g1);vertical-align:top;}
+.ag-tbl tbody tr:hover{background:var(--g1);}

@@ -13,6 +13,7 @@ function patchBnavAkaun() {
   if (!akunBtn) return;
   var isAdmin = window._sesi && window._sesi.role === 'admin';
   akunBtn.style.display = isAdmin ? 'flex' : 'none';
+  var agBtn = document.getElementById('bnav-anugerah'); if (agBtn) agBtn.style.display = isAdmin ? 'flex' : 'none';
 }
 setTimeout(patchBnavAkaun, 900);
 

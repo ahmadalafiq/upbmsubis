@@ -159,6 +159,7 @@ function onTahunChange(){
   loadProgs(true);
   loadProgsForPeny(true);
   loadDash(true);
+  var _pa=document.getElementById('pg-anugerah'); if(_pa&&_pa.classList.contains('on')&&typeof loadAnugerah==='function'){ document.getElementById('ag-rubrik').innerHTML=''; loadAnugerah(false); }
 }
 
 async function initTahunSel(){
@@ -295,6 +296,8 @@ function _tunjukDialogTinggal(pgTujuOrFn){
 
 // Pelaksana sebenar tukar tab (tanpa semakan)
 function _doShowPage(pg){
+  // Halaman Anugerah: admin sahaja (pelayan turut menolak bukan admin)
+  if(pg==='anugerah' && !(_sesi && _sesi.role==='admin')){ if(typeof toast==='function') toast('Halaman Anugerah hanya untuk admin.','er'); return; }
   // P11: Tutup semua modal sebelum tukar tab
   document.querySelectorAll('.mo.on').forEach(function(m){m.classList.remove('on');});
   _moOpenCount=0;
@@ -311,6 +314,7 @@ function _doShowPage(pg){
   if(pg==='peserta'){loadProgsForPeny(false);setTimeout(_checkPenyDraft,800);}
   if(pg==='dashboard')loadDash(false);
   if(pg==='akaun')loadAkaun(false);
+  if(pg==='anugerah'&&typeof loadAnugerah==='function')loadAnugerah(false);
 }
 
 function showPage(pg){

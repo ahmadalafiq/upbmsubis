@@ -302,6 +302,8 @@ function _applyRoleUI(){
   var isPKK   = _sesi.role==='pkk';
   // Tab Akaun — Admin sahaja
   document.getElementById('nt-akaun').style.display = isAdmin ? '' : 'none';
+  var _ntAg = document.getElementById('nt-anugerah'); if(_ntAg) _ntAg.style.display = isAdmin ? '' : 'none';
+  var _bnAg = document.getElementById('bnav-anugerah'); if(_bnAg) _bnAg.style.display = isAdmin ? 'flex' : 'none';
   // Borang daftar program — sembunyikan untuk Guru, tunjuk untuk PKK dan Admin
   var cardDaftar = document.getElementById('card-daftar-prog');
   if(cardDaftar) cardDaftar.style.display = isGuru ? 'none' : '';

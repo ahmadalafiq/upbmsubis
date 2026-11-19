@@ -164,6 +164,7 @@
     <button class="nt" onclick="showPage('peserta')" data-pg="peserta">📋 PENYERTAAN</button>
     <button class="nt" onclick="showPage('dashboard')" data-pg="dashboard">📊 DASHBOARD</button>
     <button class="nt" id="nt-akaun" onclick="showPage('akaun')" data-pg="akaun" style="display:none;">👥 AKAUN</button>
+    <button class="nt" id="nt-anugerah" onclick="showPage('anugerah')" data-pg="anugerah" style="display:none;">🏆 ANUGERAH</button>
   </div>
   <!-- Pemilih Tahun -->
   <div class="tahun-sel-wrap" id="tahun-sel-wrap" style="display:none;">
@@ -203,6 +204,10 @@
   <button class="bnav-item" id="bnav-akaun" onclick="showPage('akaun');bnavSet('akaun')" aria-label="Akaun" style="display:none;">
     <span class="bnav-ico">👥</span>
     <span>Akaun</span>
+  </button>
+  <button class="bnav-item" id="bnav-anugerah" onclick="showPage('anugerah');bnavSet('anugerah')" aria-label="Anugerah" style="display:none;">
+    <span class="bnav-ico">🏆</span>
+    <span>Anugerah</span>
   </button>
 </nav>
 
@@ -362,6 +367,12 @@
 </div>
 
 <!-- PAGE: AKAUN (Admin sahaja) -->
+<div class="pg" id="pg-anugerah">
+  <div class="ph"><div class="bc">UPBM SUBIS <b>›</b> ANUGERAH</div><h1>Anugerah Sekolah &amp; Guru</h1><p>Emas · Perak · Gangsa (semua sekolah) dan Tempat 1–5 sekolah &amp; guru — khusus admin. Rubrik boleh dilaras dan dipratonton.</p></div>
+  <div id="ag-rubrik"></div>
+  <div id="ag-hasil"></div>
+</div>
+
 <div class="pg" id="pg-akaun">
   <div class="ph"><div class="bc">UPBM SUBIS <b>›</b> AKAUN</div><h1>Urus Akaun Pengguna</h1><p>Lulus, tolak dan urus akaun guru &amp; pengelola</p></div>
   <div class="card mb2">
@@ -1155,6 +1166,7 @@
 <script src="js/21-wizard-program.js?v=20261119"></script>
 <script src="js/22-modal-penyertaan.js?v=20261120"></script>
 <script src="js/23-ux-aksesibiliti.js?v=20261122"></script>
+<script src="js/24-anugerah.js?v=20261123"></script>
 <script src="laporan-sekolah.js"></script>
 </body>
 </html>

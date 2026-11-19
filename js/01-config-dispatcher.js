@@ -219,6 +219,18 @@ async function _supaDispatch(fn, payload){
     return {ok:true, msg:'Program berjaya didaftarkan', id:newProgId};
   }
 
+  if(fn === 'anugerahGS'){   // ADMIN SAHAJA — pelayan menolak peranan lain
+    var rAg = await sb.rpc('anugerah_keputusan', {p_no_kp:(_sesi&&_sesi.noKP)||'', p_token:(_sesi&&_sesi.token)||'', p_tahun:(payload&&payload.tahun)||null, p_config:(payload&&payload.config)||null});
+    _throwIfErr(rAg.error);
+    return {ok:true, data:rAg.data};
+  }
+
+  if(fn === 'anugerahSimpanGS'){   // ADMIN SAHAJA
+    var rAs = await sb.rpc('anugerah_config_simpan', {p_no_kp:(_sesi&&_sesi.noKP)||'', p_token:(_sesi&&_sesi.token)||'', p_config:payload.config});
+    _throwIfErr(rAs.error);
+    return {ok:true, data:rAs.data};
+  }
+
   if(fn === 'getSekolahProgramGS'){
     var rSp = await sb.rpc('senarai_sekolah_program', {p_no_kp:(_sesi&&_sesi.noKP)||'', p_token:(_sesi&&_sesi.token)||'', p_program_id:String(payload)});
     _throwIfErr(rSp.error);
