@@ -1,9 +1,9 @@
 // == SENARAI SEKOLAH STATIK (dari fail rasmi) =======================
 var _SEKOLAH_STATIK = [
-  {kod:'YCC4402',nama:'SJK(C) CHEE MUNG'},
-  {kod:'YCC4403',nama:'SJK(C) CHIN NAM'},
-  {kod:'YCC4404',nama:'SJK(C) CHUNG HUA SUNGAI LUMUT'},
-  {kod:'YCC4401',nama:'SJK(C) CHUNG HUA SIBUTI'},
+  {kod:'YCC4402',nama:'SJK (C) CHEE MUNG'},
+  {kod:'YCC4403',nama:'SJK (C) CHIN NAM'},
+  {kod:'YCC4404',nama:'SJK (C) CHUNG HUA SUNGAI LUMUT'},
+  {kod:'YCC4401',nama:'SJK (C) CHUNG HUA SIBUTI'},
   {kod:'YBB4412',nama:'SK BATU NIAH'},
   {kod:'YBB4408',nama:'SK BATU TELLINGAI'},
   {kod:'YBA4407',nama:'SK BEKENU'},

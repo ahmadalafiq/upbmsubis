@@ -1,0 +1,51 @@
+/* == Paparan Program baharu (Pengelola & Penyertaan) == */
+.ph-bar{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem;}
+.ph-view{display:inline-flex;gap:.25rem;font-size:.66rem;}
+.ph-view button{border:1.5px solid var(--g2);background:#fff;border-radius:16px;padding:.22rem .65rem;font-weight:800;cursor:pointer;color:var(--g7);}
+.ph-view button.on{background:var(--red);border-color:var(--red);color:#fff;}
+.ph-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem;}
+.ph-chip{border:1.5px solid var(--g2);background:#fff;border-radius:20px;padding:.38rem .8rem;font-size:.72rem;font-weight:800;cursor:pointer;color:var(--g7);display:inline-flex;gap:.35rem;align-items:center;}
+.ph-chip b{font-family:'Montserrat',sans-serif;}
+.ph-chip.on{background:var(--red);border-color:var(--red);color:#fff;}
+.ph-chip.warn:not(.on){border-color:#f5d98b;background:#fffdf3;color:#8a5a00;}
+.ph-filters{display:flex;gap:.45rem;flex-wrap:wrap;margin-bottom:.7rem;align-items:center;}
+.ph-filters input[type=search]{flex:1;min-width:170px;}
+.ph-filters select{max-width:170px;}
+.ph-wrap{display:grid;grid-template-columns:minmax(0,1fr);gap:.9rem;align-items:start;}
+@media(min-width:1000px){.ph-wrap{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);}.ph-detail{position:sticky;top:74px;max-height:calc(100vh - 92px);overflow:auto;}}
+.ph-list{display:flex;flex-direction:column;gap:.4rem;}
+.ph-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.3rem .8rem;align-items:center;border:1.5px solid var(--g2);border-left:5px solid var(--g3);border-radius:var(--r);padding:.55rem .75rem;background:#fff;cursor:pointer;}
+.ph-row:hover{background:var(--g1);}
+.ph-row.sel{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,57,43,.12);}
+.ph-row.st-AKTIF{border-left-color:#27ae60;}.ph-row.st-DRAFT{border-left-color:#f39c12;}.ph-row.st-TUTUP{border-left-color:#95a5a6;}
+.ph-title{font-weight:800;font-size:.82rem;line-height:1.3;word-break:break-word;}
+.ph-sub{font-size:.68rem;color:var(--g6);margin-top:.15rem;display:flex;gap:.2rem .6rem;flex-wrap:wrap;align-items:center;}
+.ph-tag{background:var(--g1);border-radius:10px;padding:.02rem .5rem;font-weight:800;font-size:.62rem;color:var(--g7);}
+.ph-due{font-weight:800;color:#8a5a00;}.ph-due.lepas{color:var(--g6);font-weight:600;}
+.ph-metrics{display:flex;gap:.55rem;font-size:.7rem;font-weight:800;color:var(--g7);grid-column:1;}
+.ph-metrics .ph-warn{color:#8a5a00;}
+.ph-act{grid-row:1/span 2;grid-column:2;display:flex;gap:.3rem;align-items:center;justify-content:flex-end;}
+.ph-more{border:1.5px solid var(--g2);background:#fff;border-radius:var(--r);width:34px;height:34px;font-size:1rem;cursor:pointer;font-weight:900;}
+.ph-st{display:inline-block;border-radius:20px;padding:.08rem .55rem;font-size:.62rem;font-weight:800;}
+.ph-st.s-TUGASAN{background:#fff0b8;color:#7a5b00;}.ph-st.s-TIDAK_LENGKAP{background:#fde2e0;color:#8e2b20;}.ph-st.s-DRAF{background:#e3eefc;color:#1b4f8a;}.ph-st.s-DIHANTAR{background:#d5f5e3;color:#14683a;}.ph-st.s-BELUM{background:var(--g1);color:var(--g7);}
+.ph-detail{border:1.5px solid var(--g2);border-radius:var(--r);background:#fff;padding:.9rem 1rem;}
+.ph-detail h2{font-size:.95rem;margin:.1rem 0 .4rem;line-height:1.3;}
+.ph-kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:.2rem .6rem;font-size:.74rem;margin:.6rem 0;}
+.ph-kv dt{color:var(--g6);font-weight:700;margin:0;}.ph-kv dd{margin:0;font-weight:700;word-break:break-word;}
+.ph-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:.6rem 0;}
+.ph-kpi div{border:1.5px solid var(--g2);border-radius:var(--r);text-align:center;padding:.45rem;}
+.ph-kpi b{display:block;font-family:'Montserrat',sans-serif;font-size:1.2rem;}.ph-kpi span{font-size:.62rem;color:var(--g6);font-weight:700;}
+.ph-issues{display:flex;gap:.35rem;flex-wrap:wrap;margin:.4rem 0;}.ph-issue{background:#fffdf3;border:1px solid #f5d98b;color:#7a5b00;border-radius:12px;padding:.1rem .55rem;font-size:.66rem;font-weight:700;}
+.ph-acts{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.7rem;}
+.ph-sekl{max-height:210px;overflow:auto;border:1.5px solid var(--g2);border-radius:var(--r);margin-top:.4rem;}
+.ph-sekl div{display:flex;justify-content:space-between;gap:.5rem;padding:.25rem .55rem;font-size:.7rem;border-bottom:1px solid var(--g1);}
+.ph-menu{position:fixed;z-index:100000;background:#fff;border:1.5px solid var(--g2);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:170px;padding:.25rem;}
+.ph-menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:.5rem .7rem;font-size:.76rem;font-weight:700;cursor:pointer;border-radius:6px;}
+.ph-menu button:hover,.ph-menu button:focus-visible{background:var(--g1);}.ph-menu button.bahaya{color:var(--red);}
+.ph-more-btn{margin:.7rem auto 0;display:block;}
+.ph-tutup-detail{display:none;}
+@media(max-width:999px){
+  .ph-detail{display:none;}
+  .ph-detail.buka{display:block;position:fixed;inset:0;z-index:880;border-radius:0;overflow:auto;padding:1rem 1.1rem calc(1rem + env(safe-area-inset-bottom,0px));}
+  .ph-detail.buka .ph-tutup-detail{display:inline-flex;margin-bottom:.6rem;}
+}

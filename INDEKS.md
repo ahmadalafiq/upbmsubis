@@ -91,6 +91,10 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _agAdmin:17, _agTahun:18, _agFmt:19, _agPrefix:20, loadAnugerah:23, _agInp:41, _agBaris:42, _agRenderRubrik:47, _agPasang:83, _agKemasMod:84, _agKemasJumlah:89, _agN:96, _agBacaForm:97, _agSahJumlah:112, agPratonton:118, agSimpan:119, agLalai:128, agMuatTersimpan:129, _agBadge:132, _agMedal:136, _agRenderSemua:137, _agNota:151, agTab:164, agFilt:165, agCari:166, _agTblTop:168, _agRenderIsi:178, agEksport:207
 **Pemboleh ubah:** _ag:5, AG_LALAI:6, AG_LABEL:14, AG_TAB:15
 
+## js/25-program-hub.js — 297 baris, 24 KB
+**Fungsi:** _phOwn:15, _phRole:16, _phProgs:17, _phTop:18, _phTarikh:19, _phHari:20, _phHariTeks:25, _phBulanKey:26, _phStats:29, _phInfo:42, _phDraf:54, _phStatusSendiri:55, _phMuatTugas:64, _phLulus:79, _phIsih:98, _phSusun:110, phRender:115, _phBaris:164, _phDetail:180, _phProg:215, phAksi:216, phPilih:232, phTutupDetail:233, phTab:234, phSet:235, phCari:237, phLagi:238, phMuatSemula:239, phTutupMenu:245, phMenu:246, phPaparan:271, _phPasang:277
+**Pemboleh ubah:** _PH_PREF:6, _ph:7, _PH_BULAN:13, _PH_ST_TEKS:62, _PH_CTA:63, _phCariT:236
+
 ## laporan-sekolah.js — 798 baris, 45 KB
 
-_Jumlah: 407 fungsi, 108 pemboleh ubah aras atas._
+_Jumlah: 439 fungsi, 114 pemboleh ubah aras atas._
