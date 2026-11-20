@@ -87,8 +87,8 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 
 ## js/23-ux-aksesibiliti.js — 102 baris, 6 KB
 
-## js/24-anugerah.js — 222 baris, 21 KB
-**Fungsi:** _agAdmin:17, _agTahun:18, _agFmt:19, _agPrefix:20, loadAnugerah:23, _agInp:41, _agBaris:42, _agRenderRubrik:47, _agPasang:81, _agKemasMod:82, _agKemasJumlah:87, _agN:94, _agBacaForm:95, _agSahJumlah:109, agPratonton:115, agSimpan:116, agLalai:125, agMuatTersimpan:126, _agBadge:129, _agMedal:133, _agRenderSemua:134, _agNota:148, agTab:160, agFilt:161, agCari:162, _agTblTop:164, _agRenderIsi:174, agEksport:203
+## js/24-anugerah.js — 226 baris, 22 KB
+**Fungsi:** _agAdmin:17, _agTahun:18, _agFmt:19, _agPrefix:20, loadAnugerah:23, _agInp:41, _agBaris:42, _agRenderRubrik:47, _agPasang:83, _agKemasMod:84, _agKemasJumlah:89, _agN:96, _agBacaForm:97, _agSahJumlah:112, agPratonton:118, agSimpan:119, agLalai:128, agMuatTersimpan:129, _agBadge:132, _agMedal:136, _agRenderSemua:137, _agNota:151, agTab:164, agFilt:165, agCari:166, _agTblTop:168, _agRenderIsi:178, agEksport:207
 **Pemboleh ubah:** _ag:5, AG_LALAI:6, AG_LABEL:14, AG_TAB:15
 
 ## laporan-sekolah.js — 798 baris, 45 KB

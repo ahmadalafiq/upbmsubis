@@ -6,9 +6,9 @@ Halaman **🏆 ANUGERAH** (admin sahaja; pelayan menolak peranan lain). Semua pe
 | Perkara | Peraturan |
 |---|---|
 | Unit pencapaian | Satu **keputusan** = (program, kategori, tempat, sekolah[, peserta bagi kategori individu]). Keputusan berkumpulan dikira **sekali**, bukan setiap peserta (data: 140 baris *Terbuka Berkumpulan* = 34 keputusan sebenar). |
-| Mata | Markah rasmi sistem. Jika kosong (Bahagian/Negeri belum bermarkah): dianggar = mata tempat (1=11, 2=10, 3=9, 4=8, 5=7) × pengganda peringkat (Bahagian ×1.2, Negeri ×1.5, Kebangsaan ×2). Dinyatakan dalam Nota Data. |
+| Mata | **JADUAL 6 markah rasmi** (js/02-core.js; kini juga fungsi `markah_rasmi` di pangkalan data). Markah yang kosong dilengkapkan automatik (pencetus `trg_pencapaian_markah_auto`). 18 rekod kosong 2026 (Bahagian 12, Daerah Terbuka Berkumpulan 4, Negeri 2) telah dilengkapkan dan diarkibkan dalam `arkib_pencapaian_markah_20261122`. |
 | Kategori KESELURUHAN | Dikecualikan (agregat daripada kategori lain; markah tiada). |
-| Sekolah | Semua sekolah dalam jadual `sekolah` (50). SR dan SM dinilai dalam **kohort masing-masing** (kod sekolah huruf ke-2 = `E` → SM). |
+| Sekolah | Semua sekolah dalam jadual `sekolah` **kecuali kod dikecualikan** (lalai `Y044` = PPD SUBIS, bukan sekolah) → 49 sekolah. SR dan SM dinilai dalam **kohort masing-masing** (kod sekolah huruf ke-2 = `E` → SM). |
 | Guru | Dikenal pasti melalui No. KP (digit sahaja, 12 angka); jika tiada → nama. Pencapaian dengan beberapa guru (` | `) dipecah dan setiap guru dikreditkan penuh. |
 
 ## 2. Rubrik A — Emas · Perak · Gangsa (semua sekolah)
@@ -26,6 +26,7 @@ Skor 0–100. Setiap ukuran dibandingkan dengan **persentil ke-90 kohort** (diha
 
 **Kategori (lalai kaedah MUTLAK):** Emas ≥ 75 · Perak ≥ 55 · Gangsa ≥ 35 · di bawah = tiada pingat.
 **Syarat minimum (turun satu tahap jika gagal):** Emas ≥ 3 tempat & ≥ 8 program · Perak ≥ 1 tempat & ≥ 5 program · Gangsa ≥ 3 program. (Elak pingat untuk kehadiran semata-mata.)
+**Saguhati 🎖:** diberi kepada sekolah yang tidak mencapai Gangsa tetapi **menyertai sekurang-kurangnya 1 program** (lalai; boleh ditukar — `0` = semua sekolah termasuk yang tiada penyertaan) atau mempunyai pencapaian. Sekolah tanpa sebarang penyertaan: tiada anugerah ("—").
 **Kaedah alternatif PERCENTILE:** 15% teratas Emas, 25% berikutnya Perak, 30% berikutnya Gangsa (hanya sekolah yang ada penyertaan).
 
 ## 3. Rubrik B — Tempat 1–5 Sekolah (SR dan SM berasingan)
@@ -41,14 +42,18 @@ Menekankan kecemerlangan. Setiap ukuran dibandingkan dengan **pemimpin kohort** 
 |---|---|---|---|---|---|
 Skor minimum 20; pemecah seri sama seperti Rubrik B. Kelengkapan data guru = No. KP 12 digit, jantina, bangsa, telefon.
 
-## 5. Keputusan yang perlu disahkan jawatankuasa
-1. Berat dan ambang di atas ialah **cadangan** (diuji pada data 2026; ≈ 9 Emas, 8 Perak, 15 Gangsa daripada 50). Ubah dalam panel rubrik, tekan PRATONTON, kemudian SIMPAN.
-2. Adakah markah Bahagian/Negeri akan dimasukkan secara rasmi? Sehingga itu mata dianggar (ditanda `*`).
-3. Sekolah tanpa penyertaan tidak layak pingat (kategori "—").
-4. Guru dengan nama tanpa No. KP dikenal pasti melalui nama sahaja (ditanda ⚠).
-5. Kualiti data: rekod penyertaan tanpa peserta (guru sahaja) tidak dikira sebagai peserta.
+## 5. Keputusan jawatankuasa (dicatat 21 Nov 2026)
+1. Berat, ambang dan rubrik A/B/C — **diterima**.
+2. Markah Bahagian/Negeri — **dimasukkan secara rasmi** (JADUAL 6; lihat Bahagian 1).
+3. Sekolah yang tidak layak — **Saguhati** (Bahagian 2).
+4. Penormalan mengikut saiz sekolah (bilangan murid) — **ditangguhkan ke versi akan datang**.
 
-## 6. Had yang diketahui
-- Jumlah murid sebenar setiap sekolah tidak ada dalam sistem, jadi skor tidak dinormalkan mengikut saiz sekolah; "kadar kemenjadian" dan "kepelbagaian" mengimbangi sebahagiannya.
+## 6. Perkara terbuka
+1. Hasil pada data 2026: 9 Emas, 8 Perak, 16 Gangsa, 15 Saguhati, 1 tiada (49 sekolah). Ambang boleh diubah dalam panel: PRATONTON → SIMPAN.
+2. Guru dengan nama tanpa No. KP dikenal pasti melalui nama sahaja (ditanda ⚠).
+3. Kualiti data: rekod penyertaan tanpa peserta (guru sahaja) tidak dikira sebagai peserta.
+
+## 7. Had yang diketahui
+- Jumlah murid setiap sekolah belum ada dalam sistem, jadi skor belum dinormalkan mengikut saiz (versi akan datang); "kadar kemenjadian" dan "kepelbagaian" mengimbangi sebahagiannya.
 - Data tahun lalu tiada (hanya 2026) — ambang belum boleh diuji dengan sejarah.
 - Keputusan ialah **cadangan berasaskan data**; semak Nota Data sebelum pengumuman.
