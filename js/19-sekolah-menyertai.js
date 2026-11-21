@@ -11,8 +11,9 @@ var _psMode = {p:'KEMUDIAN'};       // Daftar Program: 'KEMUDIAN' | 'PILIH'
 var _psEdit = {loaded:false, progId:'', asal:''};
 
 function _psBox(pre){ return document.getElementById(pre+'-sek-box'); }
-function _psSenarai(){
-  return (typeof _SEKOLAH_STATIK!=='undefined'?_SEKOLAH_STATIK:[]).filter(function(s){return s&&s.kod&&s.nama;})
+function _psSenarai(pre){
+  var sas=(pre&&typeof sasGet==='function')?sasGet(pre):'';   // hanya sekolah dalam sasaran program (SR/SM)
+  return (typeof _SEKOLAH_STATIK!=='undefined'?_SEKOLAH_STATIK:[]).filter(function(s){return s&&s.kod&&s.nama&&(!sas||(typeof sasOk==='function'?sasOk(s.kod,sas):true));})
     .slice().sort(function(a,b){return String(a.nama).localeCompare(String(b.nama));});
 }
 function psMod(pre){ return pre==='p' ? (_psMode.p||'KEMUDIAN') : 'PILIH'; }
@@ -31,6 +32,7 @@ function _psKemasBil(pre){
 }
 function psRender(pre){
   var box=_psBox(pre); if(!box) return;
+  if(typeof sasGet==='function'){ var _sas=sasGet(pre); if(_sas) Object.keys(_psSel[pre]||{}).forEach(function(k){ if(!sasOk(k,_sas)) delete _psSel[pre][k]; }); }   // buang pilihan di luar sasaran
   var h='<label>🏫 Sekolah yang menyertai</label>';
   if(pre==='p'){
     h+='<div style="display:flex;flex-direction:column;gap:.3rem;margin:.2rem 0 .5rem;">'
@@ -51,7 +53,7 @@ function psRender(pre){
       +'<button type="button" class="btn bs bsm" onclick="psKumpulan(\''+pre+'\',\'KOSONG\')">KOSONGKAN</button>'
       +'<span id="'+pre+'-sek-bil" style="font-size:.68rem;font-weight:800;color:var(--g6);align-self:center;margin-left:.3rem;"></span></div>'
       +'<div id="'+pre+'-sek-chk" style="max-height:220px;overflow-y:auto;border:1px solid var(--g2);border-radius:var(--r);padding:.35rem .5rem;display:flex;flex-direction:column;gap:.15rem;">';
-    _psSenarai().forEach(function(s){
+    _psSenarai(pre).forEach(function(s){
       var jenis=(typeof _jenisSekolah==='function')?_jenisSekolah(s.nama):'SR';
       h+='<label class="kat-chk" data-q="'+esc(String(s.nama).toLowerCase()+' '+String(s.kod).toLowerCase())+'" data-j="'+jenis+'" style="margin:0;">'
         +'<input type="checkbox" value="'+esc(s.kod)+'"'+(_psSel[pre][s.kod]?' checked':'')+' onchange="psToggle(\''+pre+'\',this)"> '
@@ -82,7 +84,7 @@ function psCari(pre,q){
 function psKumpulan(pre,g){
   var sel={};
   if(g!=='KOSONG'){
-    _psSenarai().forEach(function(s){
+    _psSenarai(pre).forEach(function(s){
       var j=(typeof _jenisSekolah==='function')?_jenisSekolah(s.nama):'SR';
       if(g==='SEMUA'||g===j) sel[s.kod]=true;
     });

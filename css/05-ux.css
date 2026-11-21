@@ -3,7 +3,6 @@
 :focus-visible{outline:2px solid var(--red);outline-offset:2px;border-radius:4px;}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}  /* sudah ada gaya fokus sendiri */
 [role="button"]{cursor:pointer;}
-.btn:active:not(:disabled){transform:translateY(1px);}
 .btn:disabled{cursor:not-allowed;opacity:.6;}
 /* Kurangkan gerakan bagi pengguna yang memintanya (putaran memuatkan dikekalkan) */
 @media (prefers-reduced-motion:reduce){
@@ -29,3 +28,34 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}  
 /* Kemas: jadual lebar boleh dilungsur dalam modal */
 .md-max-body table,.md table{max-width:100%;}
 .md-max-body .tw,.md .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+/* == KESTABILAN PAPARAN (tiada "shake") ======================================== */
+/* 1) Ruang bar skrol dikekalkan walaupun body dikunci semasa modal -> lebar halaman tidak berubah ~15px setiap kali modal dibuka/ditutup */
+html{scrollbar-gutter:stable;}
+/* 2) Modal: pudar sahaja (tiada skala/zum), lebih pantas; kabur latar dikurangkan */
+.mo{transition:opacity .12s !important;backdrop-filter:blur(2px) !important;}
+.md,.mo.on .md{transform:none !important;transition:none !important;}
+/* 3) Pertukaran kandungan antara modal kerja (tiada kelip latar, tiada animasi tutup+buka bertindih) */
+body.ws-swap .mo,body.ws-swap .md{transition:none !important;animation:none !important;}
+.mo.ws-in .md{animation:wsfade .16s ease-out;}
+@keyframes wsfade{from{opacity:.4}to{opacity:1}}
+/* 4) Animasi halaman: pudar sahaja (sebelum ini naik 5px setiap kali halaman dipaparkan) */
+.pg{animation:fiPudar .14s ease !important;}
+@keyframes fiPudar{from{opacity:0}to{opacity:1}}
+/* 5) Butang sibuk mengekalkan lebar asal */
+.btn-busy{min-width:var(--bw,auto);justify-content:center;}
+/* == LEBAR SKRIN & SAIZ MODAL (susun atur baharu) ============================= */
+.pg{max-width:1760px !important;padding-left:clamp(.8rem,2vw,2.2rem) !important;padding-right:clamp(.8rem,2vw,2.2rem) !important;}
+.md.md-max{width:min(1560px,calc(100vw - 2rem)) !important;height:min(940px,calc(100dvh - 2rem)) !important;max-height:none !important;border-radius:var(--rl) !important;}
+@media(max-width:640px){.md.md-max{width:100vw !important;height:100dvh !important;border-radius:0 !important;}}
+/* Wizard Daftar Program: lebar bacaan selesa di dalam modal besar */
+#wz-body>*:not(#wz-bar){max-width:1100px;margin-left:auto;margin-right:auto;}
+#wz-bar,#wz-foot{max-width:1100px;margin-left:auto;margin-right:auto;width:100%;}
+/* Modal penyertaan: dua lajur (guru | peserta) pada skrin lebar + bar tindakan melekat di bawah */
+@media(min-width:1100px){
+  #peny-form-wrap[style*="block"]{display:grid !important;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:.9rem;align-items:start;}
+  #peny-form-wrap > .sbox:nth-of-type(1){position:sticky;top:0;max-height:calc(100dvh - 15rem);overflow:auto;}
+}
+#peny-form-wrap > .fx.gu{position:sticky;bottom:-1px;z-index:5;grid-column:1/-1;background:#fff;border-top:1px solid var(--g2);padding:.7rem 0 .2rem;margin-top:.3rem;}
+/* Modal DATA: dua lajur sekolah pada skrin lebar */
+@media(min-width:1100px){.sek-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem .9rem;align-items:start;}}

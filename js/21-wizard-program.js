@@ -25,7 +25,7 @@ function _wzKumpulan(){
     1:[_wzFi('p-nama'),_wzFi('p-bidang'),_wzFi('p-per')],
     2:[_wzFi('p-agensi'),_wzFi('p-pengelola'),_wzFi('p-kod')],
     3:[_wzEl('p-sek-box')],
-    4:[_wzFi('p-kat-wrap'),_wzFi('p-luar')],
+    4:[_wzFi('p-kat-wrap'),_wzFi('p-sasaran'),_wzFi('p-luar')],
     5:[_wzFi('p-tarikh'),_wzFi('p-tempat'),_wzFi('p-status')]
   };
 }
@@ -59,7 +59,8 @@ function _wzSemak(n){
   if(n===2){ if(!_wzV('p-pengelola')) return (typeof agIsOn==='function'&&agIsOn('p'))?'Sila taip nama agensi luar.':'Sila isi Unit / Nama pengelola.';
              if(!_wzV('p-kod')) return 'Sila isi Kod Sekolah Penganjur.'; }
   if(n===3){ if(typeof psMod==='function'&&psMod('p')==='PILIH'&&typeof psGet==='function'&&psGet('p').length===0) return "Pilih sekurang-kurangnya 1 sekolah, atau pilih 'Sekolah mendaftar sendiri kemudian'."; }
-  if(n===4){ if(typeof getKatChecked==='function'&&!getKatChecked('p-kat-wrap').length) return 'Sila pilih sekurang-kurangnya 1 kategori.'; }
+  if(n===4){ if(typeof getKatChecked==='function'&&!getKatChecked('p-kat-wrap').length) return 'Sila pilih sekurang-kurangnya 1 kategori.';
+             if(typeof sasGet==='function'&&!sasGet('p')) return 'Pilih sekurang-kurangnya satu sasaran sekolah (SR / SM).'; }
   if(n===5){ if(!_wzV('p-tarikh')||!_wzV('p-tempat')) return 'Sila isi Tarikh dan Tempat.'; }
   return '';
 }
@@ -73,7 +74,7 @@ function _wzRingkas(){
   var rows=[
     [1,'Nama Program',_wzV('p-nama')],[1,'Bidang',_wzV('p-bidang')],[1,'Peringkat',_wzV('p-per')],
     [2,'Penganjur',_wzV('p-pengelola')+(ag?' (Agensi luar)':'')+' — '+_wzV('p-kod')],
-    [3,'Sekolah menyertai',sek],[4,'Kategori',kat],[4,'Aktiviti luar',luar?'Ya':'Tidak'],
+    [3,'Sekolah menyertai',sek],[4,'Kategori',kat],[4,'Sasaran sekolah',(typeof sasTeks==='function'&&typeof sasGet==='function')?sasTeks(sasGet('p')):'—'],[4,'Aktiviti luar',luar?'Ya':'Tidak'],
     [5,'Tarikh',tar],[5,'Tempat',_wzV('p-tempat')],[5,'Status',_wzV('p-status')]
   ];
   var h='<div style="border:1.5px solid var(--g2);border-radius:var(--r);padding:.5rem .75rem;margin-top:.4rem;">'
@@ -94,6 +95,7 @@ function _wzIdSalah(n){
   var map={1:['p-nama','p-bidang','p-per'],2:['p-pengelola','p-kod'],5:['p-tarikh','p-tempat']};
   (map[n]||[]).forEach(function(id){ if(!_wzV(id)) ids.push(id); });
   if(n===4 && typeof getKatChecked==='function' && !getKatChecked('p-kat-wrap').length) ids.push('p-kat-wrap');
+  if(n===4 && typeof sasGet==='function' && !sasGet('p')) ids.push('p-sasaran');
   if(n===3 && ids.length===0 && typeof psMod==='function' && psMod('p')==='PILIH' && psGet('p').length===0) ids.push('p-sek-box');
   return ids;
 }
@@ -138,7 +140,7 @@ function wzSimpanDraf(segera){
     var f={}; _WZ_MEDAN.forEach(function(id){ f[id]=_wzV(id); });
     var kat=[]; Array.prototype.forEach.call(document.querySelectorAll('#p-kat-wrap input[type=checkbox]'),function(c){ if(c.checked) kat.push(c.value); });
     var d={v:1,kp:_sesi.noKP||'',id:wzId(),step:_wz.step,f:f,ag:(typeof agIsOn==='function'&&agIsOn('p')),
-           luar:!!(_wzEl('p-luar')&&_wzEl('p-luar').checked),kat:kat,
+           luar:!!(_wzEl('p-luar')&&_wzEl('p-luar').checked),kat:kat,sas:(typeof sasGet==='function')?sasGet('p'):'SR,SM',
            mod:(typeof psMod==='function'?psMod('p'):'KEMUDIAN'),sek:(typeof psGet==='function'?Object.keys(_psSel.p||{}):[]),t:Date.now()};
     sessionStorage.setItem(_WZ_DRAF,JSON.stringify(d));
     wzHintDraf();
@@ -167,6 +169,7 @@ function wzPulihDraf(d){
     _wzEl('p-pengelola').value=d.f['p-pengelola']||''; _wzEl('p-kod').value=d.f['p-kod']||''; }
   Array.prototype.forEach.call(document.querySelectorAll('#p-kat-wrap input[type=checkbox]'),function(c){ c.checked=(d.kat||[]).indexOf(c.value)>=0; });
   var l=_wzEl('p-luar'); if(l) l.checked=!!d.luar;
+  if(typeof sasSet==='function') sasSet('p',d.sas||'SR,SM');
   _psSel.p={}; (d.sek||[]).forEach(function(k){ _psSel.p[k]=true; }); _psMode.p=(d.mod==='PILIH')?'PILIH':'KEMUDIAN'; psRender('p');
   _wz.step=Math.max(1,Math.min(6,d.step||1));
 }

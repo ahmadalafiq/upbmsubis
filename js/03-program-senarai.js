@@ -28,6 +28,8 @@ async function daftarProgram(){
   var katList=getKatChecked('p-kat-wrap');
   var luar=!!(document.getElementById('p-luar')||{}).checked;
   var sekPilih=(typeof psGet==='function')?psGet('p'):[];
+  var sas=(typeof sasGet==='function')?sasGet('p'):'SR,SM';
+  if(!sas){ toast('Pilih sekurang-kurangnya satu sasaran sekolah (SR / SM).','er'); return; }
   var pid=(typeof wzId==='function')?wzId():'';
   if(typeof wzMsgBuang==='function') wzMsgBuang();
   if(!n||!pen||!bid||!per||!tar||!tem){toast('Sila lengkapkan semua medan','er');return;}
@@ -37,7 +39,7 @@ async function daftarProgram(){
   try{
     var r;
     try{
-      r=await run('daftarProgramGS',{nama:n,pengelola:pen,kodPengelola:kod,bidang:bid,kategori:katList,peringkat:per,tarikh:tar,tempat:tem,status:sta,aktivitiLuar:luar,id:pid});
+      r=await run('daftarProgramGS',{nama:n,pengelola:pen,kodPengelola:kod,bidang:bid,kategori:katList,peringkat:per,tarikh:tar,tempat:tem,status:sta,aktivitiLuar:luar,sasaran:sas,id:pid});
     }catch(e0){
       // Cuba semula selepas timeout: jika permintaan terdahulu sebenarnya berjaya, ID yang sama -> duplicate = sudah didaftarkan
       if(pid && /duplicate key|programs_pkey|23505/i.test(String(e0&&e0.message||e0))) r={ok:true,id:pid,dup:true};
@@ -75,6 +77,7 @@ function clearPF(){
   document.getElementById('p-status').value='AKTIF';
   var _pl=document.getElementById('p-luar'); if(_pl) _pl.checked=false;
   if(typeof psReset==='function') psReset('p');
+  if(typeof sasReset==='function') sasReset('p');
   if(typeof agReset==='function') agReset('p');
   if(typeof wzReset==='function') wzReset();
   // Reset kategori checkboxes to default (Individu L + P)
@@ -650,6 +653,7 @@ async function openEdit(p){
   document.getElementById('e-pen').value=p['Pengelola'];
   document.getElementById('e-kod').value=p['Kod Pengelola']||'';
   if(typeof agSync==='function') agSync('e');
+  if(typeof sasSet==='function') sasSet('e',p['Sasaran']);
   document.getElementById('e-bidang').value=p['Bidang'];
   // e-kat removed (now uses checkboxes)
   document.getElementById('e-per').value=p['Peringkat']||'SEKOLAH';

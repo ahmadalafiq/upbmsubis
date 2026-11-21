@@ -49,3 +49,4 @@
   .ph-detail.buka{display:block;position:fixed;inset:0;z-index:880;border-radius:0;overflow:auto;padding:1rem 1.1rem calc(1rem + env(safe-area-inset-bottom,0px));}
   .ph-detail.buka .ph-tutup-detail{display:inline-flex;margin-bottom:.6rem;}
 }
+.ph-tag.sas{background:#e3eefc;color:#1b4f8a;}

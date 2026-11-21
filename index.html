@@ -906,6 +906,13 @@
           <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'p-kat-wrap')" value="TERBUKA BERKUMPULAN"> Terbuka Berkumpulan</label>
         </div>
       </div>
+      <div class="fi full" id="p-sasaran"><label>Sasaran Sekolah</label>
+        <div class="kat-chk-wrap" style="display:flex;gap:1.2rem;flex-wrap:wrap;">
+          <label class="kat-chk"><input type="checkbox" id="p-sas-sr" checked onchange="if(typeof psRender==='function')psRender('p')"> 🏫 Sekolah Rendah (SR)</label>
+          <label class="kat-chk"><input type="checkbox" id="p-sas-sm" checked onchange="if(typeof psRender==='function')psRender('p')"> 🏛 Sekolah Menengah (SM)</label>
+        </div>
+        <div style="font-size:.66rem;color:var(--g6);">Hanya sekolah sasaran boleh mendaftar penyertaan. Tanda kedua-duanya jika program terbuka kepada semua.</div>
+      </div>
       <div class="fi"><label>Peringkat</label><select id="p-per"><option value="">— PILIH —</option><option>SEKOLAH</option><option>DAERAH</option><option>BAHAGIAN</option><option>NEGERI</option><option>KEBANGSAAN</option><option>ANTARABANGSA</option></select></div>
       <div class="fi"><label>Tarikh</label><input type="date" id="p-tarikh"></div>
       <div class="fi"><label>Tempat</label><input type="text" id="p-tempat" placeholder="Lokasi program..."></div>
@@ -949,6 +956,13 @@
           <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'e-kat-wrap');_onEditChange();" value="TERBUKA INDIVIDU" id="ek-ti"> Terbuka Individu</label>
           <label class="kat-chk"><input type="checkbox" onchange="handleKatCheck(this,'e-kat-wrap');_onEditChange();" value="TERBUKA BERKUMPULAN" id="ek-tb"> Terbuka Berkumpulan</label>
         </div>
+      </div>
+      <div class="fi full" id="e-sasaran"><label>Sasaran Sekolah</label>
+        <div class="kat-chk-wrap" style="display:flex;gap:1.2rem;flex-wrap:wrap;">
+          <label class="kat-chk"><input type="checkbox" id="e-sas-sr" checked onchange="if(typeof _onEditChange==='function')_onEditChange();if(typeof psRender==='function')psRender('e')"> 🏫 Sekolah Rendah (SR)</label>
+          <label class="kat-chk"><input type="checkbox" id="e-sas-sm" checked onchange="if(typeof _onEditChange==='function')_onEditChange();if(typeof psRender==='function')psRender('e')"> 🏛 Sekolah Menengah (SM)</label>
+        </div>
+        <div style="font-size:.66rem;color:var(--g6);">Hanya sekolah sasaran boleh mendaftar penyertaan. Tanda kedua-duanya jika program terbuka kepada semua.</div>
       </div>
       <div class="fi"><label>Peringkat</label><select id="e-per" onchange="_onEditChange();"><option>SEKOLAH</option><option>DAERAH</option><option>BAHAGIAN</option><option>NEGERI</option><option>KEBANGSAAN</option><option>ANTARABANGSA</option></select></div>
       <div class="fi"><label>Tarikh</label><input type="date" id="e-tarikh" onchange="_onEditChange();"></div>
@@ -1169,6 +1183,8 @@
 <script src="js/23-ux-aksesibiliti.js?v=20261122"></script>
 <script src="js/24-anugerah.js?v=20261123"></script>
 <script src="js/25-program-hub.js?v=20261124"></script>
+<script src="js/26-modal-kerja.js?v=20261125"></script>
+<script src="js/27-sasaran.js?v=20261125"></script>
 <script src="laporan-sekolah.js"></script>
 </body>
 </html>

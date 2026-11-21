@@ -6,8 +6,8 @@
 var _PH_PREF = 'upbm_ph_view';
 var _ph = {
   view: 'baru',
-  pengelola: {root:'ph-pengelola', f:{q:'', tab:'AKTIF', bidang:'', bulan:'', per:'', isih:'tarikh'}, sel:'', n:25},
-  peserta:   {root:'ph-peserta',   f:{q:'', tab:'',      bidang:'', bulan:'', per:'', isih:'tarikh'}, sel:'', n:25, auto:true},
+  pengelola: {root:'ph-pengelola', f:{q:'', tab:'AKTIF', bidang:'', bulan:'', per:'', sas:'', isih:'tarikh'}, sel:'', n:25, rows:[]},
+  peserta:   {root:'ph-peserta',   f:{q:'', tab:'',      bidang:'', bulan:'', per:'', sas:'', isih:'tarikh'}, sel:'', n:25, auto:true, rows:[]},
   tugas: null, tugasMuat: false, dimuat: false
 };
 var _PH_BULAN = ['Jan','Feb','Mac','Apr','Mei','Jun','Jul','Ogo','Sep','Okt','Nov','Dis'];
@@ -47,20 +47,22 @@ function _phInfo(p,S){
   if(p['Status']==='DRAFT') issues.push('Draf — belum diaktifkan');
   if(asing.length) issues.push('Kategori penyertaan tidak sepadan: '+asing.join(', '));
   if(p['Status']==='AKTIF' && hari!==null && hari<0) issues.push('Tarikh sudah lepas — pertimbang tutup program');
-  return {sek:Object.keys(s.sek).length, pes:Object.keys(s.pes).length, guru:Object.keys(s.guru).length, own:s.own, sekN:s.sekN, hari:hari, issues:issues, asing:asing};
+  var ownK=_phOwn(), sasOk2=(!ownK||_phRole()==='admin'||typeof sasOk!=='function')?true:sasOk(ownK,p['Sasaran']);
+  return {sek:Object.keys(s.sek).length, pes:Object.keys(s.pes).length, guru:Object.keys(s.guru).length, own:s.own, sekN:s.sekN, hari:hari, issues:issues, asing:asing, sasOk:sasOk2};
 }
 
 // -- Status penyertaan sekolah sendiri (guru/PKK) ------------------------------------------------
 function _phDraf(){ try{ var d=JSON.parse(sessionStorage.getItem('upbm_peny_draft')||'null'); return (d&&_sesi&&d.noKP===_sesi.noKP)?d:null; }catch(e){ return null; } }
 function _phStatusSendiri(pid,info){
   if(!_phOwn()) return '';
+  if(info && info.sasOk===false) return 'BUKAN';
   var tl=_ph.tugas&&_ph.tugas.tl&&_ph.tugas.tl[pid], tg=_ph.tugas&&_ph.tugas.tg&&_ph.tugas.tg[pid];
   if(info.own>0) return tl?'TIDAK_LENGKAP':'DIHANTAR';
   var d=_phDraf(); if(d&&d.selId===pid) return 'DRAF';
   return tg?'TUGASAN':'BELUM';
 }
-var _PH_ST_TEKS={TUGASAN:'📌 Ditugaskan',TIDAK_LENGKAP:'⚠ Perlu dibetulkan',DRAF:'📝 Draf',DIHANTAR:'✅ Dihantar',BELUM:'Belum daftar'};
-var _PH_CTA={TUGASAN:'DAFTAR',BELUM:'DAFTAR',DRAF:'SAMBUNG',DIHANTAR:'KEMASKINI',TIDAK_LENGKAP:'BETULKAN'};
+var _PH_ST_TEKS={BUKAN:'Bukan sasaran sekolah anda',TUGASAN:'📌 Ditugaskan',TIDAK_LENGKAP:'⚠ Perlu dibetulkan',DRAF:'📝 Draf',DIHANTAR:'✅ Dihantar',BELUM:'Belum daftar'};
+var _PH_CTA={BUKAN:'—',TUGASAN:'DAFTAR',BELUM:'DAFTAR',DRAF:'SAMBUNG',DIHANTAR:'KEMASKINI',TIDAK_LENGKAP:'BETULKAN'};
 async function _phMuatTugas(){
   if(_ph.tugas || _ph.tugasMuat || !_sesi || !_phOwn() || (_phRole()!=='guru'&&_phRole()!=='pkk')) return;   // sudah dimuat / sedang dimuat -> jangan ulang
   _ph.tugasMuat=true;
@@ -81,6 +83,7 @@ function _phLulus(p,info,st,m){
   if(q && [p['Nama Program'],p['Bidang'],p['Pengelola'],p['Tempat'],p['Peringkat']].join(' ').toLowerCase().indexOf(q)<0) return false;
   if(f.bidang && p['Bidang']!==f.bidang) return false;
   if(f.per && p['Peringkat']!==f.per) return false;
+  if(f.sas && String(p['Sasaran']||'SR,SM').indexOf(f.sas)<0) return false;
   if(f.bulan && _phBulanKey(p)!==f.bulan) return false;
   var tab=f.tab;
   if(m==='pengelola'){
@@ -90,7 +93,7 @@ function _phLulus(p,info,st,m){
   }
   // penyertaan
   if(tab==='TUGAS') return st==='TUGASAN'||st==='TIDAK_LENGKAP'||st==='DRAF';
-  if(tab==='TERBUKA') return p['Status']==='AKTIF' && st!=='DIHANTAR';
+  if(tab==='TERBUKA') return p['Status']==='AKTIF' && st!=='DIHANTAR' && st!=='BUKAN';
   if(tab==='DIHANTAR') return st==='DIHANTAR'||st==='TIDAK_LENGKAP';
   if(tab==='AKTIF') return p['Status']==='AKTIF';
   return true;
@@ -132,7 +135,7 @@ function phRender(m){
   if(m==='pengelola'){
     chips=[['AKTIF','Aktif',cnt(function(x){return x.p['Status']==='AKTIF';})],['DRAFT','Draf',cnt(function(x){return x.p['Status']==='DRAFT';})],['TUTUP','Tutup',cnt(function(x){return x.p['Status']==='TUTUP';})],['SEMUA','Semua',all.length],['PERLU','⚠ Perlu tindakan',cnt(function(x){return x.i.issues.length>0;})]];
   } else if(own){
-    chips=[['TUGAS','📌 Tugas saya',cnt(function(x){return x.st==='TUGASAN'||x.st==='TIDAK_LENGKAP'||x.st==='DRAF';})],['TERBUKA','Terbuka',cnt(function(x){return x.p['Status']==='AKTIF'&&x.st!=='DIHANTAR';})],['DIHANTAR','✅ Dihantar',cnt(function(x){return x.st==='DIHANTAR'||x.st==='TIDAK_LENGKAP';})],['SEMUA','Semua',all.length]];
+    chips=[['TUGAS','📌 Tugas saya',cnt(function(x){return x.st==='TUGASAN'||x.st==='TIDAK_LENGKAP'||x.st==='DRAF';})],['TERBUKA','Terbuka',cnt(function(x){return x.p['Status']==='AKTIF'&&x.st!=='DIHANTAR'&&x.st!=='BUKAN';})],['DIHANTAR','✅ Dihantar',cnt(function(x){return x.st==='DIHANTAR'||x.st==='TIDAK_LENGKAP';})],['SEMUA','Semua',all.length]];
   } else {
     chips=[['AKTIF','Aktif',cnt(function(x){return x.p['Status']==='AKTIF';})],['SEMUA','Semua',all.length]];
   }
@@ -145,10 +148,12 @@ function phRender(m){
   h+='<div class="ph-filters"><input type="search" id="ph-q-'+m+'" placeholder="Cari program, bidang, tempat..." value="'+esc(f.q)+'" oninput="phCari(\''+m+'\',this.value)" aria-label="Cari program">'
     +'<select onchange="phSet(\''+m+'\',\'bidang\',this.value)" aria-label="Bidang">'+opt(Object.keys(bid).sort().map(function(v){return [v,v];}),f.bidang,'Semua bidang')+'</select>'
     +'<select onchange="phSet(\''+m+'\',\'per\',this.value)" aria-label="Peringkat">'+opt(Object.keys(per).sort().map(function(v){return [v,v];}),f.per,'Semua peringkat')+'</select>'
+    +'<select onchange="phSet(\''+m+'\',\'sas\',this.value)" aria-label="Sasaran sekolah"><option value="">Semua sasaran</option><option value="SR"'+(f.sas==="SR"?" selected":"")+'>Sekolah Rendah (SR)</option><option value="SM"'+(f.sas==="SM"?" selected":"")+'>Sekolah Menengah (SM)</option></select>'
     +'<select onchange="phSet(\''+m+'\',\'bulan\',this.value)" aria-label="Bulan">'+opt(bk,f.bulan,'Semua bulan')+'</select>'
     +'<select onchange="phSet(\''+m+'\',\'isih\',this.value)" aria-label="Isih">'+[['tarikh','Isih: Tarikh terdekat'],['baharu','Isih: Terbaru'],['nama','Isih: Nama'],['ramai','Isih: Peserta terbanyak']].map(function(o){return '<option value="'+o[0]+'"'+(f.isih===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div>';
   // senarai
   var rows=all.filter(function(x){ return _phLulus(x.p,x.i,x.st,m); }).sort(function(a,b){ return _phIsih(a,b,m); });
+  _ph[m].rows=rows;
   var tunjuk=rows.slice(0,_ph[m].n);
   var list='';
   if(!rows.length) list='<div class="empty" style="padding:1.4rem;"><div class="ei">📭</div><h3>Tiada program sepadan</h3><p style="font-size:.74rem;color:var(--g6);">Ubah penapis atau carian.</p></div>';
@@ -166,12 +171,12 @@ function _phBaris(x,m,peran){
   var hari=(p['Status']!=='TUTUP')?_phHariTeks(i.hari):'';
   var cta;
   if(m==='pengelola') cta='<button type="button" class="btn bp bsm" onclick="event.stopPropagation();phAksi(\'data\',\''+id+'\')">👁 DATA</button>';
-  else if(_phOwn()) cta='<button type="button" class="btn '+((x.st==='DIHANTAR')?'bs':'bp')+' bsm" onclick="event.stopPropagation();phAksi(\'cta\',\''+id+'\')" '+(p['Status']!=='AKTIF'&&x.st==='BELUM'?'disabled title="Program tidak aktif"':'')+'>'+_PH_CTA[x.st||'BELUM']+'</button>';
+  else if(_phOwn()) cta='<button type="button" class="btn '+((x.st==='DIHANTAR')?'bs':'bp')+' bsm" onclick="event.stopPropagation();phAksi(\'cta\',\''+id+'\')" '+(x.st==='BUKAN'?'disabled title="Program ini bukan untuk sekolah anda"':(p['Status']!=='AKTIF'&&x.st==='BELUM'?'disabled title="Program tidak aktif"':''))+'>'+_PH_CTA[x.st||'BELUM']+'</button>';
   else cta='<button type="button" class="btn bp bsm" onclick="event.stopPropagation();phAksi(\'cta\',\''+id+'\')">DAFTAR</button>';
   var st=(m==='peserta'&&_phOwn())?'<span class="ph-st s-'+x.st+'">'+_PH_ST_TEKS[x.st]+'</span>':((m==='pengelola'&&p['Status']!=='AKTIF')?'<span class="ph-st s-BELUM">'+esc(p['Status'])+'</span>':'');
   return '<div class="ph-row st-'+esc(p['Status'])+(sel?' sel':'')+'" role="button" tabindex="0" data-pid="'+id+'" onclick="phPilih(\''+m+'\',\''+id+'\')">'
     +'<div><div class="ph-title">'+esc(p['Nama Program'])+' '+st+'</div>'
-    +'<div class="ph-sub"><span class="ph-tag">'+esc(p['Bidang']||'—')+'</span><span>'+esc(p['Peringkat']||'')+'</span><span>📅 '+esc(fd(p['Tarikh']))+'</span>'+(hari?'<span class="ph-due'+(i.hari<0?' lepas':'')+'">'+hari+'</span>':'')+'<span>📍 '+esc(p['Tempat']||'—')+'</span>'+(p['Aktiviti Luar']===true?'<span title="Aktiviti luar">🌐</span>':'')+'</div></div>'
+    +'<div class="ph-sub"><span class="ph-tag">'+esc(p['Bidang']||'—')+'</span>'+((p['Sasaran']&&p['Sasaran']!=='SR,SM')?'<span class="ph-tag sas" title="Sasaran: '+esc(typeof sasTeks==="function"?sasTeks(p['Sasaran']):p['Sasaran'])+'">'+esc(p['Sasaran'])+'</span>':'')+'<span>'+esc(p['Peringkat']||'')+'</span><span>📅 '+esc(fd(p['Tarikh']))+'</span>'+(hari?'<span class="ph-due'+(i.hari<0?' lepas':'')+'">'+hari+'</span>':'')+'<span>📍 '+esc(p['Tempat']||'—')+'</span>'+(p['Aktiviti Luar']===true?'<span title="Aktiviti luar">🌐</span>':'')+'</div></div>'
     +'<div class="ph-metrics" title="Sekolah · Peserta"><span>🏫 '+i.sek+'</span><span>👤 '+i.pes+'</span>'+(i.issues.length?'<span class="ph-warn" title="'+esc(i.issues.join('; '))+'">⚠ '+i.issues.length+'</span>':'')+'</div>'
     +'<div class="ph-act">'+cta+'<button type="button" class="ph-more" aria-haspopup="menu" aria-label="Lagi tindakan" onclick="event.stopPropagation();phMenu(event,\''+id+'\',\''+m+'\')">⋯</button></div></div>';
 }
@@ -192,6 +197,7 @@ function _phDetail(m,rows){
     +'<dt>Tarikh</dt><dd>'+esc(fd(p['Tarikh']))+(i.hari!==null?' <span class="ph-due'+(i.hari<0?' lepas':'')+'">· '+_phHariTeks(i.hari)+'</span>':'')+'</dd>'
     +'<dt>Tempat</dt><dd>'+esc(p['Tempat']||'—')+'</dd>'
     +'<dt>Kategori</dt><dd>'+esc(kat.join(', ')||'—')+'</dd>'
+    +'<dt>Sasaran</dt><dd>'+esc(typeof sasTeks==='function'?sasTeks(p['Sasaran']):(p['Sasaran']||'SR,SM'))+'</dd>'
     +(p['Aktiviti Luar']===true?'<dt>Jenis</dt><dd>🌐 Aktiviti luar (tidak semua sekolah menyertai)</dd>':'')+'</dl>'
     +'<div class="ph-kpi"><div><b>'+i.sek+'</b><span>sekolah</span></div><div><b>'+i.pes+'</b><span>peserta</span></div><div><b>'+i.guru+'</b><span>guru</span></div></div>';
   // status sekolah sendiri
@@ -201,7 +207,7 @@ function _phDetail(m,rows){
   if(sk.length) h+='<div style="font-size:.7rem;font-weight:800;margin-top:.5rem;">Sekolah menyertai ('+sk.length+')</div><div class="ph-sekl">'+sk.slice(0,12).map(function(s){return '<div><span>'+esc(s.n)+'</span><span style="white-space:nowrap;color:var(--g6);">👤 '+s.p+' · 🧑‍🏫 '+s.g+'</span></div>';}).join('')+(sk.length>12?'<div style="color:var(--g6);">… dan '+(sk.length-12)+' lagi — lihat DATA</div>':'')+'</div>';
   // tindakan
   var pid=esc(p['ID']), a='';
-  if(own){ var s2=_phStatusSendiri(p['ID'],i); a+='<button type="button" class="btn bp" onclick="phAksi(\'cta\',\''+pid+'\')" '+(p['Status']!=='AKTIF'&&s2==='BELUM'?'disabled':'')+'>'+_PH_CTA[s2]+' PENYERTAAN</button>'; }
+  if(own){ var s2=_phStatusSendiri(p['ID'],i); a+='<button type="button" class="btn bp" onclick="phAksi(\'cta\',\''+pid+'\')" '+((s2==='BUKAN'||(p['Status']!=='AKTIF'&&s2==='BELUM'))?'disabled':'')+'>'+(s2==='BUKAN'?'BUKAN SASARAN ANDA':_PH_CTA[s2]+' PENYERTAAN')+'</button>'; }
   else if(peran==='admin') a+='<button type="button" class="btn bp" onclick="phAksi(\'cta\',\''+pid+'\')">+ DAFTAR PENYERTAAN</button>';
   a+='<button type="button" class="btn bs" onclick="phAksi(\'data\',\''+pid+'\')">👁 Lihat data</button>';
   if(peran!=='guru'){ a+='<button type="button" class="btn bs" onclick="phAksi(\'rum\',\''+pid+'\')">📄 Rumusan</button><button type="button" class="btn bs" onclick="phAksi(\'xlsx\',\''+pid+'\')">📥 Excel</button>'; }
@@ -223,13 +229,18 @@ function phAksi(a,pid){
   if(a==='padam'){ return reqPadam(pid,p['Nama Program'],p['Kod Pengelola']||''); }
   if(a==='cta'){
     var own=_phOwn(), st=_phStatusSendiri(pid,_phInfo(p,_phStats()));
+    if(st==='BUKAN'){ toast('Program ini bukan untuk sekolah anda ('+(typeof sasTeks==='function'?sasTeks(p['Sasaran']):p['Sasaran'])+').','er'); return; }
     if(!own || st==='BELUM' || st==='TUGASAN') return _tgBuka(pid);                        // DAFTAR (admin: pilih sekolah dalam modal)
     if(st==='DRAF'){ var d=_phDraf(); if(d&&typeof _restorePenyDraft==='function') return _restorePenyDraft(d); return _tgBuka(pid); }
     var nm=''; (typeof _SEKOLAH_STATIK!=='undefined'?_SEKOLAH_STATIK:[]).forEach(function(s){ if(String(s.kod).toUpperCase()===own) nm=s.nama; });
     return _openPenyertaanEdit(JSON.parse(JSON.stringify(p)), _sesi.kodSekolah, nm||(_sesi.namaSekolah||''));   // KEMASKINI / BETULKAN
   }
 }
-function phPilih(m,pid){ _ph[m].sel=pid; phRender(m); var d=document.getElementById('ph-detail-'+m); if(d&&window.matchMedia&&window.matchMedia('(max-width:999px)').matches){ d.classList.add('buka'); d.scrollTop=0; } }
+function phPilih(m,pid){
+  _ph[m].sel=pid;   // tukar pilihan & butiran sahaja (tanpa bina semula senarai -> tiada kelip / lonjakan skrol)
+  var ls=document.getElementById('ph-list-'+m); if(ls) Array.prototype.forEach.call(ls.querySelectorAll('.ph-row'),function(r){ r.classList.toggle('sel', r.getAttribute('data-pid')===pid); });
+  _phDetail(m,_ph[m].rows||[]);
+  var d=document.getElementById('ph-detail-'+m); if(d&&window.matchMedia&&window.matchMedia('(max-width:999px)').matches){ d.classList.add('buka'); d.scrollTop=0; } }
 function phTutupDetail(m){ var d=document.getElementById('ph-detail-'+m); if(d) d.classList.remove('buka'); }
 function phTab(m,t){ _ph[m].f.tab=t; _ph[m].auto=false; _ph[m].n=25; phRender(m); }
 function phSet(m,k,v){ _ph[m].f[k]=v; _ph[m].n=25; phRender(m); }

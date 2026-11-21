@@ -1,0 +1,8 @@
+-- Dilaksanakan di Supabase production 24 Nov 2026 (migrasi "sasaran_program_sr_sm_20261124").
+-- Sasaran sekolah bagi program: SR | SM | SR,SM (lalai SR,SM). Panggilan lama tanpa p_sasaran kekal sah (parameter terakhir, lalai NULL).
+--  * programs.sasaran text not null default 'SR,SM' + check programs_sasaran_chk; fungsi _norm_sasaran(text)
+--  * daftar_program(..., p_aktiviti_luar default false, p_sasaran default null)       [tandatangan lama digugurkan]
+--  * kemaskini_program_cascade(..., p_aktiviti_luar default null, p_sasaran default null)  [null = jangan ubah]
+--  * hantar_penyertaan_sekolah: sekolah SR (kod huruf ke-2 bukan 'E') ditolak bagi program khas SM dan sebaliknya; admin dikecualikan
+--  * Pelabelan awal ikut nama: "SEKOLAH MENENGAH" -> SM (22), "SEKOLAH RENDAH" / "SJK (C)" -> SR (47); selebihnya SR,SM (83)
+-- Pulih label: update programs set sasaran='SR,SM';

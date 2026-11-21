@@ -47,6 +47,8 @@ Dipecahkan daripada satu fail 600 KB (16 Nov 2026, tag git `pra-pecah` = versi a
 | `23-ux-aksesibiliti` | ARIA modal, ESC, focus-trap, label/medan, jalur luar talian | aksesibiliti |
 | `24-anugerah` | halaman ANUGERAH (admin sahaja): rubrik, pratonton, Emas/Perak/Gangsa, tempat 1-5 sekolah & guru, eksport Excel | anugerah, rubrik |
 | `25-program-hub` | paparan baharu Pengelola & Penyertaan: senarai padat + panel butiran, CTA ikut status sekolah sendiri, menu ⋯, butang "Lama" untuk kembali (css/06-program-hub.css) | program hub, ph |
+| `26-modal-kerja` | modal kerja (DATA/Rumusan/Edit/Daftar-Edit Penyertaan/Daftar Program): tukar KANDUNGAN, bukan modal (tiada kelip, kiraan & kunci skrol dikekalkan) | modal kerja, ws-swap |
+| `27-sasaran` | Sasaran SR/SM bagi program: kotak, `sasOk`, penapis sekolah penyertaan | sasaran SR SM |
 | `laporan-sekolah.js` | Laporan Sekolah + perbandingan sesi (dimuat terakhir; kekal di akar) | laporan |
 
 **Dashboard merentas 3 fail:** `10` (data/skor), `13` (rebuild/penapis), `17` (kad statistik, carta, penapis lanjutan).

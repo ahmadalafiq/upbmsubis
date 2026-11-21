@@ -139,7 +139,7 @@ function onSugSekPeny(q){
   if(!v){drop.innerHTML='';drop.classList.remove('on');return;}
   var lv=v.toLowerCase();
   var items=_getSekSuggestions().filter(function(s){
-    return s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1;
+    return (typeof _sasOkSek!=='function'||_sasOkSek(s.kod)) && (s.kod.toLowerCase().indexOf(lv)>-1||s.nama.toLowerCase().indexOf(lv)>-1);
   }).sort(function(a,b){return a.nama.localeCompare(b.nama);}).slice(0,8);
   if(!items.length){drop.innerHTML='<div class="sug-item" style="cursor:default;color:var(--g6);">Tiada sekolah sepadan</div>';drop.classList.add('on');return;}
   drop.innerHTML=items.map(function(s){

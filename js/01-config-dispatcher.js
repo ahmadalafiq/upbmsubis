@@ -34,7 +34,8 @@ function _mapProgramOut(r){
     'Tempat': r.tempat || r['Tempat'] || '',
     'Status': r.status || r['Status'] || '',
     'Tahun': r.tahun || r['Tahun'] || '',
-    'Aktiviti Luar': (r.aktiviti_luar === true || r.aktiviti_luar === 'true' || r['Aktiviti Luar'] === true)
+    'Aktiviti Luar': (r.aktiviti_luar === true || r.aktiviti_luar === 'true' || r['Aktiviti Luar'] === true),
+    'Sasaran': (r.sasaran || r['Sasaran'] || 'SR,SM')
   };
 }
 function _mapPenyertaanOut(r){
@@ -213,7 +214,8 @@ async function _supaDispatch(fn, payload){
       p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
       p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
       p_tarikh: tar1, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn1,
-      p_aktiviti_luar: !!payload.aktivitiLuar
+      p_aktiviti_luar: !!payload.aktivitiLuar,
+      p_sasaran: payload.sasaran || null
     });
     _throwIfErr(rInsP.error);
     return {ok:true, msg:'Program berjaya didaftarkan', id:newProgId};
@@ -263,7 +265,8 @@ async function _supaDispatch(fn, payload){
       p_kod_pengelola: payload.kodPengelola, p_bidang: payload.bidang,
       p_kategori: (payload.kategori||[]).join(','), p_peringkat: payload.peringkat,
       p_tarikh: tar2, p_tempat: payload.tempat, p_status: payload.status||'AKTIF', p_tahun: thn2,
-      p_aktiviti_luar: (typeof payload.aktivitiLuar === 'boolean') ? payload.aktivitiLuar : null   // null = jangan ubah
+      p_aktiviti_luar: (typeof payload.aktivitiLuar === 'boolean') ? payload.aktivitiLuar : null,   // null = jangan ubah
+      p_sasaran: payload.sasaran || null
     });
     _throwIfErr(rKp.error);
     return {ok:true, msg:'Program berjaya dikemaskini'};

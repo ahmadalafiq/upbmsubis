@@ -38,6 +38,7 @@ async function saveEdit(){
   ).map(function(cb){ return cb.value; });
   if(!katList.length){ toast('Pilih sekurang-kurangnya satu kategori','er'); return; }
 
+  if(typeof sasGet==='function' && !sasGet('e')){ toast('Pilih sekurang-kurangnya satu sasaran sekolah (SR / SM).','er'); return; }
   showOv('MENYIMPAN PROGRAM...');
   try{
     var r = await run('kemaskiniProgramGS',{
@@ -52,6 +53,7 @@ async function saveEdit(){
       tempat:       tem,
       status:       sta,
       aktivitiLuar: luar,
+      sasaran:      (typeof sasGet==='function')?sasGet('e'):null,
     });
     if(r&&r.ok){
       toast('Program berjaya dikemaskini ✓','ok');

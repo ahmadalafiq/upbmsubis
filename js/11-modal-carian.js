@@ -20,7 +20,7 @@ function openMo(id){
   // Fokus ke elemen pertama yang boleh difokus
   setTimeout(function(){
     var focusable=el.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])');
-    if(focusable.length) focusable[0].focus();
+    if(focusable.length){ try{ focusable[0].focus({preventScroll:true}); }catch(e){ focusable[0].focus(); } }
   },50);
   _moOpenCount++;
   document.body.classList.add('modal-open');
@@ -32,8 +32,8 @@ function ldInline(msg){ return '<div class="ld-inline"><div class="sp"></div><sp
 // Butang sibuk: nyahaktif + putar kecil dalam butang (ganti overlay tengah skrin)
 function btnBusy(id,on,txt){
   var b=typeof id==='string'?document.getElementById(id):id; if(!b) return;
-  if(on){ if(!b.dataset.asal) b.dataset.asal=b.innerHTML; b.disabled=true; b.classList.add('btn-busy'); b.innerHTML='<span class="sp"></span>'+(txt||'Sila tunggu...'); }
-  else { b.disabled=false; b.classList.remove('btn-busy'); if(b.dataset.asal){ b.innerHTML=b.dataset.asal; delete b.dataset.asal; } }
+  if(on){ if(!b.dataset.asal){ b.dataset.asal=b.innerHTML; b.style.setProperty('--bw', b.offsetWidth+'px'); } b.disabled=true; b.classList.add('btn-busy'); b.innerHTML='<span class="sp"></span>'+(txt||'Sila tunggu...'); }
+  else { b.disabled=false; b.classList.remove('btn-busy'); if(b.dataset.asal){ b.innerHTML=b.dataset.asal; delete b.dataset.asal; } b.style.removeProperty('--bw'); }
 }
 function closeMo(id){
   var el=document.getElementById(id);
@@ -41,7 +41,7 @@ function closeMo(id){
   el.classList.remove('on');
   // P1-C: pulihkan fokus
   var prevFocus=_moFocusStack.pop();
-  if(prevFocus&&prevFocus.focus){setTimeout(function(){try{prevFocus.focus();}catch(e){}},50);}
+  if(prevFocus&&prevFocus.focus){setTimeout(function(){try{prevFocus.focus({preventScroll:true});}catch(e){}},50);}
   _moOpenCount=Math.max(0,_moOpenCount-1);
   if(_moOpenCount===0){
     document.body.classList.remove('modal-open');
