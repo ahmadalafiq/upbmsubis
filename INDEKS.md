@@ -91,9 +91,9 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** _agAdmin:17, _agTahun:18, _agFmt:19, _agPrefix:20, loadAnugerah:23, _agInp:41, _agBaris:42, _agRenderRubrik:47, _agPasang:83, _agKemasMod:84, _agKemasJumlah:89, _agN:96, _agBacaForm:97, _agSahJumlah:112, agPratonton:118, agSimpan:119, agLalai:128, agMuatTersimpan:129, _agBadge:132, _agMedal:136, _agRenderSemua:137, _agNota:151, agTab:164, agFilt:165, agCari:166, _agTblTop:168, _agRenderIsi:178, agEksport:207
 **Pemboleh ubah:** _ag:5, AG_LALAI:6, AG_LABEL:14, AG_TAB:15
 
-## js/25-program-hub.js — 308 baris, 25 KB
-**Fungsi:** _phOwn:15, _phRole:16, _phProgs:17, _phTop:18, _phTarikh:19, _phHari:20, _phHariTeks:25, _phBulanKey:26, _phStats:29, _phInfo:42, _phDraf:55, _phStatusSendiri:56, _phMuatTugas:66, _phLulus:81, _phIsih:101, _phSusun:113, phRender:118, _phBaris:169, _phDetail:185, _phProg:221, phAksi:222, phPilih:239, phTutupDetail:244, phTab:245, phSet:246, phCari:248, phLagi:249, phMuatSemula:250, phTutupMenu:256, phMenu:257, phPaparan:282, _phPasang:288
-**Pemboleh ubah:** _PH_PREF:6, _ph:7, _PH_BULAN:13, _PH_ST_TEKS:64, _PH_CTA:65, _phCariT:247
+## js/25-program-hub.js — 323 baris, 27 KB
+**Fungsi:** _phOwn:15, _phRole:16, _phProgs:17, _phTop:18, _phTarikh:19, _phHari:20, _phHariTeks:25, _phBulanKey:26, _phStats:29, _phInfo:42, _phDraf:55, _phStatusSendiri:56, _phMuatTugas:66, _phLulus:81, _phIsih:101, _phSusun:113, _phAktif:118, _phSig:120, phRender:128, _phBaris:183, _phDetail:199, _phProg:235, phAksi:236, phPilih:253, phTutupDetail:258, phTab:259, phSet:260, phCari:262, phLagi:263, phMuatSemula:264, phTutupMenu:270, phMenu:271, phPaparan:296, _phPasang:302
+**Pemboleh ubah:** _PH_PREF:6, _ph:7, _PH_BULAN:13, _PH_ST_TEKS:64, _PH_CTA:65, _phCariT:261
 
 ## js/26-modal-kerja.js — 32 baris, 2 KB
 **Fungsi:** _wsLain:7
@@ -103,6 +103,10 @@ Jana semula: `python3 tools/jana_indeks.py`. Rujuk `STRUKTUR.md` untuk gambaran 
 **Fungsi:** sasGet:5, sasSet:10, sasReset:14, sasJenisKod:15, sasProg:16, sasOk:21, _sasOkSek:23, sasTeks:28
 **Pemboleh ubah:** _SAS_ID:4
 
+## js/28-penyertaan-ringkas.js — 108 baris, 9 KB
+**Fungsi:** _ppD:7, penyIsu:10, penyProgres:25, _ppHeader:47, penyLompatIsu:53, _ppJantina:64, _ppBangsa:65, penyTampal:70
+**Pemboleh ubah:** _ppIdx:6, _PP_BANGSA:63
+
 ## laporan-sekolah.js — 798 baris, 45 KB
 
-_Jumlah: 448 fungsi, 117 pemboleh ubah aras atas._
+_Jumlah: 458 fungsi, 119 pemboleh ubah aras atas._

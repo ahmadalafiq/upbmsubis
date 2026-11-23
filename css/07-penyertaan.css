@@ -1,0 +1,33 @@
+/* == Borang penyertaan: bar kemajuan melekat + jadual peserta == */
+.pp-bar{position:sticky;top:0;z-index:7;grid-column:1/-1;background:#fff;border:1.5px solid var(--g2);border-radius:var(--r);padding:.55rem .8rem;margin-bottom:.6rem;display:flex;gap:.5rem 1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.pp-ctx{font-size:.74rem;color:var(--g7);min-width:0;word-break:break-word;}
+.pp-edit{color:#1b4f8a;font-weight:800;}
+.pp-chips{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;}
+.pp-chip{border-radius:20px;padding:.22rem .7rem;font-size:.7rem;font-weight:800;border:1.5px solid var(--g2);background:var(--g1);color:var(--g7);}
+.pp-chip.ok{background:#d5f5e3;border-color:#a9dfbf;color:#14683a;}
+.pp-chip.warn{background:#fffdf3;border-color:#f5d98b;color:#7a5b00;}
+.pp-chip.bad{background:#fde2e0;border-color:#f5b7b1;color:#8e2b20;}
+button.pp-isu{cursor:pointer;font-family:inherit;}
+.ri.ri-isu{border-left:4px solid var(--red);background:#fffafa;}
+.ri.ri-lompat{box-shadow:0 0 0 3px rgba(192,57,43,.25);}
+.pp-bad{border-color:var(--red) !important;box-shadow:0 0 0 3px rgba(192,57,43,.18) !important;}
+.pp-head{display:none;}
+@media(min-width:1100px){
+  #main-pes-list{counter-reset:pes;}
+  #peny-pes-head,#main-pes-list .ri{display:grid;grid-template-columns:2rem minmax(170px,2.2fr) minmax(130px,1.3fr) 118px 120px minmax(190px,2.6fr) auto;gap:.35rem .5rem;align-items:center;}
+  #peny-pes-head{position:sticky;top:3.9rem;z-index:6;background:var(--g1);border-radius:var(--r);padding:.35rem .5rem;margin-bottom:.3rem;font-size:.62rem;font-weight:800;text-transform:uppercase;color:var(--g6);}
+  #main-pes-list .ri{counter-increment:pes;padding:.3rem .5rem;margin:0 0 .25rem;}
+  #main-pes-list .ri .rih,#main-pes-list .ri .fg{display:contents;}
+  #main-pes-list .ri .rih > span{order:1;font-size:0;}
+  #main-pes-list .ri .rih > span::before{content:counter(pes);font-size:.74rem;font-weight:800;color:var(--g6);}
+  #main-pes-list .ri .rih > .btn{order:7;padding:.3rem .55rem;font-size:.66rem;}
+  #main-pes-list .ri .fg > .fi.full{order:0;grid-column:1/-1;display:none;}
+  #main-pes-list .ri.ri-kosong .fg > .fi.full{display:block;}
+  #main-pes-list .ri .fi:has([id^="pn-"]){order:2;}
+  #main-pes-list .ri .fi:has([id^="pkp-"]){order:3;}
+  #main-pes-list .ri .fi:has([id^="pjn-"]){order:4;}
+  #main-pes-list .ri .fi:has([id^="pbg-"]){order:5;}
+  #main-pes-list .ri > div:not(.rih):not(.fg){order:6;margin:0 !important;padding:.15rem !important;background:none !important;}
+  #main-pes-list .ri .fi > label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+  #main-pes-list .ri .fi input,#main-pes-list .ri .fi select{padding:.34rem .5rem;font-size:.76rem;}
+}

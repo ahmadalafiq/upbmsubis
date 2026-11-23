@@ -115,9 +115,20 @@ function _phSusun(m){
   _phProgs().forEach(function(p){ var i=_phInfo(p,S); items.push({p:p,i:i,st:(m==='peserta')?_phStatusSendiri(p['ID'],i):''}); });
   return items;
 }
-function phRender(m){
-  if(!m){ phRender('pengelola'); phRender('peserta'); return; }
+function _phAktif(m){ var r=document.getElementById(_ph[m].root); var pg=r&&r.closest&&r.closest('.pg'); return !!(pg&&pg.classList.contains('on')); }
+// Tandatangan input paparan: tiada binaan semula jika tiada apa-apa berubah (elak lonjakan/kelip skrin utama semasa modal dibuka)
+function _phSig(m){
+  var ps=_phProgs(), h=ps.length+'|';
+  for(var i=0;i<ps.length;i++){ var p=ps[i]; h+=p['ID']+':'+p['Status']+':'+p['Tarikh']+':'+p['Sasaran']+':'+p['Nama Program']+';'; }
+  var ap=(typeof _aP!=='undefined'?_aP:[]);
+  var tg=_ph.tugas?(Object.keys(_ph.tugas.tg||{}).join(',')+'/'+Object.keys(_ph.tugas.tl||{}).join(',')):'-';
+  var d=_phDraf(); 
+  return h+'|'+ap.length+'|'+JSON.stringify(_ph[m].f)+'|'+_ph[m].n+'|'+tg+'|'+(d?d.selId:'')+'|'+_phOwn()+'|'+_phRole()+'|'+_ph.view+'|'+(_ph.dimuat?1:0);
+}
+function phRender(m,paksa){
+  if(!m){ ['pengelola','peserta'].forEach(function(k){ if(_phAktif(k)) phRender(k,paksa); }); return; }
   var root=document.getElementById(_ph[m].root); if(!root||_ph.view!=='baru') return;
+  var sig=_phSig(m); if(!paksa && root.getAttribute('data-sig')===sig) return;
   if(!_ph.dimuat){ root.innerHTML='<div class="ph-list">'+ldInline('Memuatkan senarai program...')+'</div>'; return; }
   if(m==='peserta') _phMuatTugas();
   var all=_phSusun(m), f=_ph[m].f, own=_phOwn(), peran=_phRole();
@@ -160,9 +171,12 @@ function phRender(m){
   tunjuk.forEach(function(x){ list+=_phBaris(x,m,peran); });
   if(rows.length>tunjuk.length) list+='<button type="button" class="btn bs ph-more-btn" onclick="phLagi(\''+m+'\')">Papar lagi ('+(rows.length-tunjuk.length)+')</button>';
   h+='<div class="ph-wrap"><div><div class="ph-list" id="ph-list-'+m+'" aria-label="Senarai program ('+rows.length+')">'+list+'</div></div><aside class="ph-detail" id="ph-detail-'+m+'" aria-label="Butiran program"></aside></div>';
-  // kekalkan fokus carian
+  // kekalkan fokus carian & kedudukan skrol (tiada lonjakan)
   var aktif=document.activeElement, kekal=(aktif&&aktif.id==='ph-q-'+m)?aktif.selectionStart:null;
-  root.innerHTML=h;
+  var sy=window.pageYOffset||0, tinggi=root.offsetHeight; if(tinggi) root.style.minHeight=tinggi+'px';
+  root.innerHTML=h; root.setAttribute('data-sig',sig);
+  try{ window.scrollTo(0,sy); }catch(e){}
+  setTimeout(function(){ root.style.minHeight=''; },60);
   if(kekal!==null){ var qi=document.getElementById('ph-q-'+m); if(qi){ qi.focus(); try{qi.setSelectionRange(kekal,kekal);}catch(e){} } }
   _phDetail(m, rows);
 }
@@ -249,7 +263,7 @@ function phCari(m,v){ _ph[m].f.q=v; _ph[m].n=25; clearTimeout(_phCariT); _phCari
 function phLagi(m){ _ph[m].n+=25; phRender(m); }
 async function phMuatSemula(m){
   try{ _ph.tugasMuat=false; _ph.tugas=null; await (m==='pengelola'?loadProgs(true,true):new Promise(function(r){ loadProgsForPeny(true,r,true); })); }catch(e){}
-  phRender(m); toast('Data dimuat semula.','ok');
+  phRender(m,true); toast('Data dimuat semula.','ok');
 }
 
 // -- Menu ⋯ ----------------------------------------------------------------------------------------------------------------
@@ -300,9 +314,10 @@ function _phPasang(){
 (function(){
   try{ if(localStorage.getItem(_PH_PREF)==='lama') _ph.view='lama'; }catch(e){}
   // render semula bila data program dimuat / disegerak
-  if(typeof applyProgFilt==='function'){ var _a=applyProgFilt; applyProgFilt=function(){ var r=_a.apply(this,arguments); _ph.dimuat=true; try{ phRender('pengelola'); phRender('peserta'); }catch(e){ console.warn('phRender:',e); } return r; }; }
-  if(typeof renderPenyList==='function'){ var _b=renderPenyList; renderPenyList=function(){ var r=_b.apply(this,arguments); _ph.dimuat=true; try{ phRender('peserta'); phRender('pengelola'); }catch(e){ console.warn('phRender:',e); } return r; }; }
+  if(typeof applyProgFilt==='function'){ var _a=applyProgFilt; applyProgFilt=function(){ var r=_a.apply(this,arguments); _ph.dimuat=true; try{ phRender(); }catch(e){ console.warn('phRender:',e); } return r; }; }
+  if(typeof renderPenyList==='function'){ var _b=renderPenyList; renderPenyList=function(){ var r=_b.apply(this,arguments); _ph.dimuat=true; try{ phRender(); }catch(e){ console.warn('phRender:',e); } return r; }; }
   // selepas penyertaan dihantar / modal ditutup: segarkan data & status
   if(typeof resetPeny==='function'){ var _c=resetPeny; resetPeny=function(){ var r=_c.apply(this,arguments); setTimeout(function(){ _ph.tugasMuat=false; _ph.tugas=null; try{ loadProgsForPeny(true,function(){ phRender(); },true); }catch(e){} },700); return r; }; }
+  if(typeof _doShowPage==='function'){ var _d=_doShowPage; _doShowPage=function(pg){ var r=_d.apply(this,arguments); try{ if(pg==='pengelola'||pg==='peserta') phRender(pg); }catch(e){} return r; }; }
   _phPasang();
 })();

@@ -29,11 +29,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}  
 .md-max-body table,.md table{max-width:100%;}
 .md-max-body .tw,.md .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 
-/* == KESTABILAN PAPARAN (tiada "shake") ======================================== */
-/* 1) Ruang bar skrol dikekalkan walaupun body dikunci semasa modal -> lebar halaman tidak berubah ~15px setiap kali modal dibuka/ditutup */
-html{scrollbar-gutter:stable;}
-/* 2) Modal: pudar sahaja (tiada skala/zum), lebih pantas; kabur latar dikurangkan */
-.mo{transition:opacity .12s !important;backdrop-filter:blur(2px) !important;}
+/* == KESTABILAN PAPARAN (tiada "shake" pada skrin utama semasa modal dibuka) ======= */
+/* 1) TIADA kunci skrol pada body: overflow:hidden menukar bar skrol / reflow skrin utama setiap kali modal dibuka-tutup.
+      Latar dilindungi daripada skrol melalui overlay penuh + overscroll-behavior:contain. */
+body.modal-open{overflow:visible !important;}
+.mo{overscroll-behavior:contain;}
+.md{overscroll-behavior:contain;}
+/* 2) TIADA backdrop-filter (menjadikan semula seluruh skrin utama di bawah modal -> kelipan) */
+.mo{backdrop-filter:none !important;-webkit-backdrop-filter:none !important;background:rgba(0,0,0,.5);transition:opacity .12s !important;}
 .md,.mo.on .md{transform:none !important;transition:none !important;}
 /* 3) Pertukaran kandungan antara modal kerja (tiada kelip latar, tiada animasi tutup+buka bertindih) */
 body.ws-swap .mo,body.ws-swap .md{transition:none !important;animation:none !important;}
@@ -54,8 +57,16 @@ body.ws-swap .mo,body.ws-swap .md{transition:none !important;animation:none !imp
 /* Modal penyertaan: dua lajur (guru | peserta) pada skrin lebar + bar tindakan melekat di bawah */
 @media(min-width:1100px){
   #peny-form-wrap[style*="block"]{display:grid !important;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:.9rem;align-items:start;}
-  #peny-form-wrap > .sbox:nth-of-type(1){position:sticky;top:0;max-height:calc(100dvh - 15rem);overflow:auto;}
+  #peny-form-wrap > .sbox:has(#main-guru-list){position:sticky;top:4.6rem;max-height:calc(100dvh - 17rem);overflow:auto;}
 }
 #peny-form-wrap > .fx.gu{position:sticky;bottom:-1px;z-index:5;grid-column:1/-1;background:#fff;border-top:1px solid var(--g2);padding:.7rem 0 .2rem;margin-top:.3rem;}
 /* Modal DATA: dua lajur sekolah pada skrin lebar */
 @media(min-width:1100px){.sek-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem .9rem;align-items:start;}}
+
+/* == SISTEM SAIZ MODAL SERAGAM ============================================================
+   S (dialog/pengesahan 460px) · M (maklumat/butiran 800px) · L = modal kerja besar (md-max).
+   Semua modal wajib menggunakan SATU daripada tiga kelas ini (tiada max-width sebaris). */
+.md.md-s{width:min(460px,calc(100vw - 2rem)) !important;max-width:none !important;}
+.md.md-m{width:min(800px,calc(100vw - 2rem)) !important;max-width:none !important;}
+.md.md-s,.md.md-m{padding:1.4rem;max-height:min(90dvh,880px);}
+@media(max-width:640px){.md.md-s,.md.md-m{width:calc(100vw - 1rem) !important;padding:1rem;max-height:94dvh;}}

@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="css/04-fullscreen-nav-widgets.css?v=20261122">
 <link rel="stylesheet" href="css/05-ux.css?v=20261122">
 <link rel="stylesheet" href="css/06-program-hub.css?v=20261124">
+<link rel="stylesheet" href="css/07-penyertaan.css?v=20261126">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -356,7 +357,7 @@
 
   <!-- MODAL PENGESAHAN -->
   <div class="mo" id="mo-pengesahan">
-    <div class="md" style="max-width:700px;">
+    <div class="md md-m">
       <div class="mh">✅ PENGESAHAN PENYERTAAN</div>
       <div id="pengesahan-body" style="max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
       <div class="mt2 fx gu" style="flex-wrap:wrap;">
@@ -737,7 +738,7 @@
 </div>
 <!-- MODAL: TINGGALKAN PENYERTAAN -->
 <div class="mo" id="mo-tugasan">
-  <div class="md" style="max-width:560px;max-height:88vh;overflow-y:auto;">
+  <div class="md md-m" style="max-height:88vh;overflow-y:auto;">
     <div class="mh" style="color:var(--red);">📌 Semakan Selepas Log Masuk</div>
     <div id="tg-body"></div>
     <div style="margin-top:.9rem;display:flex;justify-content:flex-end;"><button class="btn bs" onclick="closeMo('mo-tugasan')">NANTI SAYA SEMAK</button></div>
@@ -745,7 +746,7 @@
 </div>
 
 <div class="mo" id="mo-tinggal">
-  <div class="md" style="max-width:420px;">
+  <div class="md md-s">
     <div class="mh" style="color:var(--red);">⚠️ Tinggalkan Penyertaan?</div>
     <div style="font-size:.78rem;color:var(--g7);line-height:1.6;margin-bottom:1rem;">
       Anda sedang mengisi borang penyertaan untuk program <strong id="tinggal-prog-name"></strong>.
@@ -770,7 +771,7 @@
 
 <!-- MODAL: CLAIM AKAUN GOOGLE -->
 <div class="mo" id="mo-claim">
-  <div class="md" style="max-width:440px;">
+  <div class="md md-s">
     <div class="mh">🔗 AKAUN GOOGLE</div>
     <p style="font-size:.72rem;color:var(--g6);margin:0 0 .6rem;">Akaun Google anda (<b id="claim-emel"></b>) belum diikat ke mana-mana akaun UPBM Subis.</p>
 
@@ -839,7 +840,7 @@
 
 <!-- MODAL: EDIT PROGRAM -->
 <div class="mo" id="mo-profil">
-  <div class="md" style="max-width:460px;">
+  <div class="md md-s">
     <div class="mh">👤 PROFIL SAYA</div>
     <div id="pf-ld" style="display:none;padding:1rem 0;font-size:.78rem;color:var(--g6);">Memuatkan profil...</div>
     <div id="pf-body" style="display:none;">
@@ -997,10 +998,10 @@
 
 <!-- MODAL: RUMUSAN -->
 <div class="mo" id="mo-rum">
-  <div class="md" style="max-width:800px;">
-    <div class="mh" id="rum-tit">📄 RUMUSAN PROGRAM</div>
-    <div id="rum-body" style="max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
-    <div class="mt2 fx gu" style="flex-wrap:wrap;">
+  <div class="md md-max">
+    <div class="md-max-head"><span class="mh" id="rum-tit" style="margin:0;">📄 RUMUSAN PROGRAM</span><button type="button" class="btn bs bsm" onclick="closeMo('mo-rum')">✕ TUTUP</button></div>
+    <div id="rum-body" class="md-max-body"></div>
+    <div class="md-max-foot fx gu" style="flex-wrap:wrap;">
       <button class="btn bp" onclick="printRum()">🖨 CETAK / PDF</button>
       <button class="btn bg" id="btn-csv" onclick="expCSV()" style="display:none;">📥 EXPORT CSV</button>
       <button class="btn bs" onclick="closeMo('mo-rum')">TUTUP</button>
@@ -1010,7 +1011,7 @@
 
 <!-- MODAL: RANKING DETAIL -->
 <div class="mo" id="mo-det">
-  <div class="md" style="max-width:480px;">
+  <div class="md md-m">
     <div class="mh" id="det-tit">PENCAPAIAN</div>
     <div id="det-body" style="max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
     <div class="mt2"><button class="btn bs bsm" onclick="closeMo('mo-det')">TUTUP</button></div>
@@ -1019,7 +1020,7 @@
 
 <!-- MODAL: MORE RANKING -->
 <div class="mo" id="mo-more">
-  <div class="md" style="max-width:460px;">
+  <div class="md md-m">
     <div class="mh" id="more-tit">RANKING PENUH</div>
     <div class="mo-srch-wrap">
       <span class="mo-srch-ico">🔍</span>
@@ -1034,7 +1035,7 @@
 
 <!-- MODAL: BAR LIST (Penyertaan Sekolah / Program) -->
 <div class="mo" id="mo-bar-list">
-  <div class="md" style="max-width:480px;">
+  <div class="md md-m">
     <div class="mh" id="bar-list-tit">SENARAI PENUH</div>
     <div class="mo-srch-wrap">
       <span class="mo-srch-ico">🔍</span>
@@ -1049,7 +1050,7 @@
 
 <!-- MODAL: MORE PENCAPAIAN -->
 <div class="mo" id="mo-morep">
-  <div class="md" style="max-width:560px;">
+  <div class="md md-m">
     <div class="mh">SEMUA PENCAPAIAN</div>
     <div class="mo-srch-wrap">
       <span class="mo-srch-ico">🔍</span>
@@ -1064,7 +1065,7 @@
 
 <!-- MODAL: PENC DETAIL (single program) -->
 <div class="mo" id="mo-penc-det">
-  <div class="md" style="max-width:500px;">
+  <div class="md md-m">
     <div class="mh" id="penc-det-tit">PENCAPAIAN</div>
     <div id="penc-det-body" style="max-height:60vh;overflow-y:auto;"></div>
     <div class="mt2"><button class="btn bs bsm" onclick="closeMo('mo-penc-det')">TUTUP</button></div>
@@ -1073,7 +1074,7 @@
 
 <!-- MODAL: PENCAPAIAN PODIUM -->
 <div class="mo" id="mo-podium">
-  <div class="md" style="max-width:500px;">
+  <div class="md md-m">
     <div class="mh" id="podium-tit">🏆 PENCAPAIAN</div>
     <div id="podium-body" style="max-height:70vh;overflow-y:auto;"></div>
     <div class="mt2"><button class="btn bs bsm" onclick="closeMo('mo-podium')">TUTUP</button></div>
@@ -1083,7 +1084,7 @@
 <!-- MODAL: SEARCH DETAIL (single entity) -->
 <!-- MODAL: SEARCH DETAIL (single entity) -->
 <div class="mo" id="mo-sdet">
-  <div class="md" style="max-width:620px;">
+  <div class="md md-m">
     <div id="sdet-inner" style="max-height:75vh;overflow-y:auto;"></div>
     <div class="mt2 fx gu" style="flex-wrap:wrap;">
       <button class="btn bp" onclick="printSdet()">🖨 CETAK</button>
@@ -1094,7 +1095,7 @@
 
 <!-- MODAL: SEARCH RESULTS -->
 <div class="mo" id="mo-srch">
-  <div class="md" style="max-width:700px;">
+  <div class="md md-m">
     <div class="mh">🔍 HASIL CARIAN: <span id="srch-q"></span></div>
     <div id="srch-body" style="max-height:70vh;overflow-y:auto;"></div>
     <div class="mt2"><button class="btn bs bsm" onclick="closeMo('mo-srch')">TUTUP</button></div>
@@ -1110,7 +1111,7 @@
 
 <!-- MODAL SALINAN PENYERTAAN -->
 <div class="mo" id="mo-salinan">
-  <div class="md" style="max-width:860px;width:96%;padding:0;overflow:hidden;">
+  <div class="md md-m" style="padding:0;overflow:hidden;">
     <div class="mh" style="background:var(--red);color:#fff;border-radius:var(--rl) var(--rl) 0 0;padding:.75rem 1rem;margin:0;border:none;">
       <span>📄 SALINAN PENYERTAAN</span>
     </div>
@@ -1132,7 +1133,7 @@
 
 <!-- CUSTOM CONFIRM MODAL (ganti confirm() yang disekat dalam iframe) -->
 <div class="mo" id="mo-draft">
-  <div class="md" style="max-width:460px;">
+  <div class="md md-s">
     <div class="mh">🗂 Draf Penyertaan Tersimpan</div>
     <div style="padding:1.2rem 1.4rem;">
       <p id="draft-msg" style="font-size:.88rem;line-height:1.7;color:#2c3e50;margin-bottom:1.2rem;white-space:pre-line;"></p>
@@ -1146,7 +1147,7 @@
 </div>
 
 <div class="mo" id="mo-cfm">
-  <div class="md" style="max-width:420px;">
+  <div class="md md-s">
     <div class="mh" id="cfm-tit">⚠ PENGESAHAN</div>
     <div style="padding:1.2rem 1.4rem;">
       <p id="cfm-msg" style="font-size:.92rem;line-height:1.6;color:#2c3e50;margin-bottom:1.2rem;"></p>
@@ -1185,6 +1186,7 @@
 <script src="js/25-program-hub.js?v=20261124"></script>
 <script src="js/26-modal-kerja.js?v=20261125"></script>
 <script src="js/27-sasaran.js?v=20261125"></script>
+<script src="js/28-penyertaan-ringkas.js?v=20261126"></script>
 <script src="laporan-sekolah.js"></script>
 </body>
 </html>

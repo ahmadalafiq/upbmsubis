@@ -318,7 +318,7 @@ function _buildPencConfirm(col){
     mo=document.createElement('div');
     mo.id='mo-penc-confirm';
     mo.className='mo';
-    mo.innerHTML='<div class="md" style="max-width:640px;">'
+    mo.innerHTML='<div class="md md-m">'
       +'<div class="mh">✅ PENGESAHAN PENCAPAIAN</div>'
       +'<div id="penc-confirm-body" style="max-height:62vh;overflow-y:auto;"></div>'
       +'<div class="mt2 fx gu" id="mo-penc-confirm-foot" style="flex-wrap:wrap;">'

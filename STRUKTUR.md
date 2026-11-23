@@ -49,6 +49,7 @@ Dipecahkan daripada satu fail 600 KB (16 Nov 2026, tag git `pra-pecah` = versi a
 | `25-program-hub` | paparan baharu Pengelola & Penyertaan: senarai padat + panel butiran, CTA ikut status sekolah sendiri, menu ⋯, butang "Lama" untuk kembali (css/06-program-hub.css) | program hub, ph |
 | `26-modal-kerja` | modal kerja (DATA/Rumusan/Edit/Daftar-Edit Penyertaan/Daftar Program): tukar KANDUNGAN, bukan modal (tiada kelip, kiraan & kunci skrol dikekalkan) | modal kerja, ws-swap |
 | `27-sasaran` | Sasaran SR/SM bagi program: kotak, `sasOk`, penapis sekolah penyertaan | sasaran SR SM |
+| `28-penyertaan-ringkas` | borang penyertaan: bar kemajuan melekat (guru/peserta/isu + lompat), jadual peserta (css/07-penyertaan.css), tampal terus daripada Excel | kemajuan penyertaan, tampal excel |
 | `laporan-sekolah.js` | Laporan Sekolah + perbandingan sesi (dimuat terakhir; kekal di akar) | laporan |
 
 **Dashboard merentas 3 fail:** `10` (data/skor), `13` (rebuild/penapis), `17` (kad statistik, carta, penapis lanjutan).
@@ -65,3 +66,7 @@ Dipecahkan daripada satu fail 600 KB (16 Nov 2026, tag git `pra-pecah` = versi a
 - Sumber: `js/`, `css/`, `index.html`. `npm run build` (esbuild) -> `dist/` (minify + cap versi hash). Vercel membina menurut `vercel.json`.
 - Fail pangkalan data: `supabase/migrations/` (pelaksanaan manual melalui Supabase). `20261119_revoke_analitik_anon.sql` = langkah SELEPAS deploy edge function.
 - Edge function `ai-chat`: auto-deploy oleh GitHub Action semasa push ke `main`. Ujian logik: Deno + fetch tiruan (lihat AUDIT.md).
+
+## Sistem saiz modal (seragam)
+- **S** `md-s` 460px: dialog/pengesahan (tinggal, cfm, claim, profil, draf). **M** `md-m` 800px: maklumat/butiran (11 modal + pengesahan pencapaian dinamik). **L** `md-max` `min(1560px,100vw-2rem)` × `min(940px,100dvh-2rem)`: modal kerja (peny, daftar-prog, edit, lihat, rum). Dilarang `max-width` sebaris pada `.md`.
+- Skrin utama: TIADA kunci skrol body (`overflow:visible`), TIADA `backdrop-filter`; senarai Program Hub tidak dibina semula jika tandatangan data tidak berubah.
